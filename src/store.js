@@ -45,6 +45,19 @@ export function deleteRutina(id) {
   write(KEYS.rutinas, rutinas);
 }
 
+export function duplicateRutina(id) {
+  const original = getRutinaById(id);
+  if (!original) return null;
+  const copia = JSON.parse(JSON.stringify(original));
+  copia.id = crypto.randomUUID();
+  copia.nombre = original.nombre + ' (copia)';
+  copia.diaSemana = null; // don't copy day assignment
+  const rutinas = getRutinas();
+  rutinas.push(copia);
+  write(KEYS.rutinas, rutinas);
+  return copia;
+}
+
 // ── Sesiones ─────────────────────────────────
 
 export function getSesiones() {
@@ -92,6 +105,51 @@ export function setPlanDia(usuario, dia, tipo) {
     delete all[usuario][dia]; // descanso
   }
   write(KEYS.planSemanal, all);
+}
+
+// ── Notas de ejercicios ─────────────────────
+
+const NOTAS_KEY = 'gym_notas_ejercicios';
+
+export function getNotaEjercicio(nombre) {
+  const notas = read(NOTAS_KEY) || {};
+  return notas[nombre] || '';
+}
+
+export function saveNotaEjercicio(nombre, nota) {
+  const notas = read(NOTAS_KEY) || {};
+  if (nota && nota.trim()) {
+    notas[nombre] = nota.trim();
+  } else {
+    delete notas[nombre];
+  }
+  write(NOTAS_KEY, notas);
+}
+
+// ── Routine-day assignment ──────────────────
+
+export function assignRutinaADia(rutinaId, dia, usuario) {
+  const rutinas = getRutinas();
+  // Clear any routine currently assigned to this day for this user
+  for (const r of rutinas) {
+    if (r.usuario === usuario && r.diaSemana === dia) {
+      r.diaSemana = null;
+    }
+  }
+  // Assign the new one
+  const target = rutinas.find((r) => r.id === rutinaId);
+  if (target) target.diaSemana = dia;
+  write(KEYS.rutinas, rutinas);
+}
+
+export function clearRutinaDelDia(dia, usuario) {
+  const rutinas = getRutinas();
+  for (const r of rutinas) {
+    if (r.usuario === usuario && r.diaSemana === dia) {
+      r.diaSemana = null;
+    }
+  }
+  write(KEYS.rutinas, rutinas);
 }
 
 // ── Scheduling ──────────────────────────────

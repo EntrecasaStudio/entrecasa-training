@@ -2,10 +2,12 @@ import {
   getRutinas,
   getUsuarioActivo,
   deleteRutina,
+  duplicateRutina,
 } from '@/store.js';
 import { navigate } from '@/router.js';
 import { renderNavBar } from '@js/components/nav-bar.js';
 import { showModal } from '@js/components/modal.js';
+import { showToast } from '@js/components/toast.js';
 import { icon, iconLg } from '@js/icons.js';
 import {
   TAG_CLASS,
@@ -42,6 +44,7 @@ function renderRutinaCard(rutina) {
         <span class="rutina-card-meta">${renderLastDone(rutina)}</span>
         <div class="rutina-card-actions">
           <button class="btn-icon-action" data-action="start" data-id="${rutina.id}">${icon.play}</button>
+          <button class="btn-icon-action" data-action="duplicate" data-id="${rutina.id}">${icon.copy}</button>
           <button class="btn-icon-action" data-action="edit" data-id="${rutina.id}">${icon.edit}</button>
         </div>
       </div>
@@ -131,6 +134,14 @@ export function mount() {
       case 'edit':
         navigate(`/rutina/editar/${id}`);
         break;
+      case 'duplicate': {
+        const copia = duplicateRutina(id);
+        if (copia) {
+          showToast('Rutina duplicada');
+          navigate('/rutinas');
+        }
+        break;
+      }
       case 'delete':
         showModal({
           title: 'Eliminar rutina',

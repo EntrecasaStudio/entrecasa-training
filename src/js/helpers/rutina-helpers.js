@@ -1,4 +1,4 @@
-import { getRutinaById, getUltimaSesionDeRutina } from '@/store.js';
+import { getRutinaById, getRutinas, getUltimaSesionDeRutina, assignRutinaADia, clearRutinaDelDia, setPlanDia } from '@/store.js';
 import { navigate } from '@/router.js';
 import { showModal } from '@js/components/modal.js';
 import { icon } from '@js/icons.js';
@@ -81,5 +81,87 @@ export function showPreview(rutinaId) {
     cancelText: 'Volver',
     onConfirm: () => navigate(`/workout/${rutinaId}`),
     html: true,
+  });
+}
+
+// ── Day assignment modal ─────────────────────
+
+export function showDayAssignmentModal(usuario, dia, tipoActual, onDone) {
+  const { hideModal: hide } = { hideModal: null };
+  const diaLabel = DIAS_LABEL[dia];
+  const otroTipo = tipoActual === 'gimnasio' ? 'cross' : 'gimnasio';
+  const otroLabel = otroTipo === 'gimnasio' ? 'Gimnasio' : 'Cross';
+
+  // Get routines matching current type
+  const rutinas = getRutinas().filter((r) => r.usuario === usuario && r.tipo === tipoActual);
+  const assigned = rutinas.find((r) => r.diaSemana === dia);
+
+  const rutinasHtml = rutinas.map((r) => {
+    const isActive = assigned && r.id === assigned.id ? 'active' : '';
+    return `<button class="day-assign-option ${isActive}" data-assign-rutina="${r.id}">${r.nombre}</button>`;
+  }).join('');
+
+  const tipoNombre = tipoActual === 'gimnasio' ? 'Gimnasio' : 'Cross';
+  const emptyMsg = `<div style="color:var(--color-text-muted);margin-bottom:var(--space-md)">No hay rutinas de ${tipoNombre}</div>`;
+
+  const bodyHtml = `
+    <div class="day-assign-body">
+      ${rutinasHtml || emptyMsg}
+      <div class="day-assign-divider"></div>
+      <button class="day-assign-option day-assign-switch" data-assign-switch="${otroTipo}">Cambiar a ${otroLabel}</button>
+      <button class="day-assign-option day-assign-clear" data-assign-clear>Sin rutina</button>
+      <button class="day-assign-option day-assign-rest" data-assign-rest>Descanso (quitar dia)</button>
+    </div>
+  `;
+
+  // Use a custom modal with event delegation
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-title">${diaLabel}</div>
+      <div class="modal-body">${bodyHtml}</div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = () => {
+    overlay.classList.add('modal-closing');
+    overlay.addEventListener('animationend', () => overlay.remove(), { once: true });
+  };
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) { close(); return; }
+
+    const btn = e.target.closest('[data-assign-rutina]');
+    if (btn) {
+      assignRutinaADia(btn.dataset.assignRutina, dia, usuario);
+      close();
+      onDone();
+      return;
+    }
+
+    if (e.target.closest('[data-assign-switch]')) {
+      clearRutinaDelDia(dia, usuario);
+      setPlanDia(usuario, dia, otroTipo);
+      close();
+      onDone();
+      return;
+    }
+
+    if (e.target.closest('[data-assign-clear]')) {
+      clearRutinaDelDia(dia, usuario);
+      close();
+      onDone();
+      return;
+    }
+
+    if (e.target.closest('[data-assign-rest]')) {
+      clearRutinaDelDia(dia, usuario);
+      setPlanDia(usuario, dia, null);
+      close();
+      onDone();
+      return;
+    }
   });
 }

@@ -18,6 +18,7 @@ import {
   renderTags,
   renderLastDone,
   showPreview,
+  showDayAssignmentModal,
 } from '@js/helpers/rutina-helpers.js';
 import { getWeeklyStreak, getSessionsThisWeek, getPlannedDaysThisWeek, getDaysSinceLastSession } from '@js/helpers/stats-helpers.js';
 
@@ -62,6 +63,7 @@ function renderQuickStatsStrip(usuario) {
 function renderWeekPlanner(usuario) {
   const hoy = new Date().getDay();
   const plan = getPlanSemanal(usuario);
+  const rutinas = getRutinas().filter((r) => r.usuario === usuario);
 
   const circles = DIAS_ORDEN.map((d) => {
     const tipo = plan[d] || '';
@@ -69,12 +71,17 @@ function renderWeekPlanner(usuario) {
     const iconInner = tipo === 'gimnasio' ? '🏋️' : tipo === 'cross' ? '🏃' : '';
     const pulseClass = isToday && tipo ? 'pulse-today' : '';
 
+    // Show assigned routine name
+    const assigned = tipo ? rutinas.find((r) => r.diaSemana === d) : null;
+    const rutLabel = assigned ? `<span class="day-circle-rutina">${assigned.nombre}</span>` : '';
+
     return `
       <div class="day-circle">
         <button class="day-circle-btn ${tipo} ${pulseClass}" data-action="toggle-day" data-day="${d}">
           ${iconInner}
         </button>
         <span class="day-circle-label ${isToday ? 'today' : ''}">${DIAS_ABREV[d]}</span>
+        ${rutLabel}
       </div>
     `;
   }).join('');
@@ -157,7 +164,7 @@ function renderWeeklyRoutines(usuario) {
       const cardIdx = DIAS_ORDEN.filter((dd) => plan[dd]).indexOf(d);
 
       return `
-        <div class="mini-card animate-in ${isToday ? 'today' : ''}" style="animation-delay:${cardIdx * 60}ms" ${rut ? `data-rutina-id="${rut.id}"` : ''}>
+        <div class="mini-card animate-in ${isToday ? 'today' : ''}" style="animation-delay:${cardIdx * 60}ms" ${rut ? `data-action="preview-routine" data-id="${rut.id}"` : ''}>
           <div class="mini-card-left">
             <div class="mini-card-day">${DIAS_LABEL[d]} · ${tipoLabel}</div>
             <div class="mini-card-name">${nombre}</div>
@@ -257,6 +264,7 @@ export function mount() {
         navigate('/');
         break;
       case 'start':
+      case 'preview-routine':
         showPreview(id);
         break;
       case 'resume-workout': {
@@ -270,10 +278,14 @@ export function mount() {
         const plan = getPlanSemanal(usuario);
         const current = plan[dia] || '';
 
-        // Cycle: off → gimnasio → cross → off
-        const next = current === '' ? 'gimnasio' : current === 'gimnasio' ? 'cross' : '';
-        setPlanDia(usuario, dia, next || null);
-        navigate('/');
+        if (current === '') {
+          // Empty day → set to gimnasio
+          setPlanDia(usuario, dia, 'gimnasio');
+          navigate('/');
+        } else {
+          // Day has type → show assignment modal
+          showDayAssignmentModal(usuario, dia, current, () => navigate('/'));
+        }
         break;
       }
     }

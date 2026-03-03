@@ -1,6 +1,7 @@
 import { getSesionById, getPersonalRecords, calcVolumenSesion, getPreviousSesion, getUsuarioActivo } from '@/store.js';
 import { navigate } from '@/router.js';
 import { icon } from '@js/icons.js';
+import { showToast } from '@js/components/toast.js';
 
 function formatDuration(min) {
   if (min < 60) return `${min} min`;
@@ -111,6 +112,7 @@ export function render(params) {
 
       <div class="summary-actions animate-in" style="animation-delay:600ms">
         <button class="btn btn-primary btn-full" data-action="detail" data-id="${sesion.id}">Ver Detalle</button>
+        <button class="btn btn-ghost btn-full" data-action="share" data-id="${sesion.id}">Compartir Resumen</button>
         <button class="btn btn-ghost btn-full" data-action="home">Volver al Inicio</button>
       </div>
     </div>
@@ -128,6 +130,18 @@ export function mount(params) {
       case 'detail':
         navigate(`/sesion/${btn.dataset.id}`);
         break;
+      case 'share': {
+        const sesion = getSesionById(btn.dataset.id);
+        if (!sesion) break;
+        const vol = Math.round(calcVolumenSesion(sesion));
+        const text = `${sesion.rutinaNombre} — ${sesion.duracionMin} min — ${vol.toLocaleString()} kg volumen 💪`;
+        if (navigator.share) {
+          navigator.share({ title: 'Entrenamiento', text }).catch(() => {});
+        } else {
+          navigator.clipboard.writeText(text).then(() => showToast('Copiado al portapapeles'));
+        }
+        break;
+      }
       case 'home':
         navigate('/');
         break;

@@ -80,6 +80,17 @@
   color: var(--color-accent);
 }
 
+.day-circle-rutina {
+  font-size: 9px;
+  color: var(--color-text-muted);
+  max-width: 48px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  line-height: 1.1;
+}
+
 .week-planner-legend {
   display: flex;
   justify-content: center;
@@ -263,6 +274,16 @@
   padding: var(--space-md);
   margin-bottom: var(--space-sm);
   box-shadow: var(--shadow-sm);
+}
+
+.mini-card[data-action] {
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.1s;
+}
+
+.mini-card[data-action]:active {
+  background-color: color-mix(in srgb, var(--color-surface) 85%, var(--color-accent));
+  transform: scale(0.98);
 }
 
 .mini-card-left {
@@ -1031,6 +1052,12 @@
   padding: var(--space-sm) var(--space-md);
   border-bottom: 1px solid var(--color-border);
   margin-left: var(--space-md);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.ej-item:active {
+  background-color: color-mix(in srgb, var(--color-surface) 80%, var(--color-accent));
 }
 
 .ej-item:last-child {
@@ -1042,6 +1069,11 @@
   font-weight: var(--fw-normal);
   flex: 1;
   min-width: 0;
+}
+
+.ej-item-note {
+  font-size: 10px;
+  margin-left: var(--space-xs);
 }
 
 .ej-item-type {
@@ -1068,6 +1100,88 @@
   color: var(--color-text-muted);
   font-weight: var(--fw-normal);
   margin-top: 1px;
+}
+
+/* ── Exercise detail modal ───────────────── */
+
+.ej-detail-modal {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.ej-detail-header {
+  margin-bottom: var(--space-md);
+}
+
+.ej-detail-name {
+  font-size: var(--text-lg);
+  font-weight: var(--fw-semibold);
+  margin-bottom: var(--space-xs);
+}
+
+.ej-detail-badges {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.ej-detail-tipo {
+  font-size: var(--text-xs);
+  font-weight: var(--fw-medium);
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-full);
+}
+
+.ej-detail-tipo.funcional {
+  background-color: color-mix(in srgb, var(--color-tag-espalda) 20%, transparent);
+  color: var(--color-tag-espalda);
+}
+
+.ej-detail-tipo.maquina {
+  background-color: color-mix(in srgb, var(--color-tag-piernas) 20%, transparent);
+  color: var(--color-tag-piernas);
+}
+
+.ej-detail-desc {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin-bottom: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background-color: color-mix(in srgb, var(--color-surface) 50%, var(--color-bg));
+  border-radius: var(--radius-sm);
+}
+
+.ej-detail-notes-section {
+  margin-bottom: var(--space-lg);
+}
+
+.ej-detail-notes-label {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-xs);
+}
+
+.ej-detail-textarea {
+  width: 100%;
+  padding: var(--space-sm);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-family: var(--font-main);
+  resize: vertical;
+  min-height: 60px;
+}
+
+.ej-detail-textarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
 }
 
 /* ── Workout Summary view ────────────────── */

@@ -1,6 +1,7 @@
 import { CATEGORIAS, getEjerciciosPorCategoria } from '@js/ejercicios-catalogo.js';
-import { getSesiones, getUsuarioActivo } from '@/store.js';
+import { getSesiones, getUsuarioActivo, getNotaEjercicio } from '@/store.js';
 import { renderNavBar } from '@js/components/nav-bar.js';
+import { showExerciseDetail } from '@js/helpers/ejercicio-detail.js';
 
 /**
  * Build a map of exercise name → { reps, peso, fecha } from the user's most recent sessions.
@@ -67,9 +68,10 @@ function renderCategorySection(cat, ejercicios, collapsed, lastUsedMap = {}) {
             const lastInfo = last
               ? `<span class="ej-item-last">${last.reps}r &middot; ${last.peso}kg</span>`
               : '';
+            const hasNota = getNotaEjercicio(e.nombre) ? '<span class="ej-item-note">📝</span>' : '';
             return `
-              <div class="ej-item">
-                <span class="ej-item-name">${e.nombre}${lastInfo}</span>
+              <div class="ej-item" data-action="show-detail" data-nombre="${e.nombre}">
+                <span class="ej-item-name">${e.nombre}${lastInfo}${hasNota}</span>
                 <span class="ej-item-type ${e.tipo}">${e.tipo === 'maquina' ? 'Máquina' : 'Funcional'}</span>
               </div>
             `;
@@ -168,6 +170,10 @@ export function mount() {
           collapsedCats.add(cat);
         }
         rerender();
+        break;
+      }
+      case 'show-detail': {
+        showExerciseDetail(btn.dataset.nombre);
         break;
       }
     }

@@ -2,6 +2,8 @@ import { getRutinaById, getWorkoutActivo, saveWorkoutActivo, clearWorkoutActivo,
 import { generateId } from '@/id.js';
 import { navigate } from '@/router.js';
 import { showModal } from '@js/components/modal.js';
+import { playCountdownTick, playFinishBeep } from '@js/helpers/audio.js';
+import { getExerciseProgressData } from '@js/helpers/stats-helpers.js';
 
 let state = null;
 let timerInterval = null;
@@ -91,13 +93,34 @@ function renderProgressBar() {
   `;
 }
 
+function renderExerciseHistory(nombre) {
+  if (!state) return '';
+  const points = getExerciseProgressData(state.usuario, nombre);
+  if (points.length === 0) return '';
+  const last3 = points.slice(-3);
+  const historyStr = last3.map((p) => `${p.reps}r@${p.peso}kg`).join(' → ');
+  return `<div class="workout-ej-history">${historyStr}</div>`;
+}
+
+function shouldSuggestOverload(nombre, ej) {
+  if (!state) return false;
+  const points = getExerciseProgressData(state.usuario, nombre);
+  if (points.length < 2) return false;
+  const last2 = points.slice(-2);
+  // Check if the last 2 sessions met or exceeded the target reps and peso
+  return last2.every((p) => p.reps >= ej.repsObjetivo && p.peso >= ej.pesoObjetivoKg);
+}
+
 function renderEjercicio(ej, ejIdx) {
+  const overload = shouldSuggestOverload(ej.nombre, ej);
   return `
     <div class="workout-ejercicio animate-in" style="animation-delay:${ejIdx * 60}ms">
       <div class="workout-ejercicio-name">${ej.nombre}</div>
       <div class="workout-ejercicio-target">
         Objetivo: ${ej.repsObjetivo} reps &middot; ${ej.pesoObjetivoKg} kg
       </div>
+      ${overload ? '<div class="workout-overload-hint">&#9650; Subir peso?</div>' : ''}
+      ${renderExerciseHistory(ej.nombre)}
       <div class="workout-ejercicio-inputs">
         <div class="workout-input-group">
           <span class="workout-input-label">Reps</span>
@@ -248,7 +271,15 @@ function showRestTimer(app, params) {
       ring.style.strokeDashoffset = circumference * (1 - pct);
     }
 
+    // Countdown feedback: tick + vibrate at 3, 2, 1
+    if (restRemaining > 0 && restRemaining <= 3) {
+      playCountdownTick();
+      if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+    }
+
     if (restRemaining <= 0) {
+      playFinishBeep();
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
       completeRest(app, params);
     }
   }, 1000);
@@ -354,7 +385,15 @@ export function mount(params) {
               const pct = restRemaining / REST_STEPS[restStepIdx];
               rr.style.strokeDashoffset = circumference * (1 - pct);
             }
-            if (restRemaining <= 0) completeRest(app, params);
+            if (restRemaining > 0 && restRemaining <= 3) {
+              playCountdownTick();
+              if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+            }
+            if (restRemaining <= 0) {
+              playFinishBeep();
+              if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+              completeRest(app, params);
+            }
           }, 1000);
         }
         break;
