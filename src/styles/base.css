@@ -1,0 +1,41 @@
+html {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-main);
+  font-weight: var(--fw-light);
+  font-size: 16px;
+}
+
+body {
+  background-color: var(--color-bg);
+  padding-bottom: 72px; /* space for bottom nav */
+}
+
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--space-md);
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Prevent iOS zoom on input focus */
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+  font-size: 16px;
+}
+
+/* Focus visible for accessibility */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

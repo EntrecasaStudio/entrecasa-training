@@ -1,0 +1,115 @@
+/* ── View transitions ────────────────────── */
+
+@keyframes view-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes view-exit {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-8px); }
+}
+
+.view-entering {
+  animation: view-enter 200ms ease-out forwards;
+}
+
+.view-exiting {
+  animation: view-exit 120ms ease-in forwards;
+}
+
+/* ── Card staggered entrance ────────────── */
+
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+  opacity: 0;
+  animation: card-enter 300ms ease-out forwards;
+}
+
+/* ── Modal animations ───────────────────── */
+
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.92) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes modal-out {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to { opacity: 0; transform: scale(0.92) translateY(10px); }
+}
+
+.modal-overlay {
+  animation: overlay-in 200ms ease-out;
+}
+
+.modal-overlay.modal-closing {
+  animation: overlay-out 150ms ease-in forwards;
+}
+
+.modal-box {
+  animation: modal-in 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-closing .modal-box {
+  animation: modal-out 150ms ease-in forwards;
+}
+
+/* ── Stepper value bump ─────────────────── */
+
+@keyframes value-bump {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+.value-bump {
+  animation: value-bump 150ms ease-out;
+}
+
+/* ── Pulse for today's circle ───────────── */
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 40%, transparent); }
+  70% { box-shadow: 0 0 0 6px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+.pulse {
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+/* ── Hero glow pulse ────────────────────── */
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 40px color-mix(in srgb, var(--color-accent) 30%, transparent); }
+  50% { box-shadow: 0 0 60px color-mix(in srgb, var(--color-accent) 45%, transparent); }
+}
+
+.glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* ── Subtle fade-in utility ─────────────── */
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fade-in 300ms ease-out;
+}
