@@ -1,10 +1,10 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   root: '.',
   publicDir: 'public',
-  base: '/treiner/',
+  base: command === 'build' ? '/treiner/' : '/',
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
@@ -19,4 +19,4 @@ export default defineConfig({
     port: 3002,
     open: false,
   },
-});
+}));
