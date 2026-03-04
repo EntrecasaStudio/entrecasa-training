@@ -87,10 +87,11 @@ export function showPreview(rutinaId) {
 // ── Day assignment modal ─────────────────────
 
 export function showDayAssignmentModal(usuario, dia, tipoActual, onDone) {
-  const { hideModal: hide } = { hideModal: null };
   const diaLabel = DIAS_LABEL[dia];
   const otroTipo = tipoActual === 'gimnasio' ? 'cross' : 'gimnasio';
+  const otroIcon = otroTipo === 'gimnasio' ? '🏋️' : '🏃';
   const otroLabel = otroTipo === 'gimnasio' ? 'Gimnasio' : 'Cross';
+  const tipoIcon = tipoActual === 'gimnasio' ? '🏋️' : '🏃';
 
   // Get routines matching current type
   const rutinas = getRutinas().filter((r) => r.usuario === usuario && r.tipo === tipoActual);
@@ -102,15 +103,27 @@ export function showDayAssignmentModal(usuario, dia, tipoActual, onDone) {
   }).join('');
 
   const tipoNombre = tipoActual === 'gimnasio' ? 'Gimnasio' : 'Cross';
-  const emptyMsg = `<div style="color:var(--color-text-muted);margin-bottom:var(--space-md)">No hay rutinas de ${tipoNombre}</div>`;
+  const emptyMsg = `<div style="color:var(--color-text-muted);padding:var(--space-sm) 0">No hay rutinas de ${tipoNombre}</div>`;
 
   const bodyHtml = `
     <div class="day-assign-body">
-      ${rutinasHtml || emptyMsg}
+      <div class="day-assign-quick-actions">
+        <button class="day-assign-quick-btn day-assign-quick-switch" data-assign-switch="${otroTipo}">
+          <span class="day-assign-quick-icon">${otroIcon}</span>
+          <span>${otroLabel}</span>
+        </button>
+        <button class="day-assign-quick-btn day-assign-quick-clear" data-assign-clear>
+          <span class="day-assign-quick-icon">✕</span>
+          <span>Sin rutina</span>
+        </button>
+        <button class="day-assign-quick-btn day-assign-quick-rest" data-assign-rest>
+          <span class="day-assign-quick-icon">😴</span>
+          <span>Descanso</span>
+        </button>
+      </div>
       <div class="day-assign-divider"></div>
-      <button class="day-assign-option day-assign-switch" data-assign-switch="${otroTipo}">Cambiar a ${otroLabel}</button>
-      <button class="day-assign-option day-assign-clear" data-assign-clear>Sin rutina</button>
-      <button class="day-assign-option day-assign-rest" data-assign-rest>Descanso (quitar dia)</button>
+      <div class="day-assign-section-label">${tipoIcon} Rutinas de ${tipoNombre}</div>
+      ${rutinasHtml || emptyMsg}
     </div>
   `;
 

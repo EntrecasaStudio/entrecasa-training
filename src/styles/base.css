@@ -3,7 +3,7 @@ html {
   color: var(--color-text);
   font-family: var(--font-main);
   font-weight: var(--fw-light);
-  font-size: 16px;
+  font-size: calc(16px * var(--text-scale, 1));
 }
 
 body {

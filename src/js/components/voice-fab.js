@@ -1,9 +1,16 @@
 import { icon } from '@js/icons.js';
 import { isVoiceSupported, createRecognition } from '@js/services/voice-recognition.js';
-import { generateRutina } from '@js/services/claude-api.js';
-import { getUsuarioActivo } from '@/store.js';
+import { processVoiceCommand } from '@js/services/claude-api.js';
+import { getUsuarioActivo, setUsuarioActivo, getRutinas, assignRutinaADia } from '@/store.js';
 import { showVoicePreview } from '@js/components/voice-preview.js';
 import { showToast } from '@js/components/toast.js';
+import { navigate } from '@/router.js';
+import {
+  applyThemeChanges,
+  applyLightMode,
+  applyDarkMode,
+  resetTheme,
+} from '@js/services/theme-manager.js';
 
 let state = 'idle'; // idle | listening | processing
 let recognition = null;
@@ -31,7 +38,7 @@ function renderOverlay() {
       <div class="voice-overlay-content">
         <div class="voice-pulse-ring"></div>
         <div class="voice-transcript" id="voice-transcript">
-          ${currentTranscript || '<span class="voice-hint">Describe tu rutina...</span>'}
+          ${currentTranscript || '<span class="voice-hint">Decime que querés hacer...</span>'}
         </div>
         <div class="voice-overlay-actions">
           <button class="btn btn-ghost" id="voice-cancel">Cancelar</button>
@@ -46,14 +53,12 @@ function updateFAB() {
   const container = document.getElementById('fab-container');
   if (!container) return;
 
-  // Always render the FAB
   const fabEl = container.querySelector('#voice-fab-btn');
   if (fabEl) {
     fabEl.className = `voice-fab ${state === 'listening' ? 'voice-fab--active' : state === 'processing' ? 'voice-fab--processing' : ''}`;
     fabEl.innerHTML = state === 'processing' ? '<span class="voice-spinner"></span>' : state === 'listening' ? icon.stop : icon.mic;
   }
 
-  // Handle overlay
   const existingOverlay = document.getElementById('voice-overlay');
   if (state === 'listening') {
     if (!existingOverlay) {
@@ -74,7 +79,7 @@ function updateFAB() {
 function updateTranscriptDisplay() {
   const el = document.getElementById('voice-transcript');
   if (el) {
-    el.innerHTML = currentTranscript || '<span class="voice-hint">Describe tu rutina...</span>';
+    el.innerHTML = currentTranscript || '<span class="voice-hint">Decime que querés hacer...</span>';
   }
   const sendBtn = document.getElementById('voice-send');
   if (sendBtn) sendBtn.disabled = !currentTranscript;
@@ -133,11 +138,12 @@ function cancelListening() {
   updateFAB();
 }
 
+// ── Multi-action dispatcher ─────────────────
+
 async function sendTranscript() {
   const text = currentTranscript.trim();
   if (!text) return;
 
-  // Stop recognition
   if (recognition) {
     recognition.stop();
     recognition = null;
@@ -148,29 +154,114 @@ async function sendTranscript() {
 
   try {
     const usuario = getUsuarioActivo();
-    const rutina = await generateRutina(text, usuario);
+    const result = await processVoiceCommand(text, usuario);
+
     state = 'idle';
     updateFAB();
-    showVoicePreview(rutina);
+
+    dispatchAction(result);
   } catch (err) {
     state = 'idle';
     updateFAB();
-    showToast(err.message || 'Error al generar rutina', 'error');
+    showToast(err.message || 'Error al procesar comando', 'error');
   }
 }
+
+function dispatchAction(result) {
+  const { action, data, confirmMessage } = result;
+
+  switch (action) {
+    case 'create_routine':
+      if (data?.rutina) {
+        showVoicePreview(data.rutina);
+      }
+      break;
+
+    case 'theme_change':
+    case 'font_size':
+      if (data?.changes) {
+        applyThemeChanges(data.changes);
+        if (confirmMessage) showToast(confirmMessage);
+      }
+      break;
+
+    case 'light_mode':
+      applyLightMode();
+      if (confirmMessage) showToast(confirmMessage);
+      break;
+
+    case 'dark_mode':
+      applyDarkMode();
+      if (confirmMessage) showToast(confirmMessage);
+      break;
+
+    case 'reset_theme':
+      resetTheme();
+      if (confirmMessage) showToast(confirmMessage);
+      break;
+
+    case 'navigate':
+      if (data?.route) {
+        navigate(data.route);
+        if (confirmMessage) showToast(confirmMessage);
+      }
+      break;
+
+    case 'switch_user':
+      if (data?.usuario) {
+        setUsuarioActivo(data.usuario);
+        navigate('/');
+        if (confirmMessage) showToast(confirmMessage);
+      }
+      break;
+
+    case 'assign_routine':
+      handleAssignRoutine(data, confirmMessage);
+      break;
+
+    case 'unknown':
+    default:
+      showToast(data?.message || confirmMessage || 'No entendi tu pedido', 'error');
+      break;
+  }
+}
+
+function handleAssignRoutine(data, confirmMessage) {
+  if (!data?.rutinaNombre || data?.dia === undefined) {
+    showToast('No pude identificar la rutina o el dia', 'error');
+    return;
+  }
+
+  const usuario = getUsuarioActivo();
+  const rutinas = getRutinas().filter((r) => r.usuario === usuario);
+
+  // Fuzzy match routine name
+  const target = rutinas.find((r) =>
+    r.nombre.toLowerCase().includes(data.rutinaNombre.toLowerCase()),
+  );
+
+  if (!target) {
+    showToast(`No encontré la rutina "${data.rutinaNombre}"`, 'error');
+    return;
+  }
+
+  assignRutinaADia(target.id, data.dia, usuario);
+  navigate('/');
+  if (confirmMessage) showToast(confirmMessage);
+}
+
+// ── FAB click ─────────────────────────────
 
 function handleFABClick() {
   if (state === 'idle') {
     startListening();
   } else if (state === 'listening') {
-    // Stop listening and send if we have text
     if (currentTranscript.trim()) {
       sendTranscript();
     } else {
       cancelListening();
     }
   }
-  // If processing, ignore clicks
 }
 
 /** Mount the voice FAB in #fab-container */

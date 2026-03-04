@@ -6,7 +6,7 @@ import {
 } from '@/store.js';
 import { navigate } from '@/router.js';
 import { showModal } from '@js/components/modal.js';
-import { showToast } from '@js/components/toast.js';
+import { showToastAction } from '@js/components/toast.js';
 import { icon, iconLg } from '@js/icons.js';
 import {
   TAG_CLASS,
@@ -135,8 +135,11 @@ export function mount() {
       case 'duplicate': {
         const copia = duplicateRutina(id);
         if (copia) {
-          showToast('Rutina duplicada');
           navigate('/rutinas');
+          showToastAction('Rutina duplicada', 'Deshacer', () => {
+            deleteRutina(copia.id);
+            navigate('/rutinas');
+          });
         }
         break;
       }

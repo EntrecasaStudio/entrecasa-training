@@ -8,7 +8,7 @@ import {
   getPlanSemanal,
   setPlanDia,
 } from '@/store.js';
-import { navigate } from '@/router.js';
+import { navigate, refreshCurrentTab } from '@/router.js';
 import { icon, iconLg } from '@js/icons.js';
 import {
   DIAS_LABEL,
@@ -279,10 +279,10 @@ export function mount() {
         if (current === '') {
           // Empty day → set to gimnasio
           setPlanDia(usuario, dia, 'gimnasio');
-          navigate('/');
+          refreshCurrentTab();
         } else {
           // Day has type → show assignment modal
-          showDayAssignmentModal(usuario, dia, current, () => navigate('/'));
+          showDayAssignmentModal(usuario, dia, current, () => refreshCurrentTab());
         }
         break;
       }

@@ -10,9 +10,13 @@ import { initRouter } from './router.js';
 import { seedIfEmpty } from './seed.js';
 import { mountNavBar } from '@js/components/nav-bar.js';
 import { mountVoiceFab } from '@js/components/voice-fab.js';
+import { loadSavedTheme } from '@js/services/theme-manager.js';
 
 // Seed initial rutinas from Notion data (only if empty)
 seedIfEmpty();
+
+// Load saved theme customizations
+loadSavedTheme();
 
 // Register service worker
 if ('serviceWorker' in navigator) {

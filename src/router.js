@@ -191,6 +191,46 @@ async function handleRoute() {
   navigate('/');
 }
 
+/**
+ * Re-render the current tab view in-place (no animation, no flicker).
+ * Used after in-page data changes (e.g., day assignment).
+ */
+export async function refreshCurrentTab() {
+  let hash = window.location.hash || '#/';
+  if (hash === '#' || hash === '') hash = '#/';
+
+  const tabDef = TAB_ROUTES[hash];
+  if (!tabDef) return; // not on a tab route
+
+  const container = getContainer();
+  if (!container) return;
+
+  const cached = viewCache.get(hash);
+
+  // Cleanup old
+  if (cached) {
+    if (cached.cleanup) cached.cleanup();
+    cached.el.remove();
+    viewCache.delete(hash);
+  }
+
+  // Render fresh — no animation
+  const mod = await tabDef.load();
+  const wrapper = document.createElement('div');
+  wrapper.className = 'tab-view';
+  wrapper.dataset.tabKey = hash;
+  wrapper.innerHTML = mod.render({});
+
+  container.appendChild(wrapper);
+  showTabWrapper(container, wrapper);
+
+  const cleanup = mod.mount ? (mod.mount({}) || null) : null;
+  const dataVer = getDataVersion();
+  viewCache.set(hash, { el: wrapper, cleanup, dataVersion: dataVer });
+  currentViewEl = wrapper;
+  currentCleanup = cleanup;
+}
+
 export function navigate(path) {
   const target = path.startsWith('#') ? path : '#' + path;
   if (window.location.hash === target) {

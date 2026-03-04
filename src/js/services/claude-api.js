@@ -1,5 +1,6 @@
 /**
- * Client for the PHP proxy that calls Claude API to generate routines.
+ * Client for the PHP proxy that calls Claude API.
+ * Supports multi-command voice interface.
  */
 
 const PROD_URL = '/treiner/api/voice-rutina.php';
@@ -12,12 +13,13 @@ function getApiUrl() {
 }
 
 /**
- * Send a voice transcript to Claude and get back a structured routine.
+ * Process a voice command through Claude API.
+ * Returns a structured command response.
  * @param {string} message - The user's voice transcript
  * @param {string} usuario - Active user name (Lean/Nat)
- * @returns {Promise<Object>} The routine object { nombre, circuitos }
+ * @returns {Promise<{ action: string, data: Object, confirmMessage: string }>}
  */
-export async function generateRutina(message, usuario) {
+export async function processVoiceCommand(message, usuario) {
   const url = getApiUrl();
 
   const res = await fetch(url, {
@@ -33,9 +35,21 @@ export async function generateRutina(message, usuario) {
 
   const data = await res.json();
 
-  if (!data.rutina) {
-    throw new Error('No se pudo generar la rutina');
+  if (!data.action) {
+    throw new Error('Respuesta invalida del servidor');
   }
 
-  return data.rutina;
+  return data;
+}
+
+/**
+ * Legacy wrapper — send a voice transcript to generate a routine.
+ * @deprecated Use processVoiceCommand instead
+ */
+export async function generateRutina(message, usuario) {
+  const result = await processVoiceCommand(message, usuario);
+  if (result.action === 'create_routine' && result.data?.rutina) {
+    return result.data.rutina;
+  }
+  throw new Error('No se pudo generar la rutina');
 }

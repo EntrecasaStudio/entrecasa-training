@@ -47,35 +47,44 @@ if (!$message) {
 $catalogPath = __DIR__ . '/ejercicios-catalogo.json';
 $catalog = file_get_contents($catalogPath);
 
-// Build system prompt
+// Build system prompt — multi-command
 $systemPrompt = <<<PROMPT
-Eres un asistente de entrenamiento que arma rutinas de gimnasio. El usuario te describe lo que quiere entrenar y tu creas una rutina estructurada.
+Eres el asistente de voz de una app de entrenamiento. Interpretas lo que dice el usuario y respondes con un JSON estructurado.
 
-CATALOGO DE EJERCICIOS DISPONIBLES:
-{$catalog}
+COMANDOS QUE PUEDES EJECUTAR:
 
-REGLAS:
-1. Usa SOLO ejercicios del catalogo. Los nombres deben ser EXACTOS.
-2. Cada circuito tiene un grupoMuscular de: Core, Piernas, Glúteos, Pecho, Espalda, Hombros, Brazos
-3. Cada ejercicio tiene repsObjetivo (6-15) y pesoKg (0 para peso corporal)
-4. Minimo 2 ejercicios por circuito, maximo 4
-5. Crea entre 2-5 circuitos segun lo que pida el usuario
-6. El nombre de la rutina debe ser descriptivo y corto (ej: "Push - Pecho / Triceps")
-7. Si el usuario pide algo generico, arma una rutina balanceada
+1. CREAR RUTINA — Cuando el usuario pide armar/crear una rutina de ejercicios.
+   CATALOGO DE EJERCICIOS: {$catalog}
+   Responde: { "action": "create_routine", "data": { "rutina": { "nombre": "...", "tipo": "gimnasio", "circuitos": [{ "grupoMuscular": "Pecho", "ejercicios": [{ "nombre": "Press de pecho", "repsObjetivo": 10, "pesoKg": 40 }] }] } }, "confirmMessage": "Rutina de pecho creada" }
+   REGLAS de rutinas: Usa SOLO ejercicios del catalogo (nombres EXACTOS). grupoMuscular: Core|Piernas|Glúteos|Pecho|Espalda|Hombros|Brazos. repsObjetivo 6-15. 2-4 ejercicios por circuito. 2-5 circuitos.
 
-RESPONDE UNICAMENTE con JSON valido, sin texto adicional, en este formato exacto:
-{
-  "nombre": "Nombre de la rutina",
-  "circuitos": [
-    {
-      "grupoMuscular": "Pecho",
-      "ejercicios": [
-        {"nombre": "Press de pecho", "repsObjetivo": 10, "pesoKg": 40},
-        {"nombre": "Fondos de pecho en maquina", "repsObjetivo": 12, "pesoKg": 30}
-      ]
-    }
-  ]
-}
+2. CAMBIAR COLOR — Cuando pide cambiar el color principal/acento de la app.
+   Colores disponibles: azul=#3B82F6, rojo=#EF4444, verde=#22C55E, naranja=#F97316, violeta=#8B5CF6, rosa=#EC4899, dorado=#FFCD00, celeste=#06B6D4, blanco=#FFFFFF, amarillo=#FFCD00
+   Responde: { "action": "theme_change", "data": { "changes": { "--color-accent": "#3B82F6", "--color-accent-hover": "#2563EB" } }, "confirmMessage": "Color cambiado a azul" }
+   Para --color-accent-hover usa un tono mas oscuro del color elegido.
+
+3. CAMBIAR TAMAÑO DE FUENTE — Cuando pide letra mas grande/chica.
+   Escalas: mas grande=1.15, grande=1.25, mas chico=0.9, chico=0.85, normal=1
+   Responde: { "action": "font_size", "data": { "changes": { "--text-scale": "1.15" } }, "confirmMessage": "Fuente mas grande" }
+
+4. MODO CLARO/OSCURO — Cuando pide cambiar el tema.
+   Responde: { "action": "light_mode", "data": {}, "confirmMessage": "Modo claro activado" }
+   O: { "action": "dark_mode", "data": {}, "confirmMessage": "Modo oscuro activado" }
+
+5. NAVEGAR — Cuando pide ir a una seccion: entreno/inicio, rutinas, progreso, ejercicios, historial.
+   Rutas: entreno="/", rutinas="/rutinas", progreso="/progreso", ejercicios="/ejercicios", historial="/historial"
+   Responde: { "action": "navigate", "data": { "route": "/rutinas" }, "confirmMessage": "Yendo a rutinas" }
+
+6. CAMBIAR USUARIO — Cuando pide cambiar a Lean o Nat.
+   Responde: { "action": "switch_user", "data": { "usuario": "Nat" }, "confirmMessage": "Cambiado a Nat" }
+
+7. RESETEAR TEMA — Cuando pide volver al tema/colores por defecto/original.
+   Responde: { "action": "reset_theme", "data": {}, "confirmMessage": "Tema restaurado" }
+
+8. NO ENTENDIDO — Cuando no puedes clasificar el comando.
+   Responde: { "action": "unknown", "data": { "message": "No entendi tu pedido. Podes pedirme armar rutinas, cambiar colores, modo claro/oscuro, navegar, o cambiar usuario." }, "confirmMessage": "" }
+
+RESPONDE UNICAMENTE con JSON valido, sin texto adicional ni markdown.
 PROMPT;
 
 // Call Claude API
@@ -126,16 +135,18 @@ if (preg_match('/```(?:json)?\s*([\s\S]*?)```/', $text, $matches)) {
     $text = trim($matches[1]);
 }
 
-$rutina = json_decode($text, true);
+$result = json_decode($text, true);
 
-if (!$rutina || !isset($rutina['nombre']) || !isset($rutina['circuitos'])) {
+if (!$result || !isset($result['action'])) {
     http_response_code(422);
-    echo json_encode(['error' => 'Could not parse routine from AI response', 'raw' => $text]);
+    echo json_encode(['error' => 'Could not parse command from AI response', 'raw' => $text]);
     exit;
 }
 
-// Add metadata
-$rutina['usuario'] = $usuario;
-$rutina['tipo'] = 'gimnasio';
+// For create_routine, add user metadata
+if ($result['action'] === 'create_routine' && isset($result['data']['rutina'])) {
+    $result['data']['rutina']['usuario'] = $usuario;
+    $result['data']['rutina']['tipo'] = $result['data']['rutina']['tipo'] ?? 'gimnasio';
+}
 
-echo json_encode(['rutina' => $rutina]);
+echo json_encode($result);

@@ -226,6 +226,59 @@ select.input {
   color: var(--color-danger, #e74c3c);
 }
 
+/* Quick action buttons at top of modal */
+.day-assign-quick-actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.day-assign-quick-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: var(--space-sm) var(--space-xs);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.day-assign-quick-btn:active {
+  background: color-mix(in srgb, var(--color-surface-alt) 70%, var(--color-accent));
+}
+
+.day-assign-quick-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.day-assign-quick-switch {
+  border-color: var(--color-accent);
+}
+
+.day-assign-quick-clear {
+  color: var(--color-text-muted);
+}
+
+.day-assign-quick-rest {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.day-assign-section-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-xs);
+}
+
 /* ── FAB ─────────────────────────────────── */
 
 .fab {
@@ -523,7 +576,7 @@ select.input {
   position: fixed;
   bottom: 100px;
   left: 50%;
-  transform: translateX(-50%) translateY(20px);
+  transform: translateX(-50%) translateY(40px);
   background-color: var(--color-surface-alt);
   color: var(--color-text);
   border: 1px solid var(--color-border);
@@ -542,6 +595,7 @@ select.input {
 .toast-visible {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
 }
 
 .toast-success {
@@ -552,6 +606,37 @@ select.input {
 .toast-error {
   border-color: var(--color-danger);
   background-color: color-mix(in srgb, var(--color-danger) 15%, var(--color-surface));
+}
+
+/* Toast with action button */
+.toast-action {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-lg);
+}
+
+.toast-message {
+  flex: 1;
+}
+
+.toast-action-btn {
+  background: none;
+  border: none;
+  color: var(--color-accent);
+  font-size: var(--text-sm);
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--transition-fast);
+}
+
+.toast-action-btn:active {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* ── Voice FAB ───────────────────────────── */
