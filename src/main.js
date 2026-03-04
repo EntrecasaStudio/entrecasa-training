@@ -6,11 +6,14 @@ import './styles/views.css';
 import './styles/workout.css';
 import './styles/animations.css';
 
-import { initRouter } from './router.js';
+import { initRouter, navigate } from './router.js';
 import { seedIfEmpty } from './seed.js';
 import { mountNavBar } from '@js/components/nav-bar.js';
 import { mountVoiceFab } from '@js/components/voice-fab.js';
 import { loadSavedTheme } from '@js/services/theme-manager.js';
+import { onAuth } from '@js/services/firebase.js';
+import { startRealtimeSync, stopRealtimeSync } from '@js/services/sync.js';
+import { setUsuarioActivo } from './store.js';
 
 // Seed initial rutinas from Notion data (only if empty)
 seedIfEmpty();
@@ -18,14 +21,74 @@ seedIfEmpty();
 // Load saved theme customizations
 loadSavedTheme();
 
-// Register service worker
+// Register service worker (use base path for production)
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(() => {});
+  const swPath = import.meta.env.BASE_URL + 'sw.js';
+  navigator.serviceWorker.register(swPath).catch(() => {});
 }
 
 // Mount persistent UI
 mountNavBar();
 mountVoiceFab();
 
-// Init app
-initRouter();
+// ── Auth-aware initialization ──────────────
+
+let authResolved = false;
+
+function hideSplash() {
+  const splash = document.getElementById('splash');
+  if (splash) {
+    splash.style.opacity = '0';
+    setTimeout(() => splash.remove(), 500);
+  }
+}
+
+onAuth((user) => {
+  if (!authResolved) {
+    authResolved = true;
+
+    // First auth callback — user session restored (or null)
+    if (user) {
+      const nombre = user.displayName?.split(' ')[0] || 'Usuario';
+      setUsuarioActivo(nombre);
+      startRealtimeSync(() => {
+        // Remote data changed — refresh if on home
+        if (window.location.hash === '' || window.location.hash === '#/') {
+          navigate('/');
+        }
+      });
+    }
+
+    // Init router now that auth state is known
+    initRouter();
+    hideSplash();
+    return;
+  }
+
+  // ── Subsequent auth state changes ──────
+  if (user) {
+    const nombre = user.displayName?.split(' ')[0] || 'Usuario';
+    setUsuarioActivo(nombre);
+    startRealtimeSync(() => {
+      if (window.location.hash === '' || window.location.hash === '#/') {
+        navigate('/');
+      }
+    });
+    if (window.location.hash === '#/login') {
+      navigate('/');
+    }
+  } else {
+    stopRealtimeSync();
+    navigate('/login');
+  }
+});
+
+// Fallback: if Firebase never resolves (misconfigured), init after 3s
+setTimeout(() => {
+  if (!authResolved) {
+    authResolved = true;
+    console.warn('[app] Auth timeout — proceeding without Firebase');
+    initRouter();
+    hideSplash();
+  }
+}, 3000);

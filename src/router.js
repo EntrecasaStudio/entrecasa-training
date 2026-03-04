@@ -1,5 +1,6 @@
 import { getDataVersion } from '@/store.js';
 import { setActiveTab, setNavBarVisible } from '@js/components/nav-bar.js';
+import { getCurrentUser } from '@js/services/firebase.js';
 
 // ── Route definitions ───────────────────────────
 
@@ -17,6 +18,7 @@ const OTHER_ROUTES = [
   { pattern: /^#\/workout\/(.+)$/,         load: () => import('@js/views/workout.js'), fullscreen: true },
   { pattern: /^#\/summary\/(.+)$/,         load: () => import('@js/views/workout-summary.js') },
   { pattern: /^#\/sesion\/(.+)$/,          load: () => import('@js/views/sesion-detalle.js') },
+  { pattern: /^#\/login$/,                 load: () => import('@js/views/login.js'), fullscreen: true },
 ];
 
 // ── View cache for tabs ─────────────────────────
@@ -172,6 +174,16 @@ async function handleRoute() {
 
   // Normalize: bare '#' or '' → '#/'
   if (hash === '#' || hash === '') hash = '#/';
+
+  // ── Auth guard ───────────────────────
+  if (hash !== '#/login' && !getCurrentUser()) {
+    window.location.hash = '#/login';
+    return;
+  }
+  if (hash === '#/login' && getCurrentUser()) {
+    window.location.hash = '#/';
+    return;
+  }
 
   // 1. Check tab routes (exact match)
   if (TAB_ROUTES[hash]) {

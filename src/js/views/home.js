@@ -2,7 +2,6 @@ import {
   getRutinas,
   getWorkoutActivo,
   getUsuarioActivo,
-  setUsuarioActivo,
   getRutinaHoy,
   getProximoEntrenamiento,
   getPlanSemanal,
@@ -20,6 +19,7 @@ import {
   showDayAssignmentModal,
 } from '@js/helpers/rutina-helpers.js';
 import { getWeeklyStreak, getSessionsThisWeek, getPlannedDaysThisWeek, getDaysSinceLastSession } from '@js/helpers/stats-helpers.js';
+import { getCurrentUser, logout } from '@js/services/firebase.js';
 
 // ── Greeting ────────────────────────────────
 
@@ -194,6 +194,7 @@ export function render() {
   const workoutActivo = getWorkoutActivo();
   const rutinaHoy = getRutinaHoy(usuario);
   const proximo = getProximoEntrenamiento(usuario);
+  const firebaseUser = getCurrentUser();
 
   // Active workout banner (only show for current user)
   const isMyWorkout = workoutActivo && (!workoutActivo.usuario || workoutActivo.usuario === usuario);
@@ -208,16 +209,24 @@ export function render() {
       </div>`
     : '';
 
-  // User toggle
-  const toggle = `
-    <div class="user-toggle">
-      <button class="user-toggle-btn ${usuario === 'Lean' ? 'active' : ''}" data-action="switch-user" data-user="Lean">Lean</button>
-      <button class="user-toggle-btn ${usuario === 'Nat' ? 'active' : ''}" data-action="switch-user" data-user="Nat">Nat</button>
+  // User header (replaces the old Lean/Nat toggle)
+  const displayName = firebaseUser?.displayName?.split(' ')[0] || usuario;
+  const avatarHtml = firebaseUser?.photoURL
+    ? `<img class="user-avatar" src="${firebaseUser.photoURL}" alt="" referrerpolicy="no-referrer" />`
+    : `<div class="user-avatar-placeholder">${displayName[0] || '?'}</div>`;
+  const userHeader = `
+    <div class="user-header">
+      <div class="user-header-info">
+        ${avatarHtml}
+      </div>
+      <button class="btn-icon-action" data-action="logout" title="Cerrar sesion">
+        ${icon.logOut}
+      </button>
     </div>
   `;
 
   // Greeting
-  const greeting = `<div class="home-greeting animate-in">${getGreeting(usuario)}</div>`;
+  const greeting = `<div class="home-greeting animate-in">${getGreeting(displayName)}</div>`;
 
   // Quick stats strip
   const quickStats = renderQuickStatsStrip(usuario);
@@ -233,7 +242,7 @@ export function render() {
   const weekly = renderWeeklyRoutines(usuario);
 
   return `
-    ${toggle}
+    ${userHeader}
     ${greeting}
     ${planner}
     ${quickStats}
@@ -257,9 +266,10 @@ export function mount() {
     const id = btn.dataset.id;
 
     switch (action) {
-      case 'switch-user':
-        setUsuarioActivo(btn.dataset.user);
-        navigate('/');
+      case 'logout':
+        if (confirm('¿Cerrar sesion?')) {
+          logout();
+        }
         break;
       case 'start':
       case 'preview-routine':

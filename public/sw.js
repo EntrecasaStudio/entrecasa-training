@@ -1,11 +1,11 @@
-const CACHE_NAME = 'gym-app-v1';
+const CACHE_NAME = 'gym-app-v2';
 
 const PRECACHE_URLS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+  '/treiner/',
+  '/treiner/index.html',
+  '/treiner/manifest.json',
+  '/treiner/icons/icon-192.png',
+  '/treiner/icons/icon-512.png',
 ];
 
 self.addEventListener('install', (event) => {

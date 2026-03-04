@@ -1,3 +1,5 @@
+import { queueSync } from '@js/services/sync.js';
+
 const KEYS = {
   rutinas: 'gym_rutinas',
   sesiones: 'gym_sesiones',
@@ -22,6 +24,7 @@ function read(key) {
 
 function write(key, data) {
   localStorage.setItem(key, JSON.stringify(data));
+  queueSync(key); // sync to Firestore in background
 }
 
 // ── Rutinas ──────────────────────────────────
