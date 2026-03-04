@@ -5,7 +5,6 @@ import {
   duplicateRutina,
 } from '@/store.js';
 import { navigate } from '@/router.js';
-import { renderNavBar } from '@js/components/nav-bar.js';
 import { showModal } from '@js/components/modal.js';
 import { showToast } from '@js/components/toast.js';
 import { icon, iconLg } from '@js/icons.js';
@@ -108,7 +107,6 @@ export function render() {
   return `
     ${header}
     ${content}
-    ${renderNavBar('rutinas')}
   `;
 }
 

@@ -9,7 +9,6 @@ import {
   setPlanDia,
 } from '@/store.js';
 import { navigate } from '@/router.js';
-import { renderNavBar } from '@js/components/nav-bar.js';
 import { icon, iconLg } from '@js/icons.js';
 import {
   DIAS_LABEL,
@@ -242,7 +241,6 @@ export function render() {
     ${hero}
     ${rest}
     ${weekly}
-    ${renderNavBar('entrenamiento')}
   `;
 }
 

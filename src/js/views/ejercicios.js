@@ -1,6 +1,5 @@
 import { CATEGORIAS, getEjerciciosPorCategoria } from '@js/ejercicios-catalogo.js';
 import { getSesiones, getUsuarioActivo, getNotaEjercicio } from '@/store.js';
-import { renderNavBar } from '@js/components/nav-bar.js';
 import { showExerciseDetail } from '@js/helpers/ejercicio-detail.js';
 
 /**
@@ -110,8 +109,6 @@ export function render() {
         return renderCategorySection(cat, items, false, lastUsedMap);
       }).join('')}
     </div>
-
-    ${renderNavBar('ejercicios')}
   `;
 }
 

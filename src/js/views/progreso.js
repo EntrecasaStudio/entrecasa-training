@@ -1,5 +1,4 @@
 import { getPersonalRecords, getUsuarioActivo } from '@/store.js';
-import { renderNavBar } from '@js/components/nav-bar.js';
 import { icon } from '@js/icons.js';
 import { renderMiniChart } from '@js/helpers/mini-chart.js';
 import {
@@ -153,7 +152,6 @@ export function render() {
       ${renderExerciseCards(usuario)}
       ${renderRecentPRs(usuario)}
     </div>
-    ${renderNavBar('progreso')}
   `;
 }
 

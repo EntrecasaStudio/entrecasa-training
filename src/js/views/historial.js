@@ -1,6 +1,5 @@
 import { getSesiones, getUsuarioActivo, calcVolumenSesion } from '@/store.js';
 import { navigate } from '@/router.js';
-import { renderNavBar } from '@js/components/nav-bar.js';
 import { iconLg } from '@js/icons.js';
 
 function formatDate(isoStr) {
@@ -76,7 +75,6 @@ export function render() {
         <div class="empty-state-text">Aun no tienes entrenamientos registrados.<br>Inicia una rutina para ver tu historial.</div>
         <a href="#/" class="btn btn-primary" style="margin-top:var(--space-md)">Ir a rutinas</a>
       </div>
-      ${renderNavBar('historial')}
     `;
   }
 
@@ -98,7 +96,6 @@ export function render() {
       <div class="view-header-title">Historial</div>
     </div>
     ${html}
-    ${renderNavBar('historial')}
   `;
 }
 

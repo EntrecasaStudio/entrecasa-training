@@ -18,6 +18,24 @@ body {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
+/* View container for tab views */
+#view-container {
+  position: relative;
+}
+
+/* Persistent nav bar container (outside #app) */
+#nav-bar {
+  /* .nav-bottom inside handles its own fixed positioning */
+}
+
+/* FAB container */
+#fab-container {
+  position: fixed;
+  bottom: 80px;
+  right: 16px;
+  z-index: 90;
+}
+
 /* Prevent iOS zoom on input focus */
 input[type="text"],
 input[type="number"],

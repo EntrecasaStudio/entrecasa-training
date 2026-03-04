@@ -6,6 +6,11 @@ const KEYS = {
   planSemanal: 'gym_plan_semanal',
 };
 
+// ── Data version (for router cache staleness) ──
+let _dataVersion = 0;
+export function getDataVersion() { return _dataVersion; }
+function bumpVersion() { _dataVersion++; }
+
 function read(key) {
   try {
     const raw = localStorage.getItem(key);
@@ -38,11 +43,13 @@ export function saveRutina(rutina) {
     rutinas.push(rutina);
   }
   write(KEYS.rutinas, rutinas);
+  bumpVersion();
 }
 
 export function deleteRutina(id) {
   const rutinas = getRutinas().filter((r) => r.id !== id);
   write(KEYS.rutinas, rutinas);
+  bumpVersion();
 }
 
 export function duplicateRutina(id) {
@@ -55,6 +62,7 @@ export function duplicateRutina(id) {
   const rutinas = getRutinas();
   rutinas.push(copia);
   write(KEYS.rutinas, rutinas);
+  bumpVersion();
   return copia;
 }
 
@@ -77,6 +85,7 @@ export function saveSesion(sesion) {
   const sesiones = read(KEYS.sesiones) || [];
   sesiones.push(sesion);
   write(KEYS.sesiones, sesiones);
+  bumpVersion();
 }
 
 // ── Usuario activo ──────────────────────────
@@ -87,6 +96,7 @@ export function getUsuarioActivo() {
 
 export function setUsuarioActivo(nombre) {
   localStorage.setItem(KEYS.usuario, nombre);
+  bumpVersion();
 }
 
 // ── Plan semanal ─────────────────────────────
@@ -105,6 +115,7 @@ export function setPlanDia(usuario, dia, tipo) {
     delete all[usuario][dia]; // descanso
   }
   write(KEYS.planSemanal, all);
+  bumpVersion();
 }
 
 // ── Notas de ejercicios ─────────────────────
@@ -124,6 +135,7 @@ export function saveNotaEjercicio(nombre, nota) {
     delete notas[nombre];
   }
   write(NOTAS_KEY, notas);
+  bumpVersion();
 }
 
 // ── Routine-day assignment ──────────────────
@@ -140,6 +152,7 @@ export function assignRutinaADia(rutinaId, dia, usuario) {
   const target = rutinas.find((r) => r.id === rutinaId);
   if (target) target.diaSemana = dia;
   write(KEYS.rutinas, rutinas);
+  bumpVersion();
 }
 
 export function clearRutinaDelDia(dia, usuario) {
@@ -150,6 +163,7 @@ export function clearRutinaDelDia(dia, usuario) {
     }
   }
   write(KEYS.rutinas, rutinas);
+  bumpVersion();
 }
 
 // ── Scheduling ──────────────────────────────
