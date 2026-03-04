@@ -187,7 +187,7 @@ export function render(params) {
         <div style="font-weight:var(--fw-semibold);font-size:var(--text-base)">${state.rutinaNombre}</div>
         <div class="workout-timer" id="workout-timer">${getElapsedStr()}</div>
       </div>
-      <button class="workout-end-btn" data-action="end-workout">Terminar</button>
+      <button class="workout-end-btn" data-action="end-workout">Salir</button>
     </div>
 
     <div class="workout-progress">
@@ -202,9 +202,10 @@ export function render(params) {
       ${PESO_STEPS.map((s, i) => `<button class="peso-step-btn ${i === pesoStepIdx ? 'active' : ''}" data-action="set-peso-step" data-idx="${i}">${s} kg</button>`).join('')}
     </div>
 
-    <div class="workout-next-btn">
+    <div class="workout-nav-btns">
+      ${state.circuitoActual > 0 ? `<button class="btn btn-ghost workout-prev-btn" data-action="prev-circuit">← Anterior</button>` : ''}
       <button class="btn btn-primary btn-full" data-action="${isLast ? 'finish' : 'next-circuit'}">
-        ${isLast ? 'Finalizar Entrenamiento' : 'Siguiente Circuito'}
+        ${isLast ? 'Finalizar Entrenamiento' : 'Siguiente Circuito →'}
       </button>
     </div>
   `;
@@ -348,6 +349,15 @@ export function mount(params) {
         break;
       }
 
+      case 'prev-circuit':
+        if (state.circuitoActual > 0) {
+          syncInputs();
+          state.circuitoActual--;
+          saveWorkoutActivo(state);
+          app.innerHTML = render(params);
+        }
+        break;
+
       case 'next-circuit':
         syncInputs();
         showRestTimer(app, params);
@@ -421,10 +431,10 @@ export function mount(params) {
 
       case 'end-workout':
         showModal({
-          title: 'Terminar entrenamiento',
-          body: 'Tu progreso hasta ahora se guardara y podras continuar despues.',
-          confirmText: 'Terminar',
-          cancelText: 'Seguir',
+          title: 'Salir del entrenamiento',
+          body: 'Tu progreso queda guardado. Podés retomarlo cuando quieras.',
+          confirmText: 'Salir',
+          cancelText: 'Continuar',
           danger: true,
           onConfirm: () => {
             syncInputs();

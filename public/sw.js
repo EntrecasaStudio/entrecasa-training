@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gym-app-v2';
+const CACHE_NAME = 'gym-app-v3';
 
 const PRECACHE_URLS = [
   '/treiner/',
@@ -24,8 +24,27 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Network-first strategy: try network, fall back to cache
 self.addEventListener('fetch', (event) => {
+  // Skip non-GET requests
+  if (event.request.method !== 'GET') return;
+
+  // Skip cross-origin requests (Firebase, CDN fonts, etc.)
+  if (!event.request.url.startsWith(self.location.origin)) return;
+
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    fetch(event.request)
+      .then((response) => {
+        // Clone response before caching (response can only be consumed once)
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, clone);
+        });
+        return response;
+      })
+      .catch(() => {
+        // Network failed — serve from cache (offline fallback)
+        return caches.match(event.request);
+      })
   );
 });

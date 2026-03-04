@@ -202,9 +202,9 @@
   font-weight: var(--fw-semibold);
 }
 
-/* ── Next circuit / finish button ────────── */
+/* ── Nav buttons (prev / next / finish) ─── */
 
-.workout-next-btn {
+.workout-nav-btns {
   position: fixed;
   bottom: 0;
   left: 0;
@@ -213,11 +213,22 @@
   padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
   background: linear-gradient(to top, var(--color-bg) 80%, transparent);
   z-index: 50;
+  display: flex;
+  gap: var(--space-sm);
 }
 
-.workout-next-btn .btn {
-  min-height: 60px;
-  font-size: var(--text-lg);
+.workout-nav-btns .btn-full {
+  flex: 1;
+}
+
+.workout-nav-btns .btn {
+  min-height: 56px;
+  font-size: var(--text-base);
+}
+
+.workout-prev-btn {
+  min-width: 100px;
+  font-size: var(--text-sm) !important;
 }
 
 /* ── Rest timer overlay ──────────────────── */

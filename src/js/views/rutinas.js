@@ -14,6 +14,9 @@ import {
   renderTags,
   renderLastDone,
   showPreview,
+  getDisplayName,
+  formatNumero,
+  getTipoIcon,
 } from '@js/helpers/rutina-helpers.js';
 
 // ── Rutina card ──────────────────────────────
@@ -22,22 +25,28 @@ let cardCounter = 0;
 
 function renderRutinaCard(rutina) {
   const dia = DIAS_LABEL[rutina.diaSemana] || '';
-  const numero = rutina.numero;
 
-  // Badge: day-of-week for scheduled, "DÍA X" for biblioteca
-  let badge = '';
-  if (dia) {
-    badge = `<div class="rutina-card-day">${dia}</div>`;
-  } else if (numero) {
-    badge = `<div class="rutina-card-day">Día ${numero}</div>`;
-  }
+  // Badge: day-of-week for scheduled routines
+  const badge = dia ? `<div class="rutina-card-day">${dia}</div>` : '';
+
+  // Display name: strip "Día X - " prefix, show clean title
+  const displayName = getDisplayName(rutina);
+
+  // Volanta: number + type icon (smaller, subordinate)
+  const num = formatNumero(rutina.numero);
+  const tipoIcon = getTipoIcon(rutina.tipo);
+  const volantaParts = [num, tipoIcon].filter(Boolean);
+  const volanta = volantaParts.length
+    ? `<div class="rutina-card-volanta">${volantaParts.join(' · ')}</div>`
+    : '';
 
   const delay = cardCounter++ * 60;
 
   return `
     <div class="rutina-card card animate-in" style="animation-delay:${delay}ms" data-rutina-id="${rutina.id}">
       ${badge}
-      <div class="rutina-card-name">${rutina.nombre}</div>
+      <div class="rutina-card-name">${displayName}</div>
+      ${volanta}
       <div class="rutina-card-tags">${renderTags(rutina, true)}</div>
       <div class="rutina-card-footer">
         <span class="rutina-card-meta">${renderLastDone(rutina)}</span>

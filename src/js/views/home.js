@@ -17,6 +17,7 @@ import {
   renderLastDone,
   showPreview,
   showDayAssignmentModal,
+  getDisplayName,
 } from '@js/helpers/rutina-helpers.js';
 import { getWeeklyStreak, getSessionsThisWeek, getPlannedDaysThisWeek, getDaysSinceLastSession } from '@js/helpers/stats-helpers.js';
 import { getCurrentUser, logout } from '@js/services/firebase.js';
@@ -153,7 +154,7 @@ function renderWeeklyRoutines(usuario) {
         rutinas.find((r) => r.diaSemana === d) ||
         rutinas.find((r) => r.tipo === tipo && r.diaSemana == null);
 
-      const nombre = rut ? rut.nombre : (tipo === 'gimnasio' ? 'Gimnasio' : 'Cross Training');
+      const nombre = rut ? getDisplayName(rut) : (tipo === 'gimnasio' ? 'Gimnasio' : 'Cross Training');
       const meta = rut ? renderLastDone(rut) : '';
       const tipoLabel = tipo === 'gimnasio' ? 'Gym' : 'Cross';
       const startBtn = rut

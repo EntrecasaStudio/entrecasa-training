@@ -417,7 +417,14 @@
 .rutina-card-name {
   font-size: var(--text-base);
   font-weight: var(--fw-semibold);
+  margin-bottom: 2px;
+}
+
+.rutina-card-volanta {
+  font-size: var(--text-xs);
+  color: var(--color-text-dim);
   margin-bottom: var(--space-xs);
+  letter-spacing: 0.3px;
 }
 
 .rutina-card-tags {

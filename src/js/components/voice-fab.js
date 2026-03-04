@@ -36,7 +36,12 @@ function renderOverlay() {
   return `
     <div class="voice-overlay" id="voice-overlay">
       <div class="voice-overlay-content">
-        <div class="voice-pulse-ring"></div>
+        <div class="voice-soul">
+          <div class="voice-soul-blob voice-soul-blob-1"></div>
+          <div class="voice-soul-blob voice-soul-blob-2"></div>
+          <div class="voice-soul-blob voice-soul-blob-3"></div>
+          <div class="voice-soul-core"></div>
+        </div>
         <div class="voice-transcript" id="voice-transcript">
           ${currentTranscript || '<span class="voice-hint">Decime que querés hacer...</span>'}
         </div>

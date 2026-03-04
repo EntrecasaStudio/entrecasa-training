@@ -33,6 +33,25 @@ export const DIAS_ABREV = {
 
 export const DIAS_ORDEN = [1, 2, 3, 4, 5, 6, 0]; // Lun→Dom
 
+// ── Display name helpers ────────────────────
+
+/** Strip "Día X - " prefix from routine name for cleaner display */
+export function getDisplayName(rutina) {
+  if (!rutina || !rutina.nombre) return '';
+  const match = rutina.nombre.match(/^Día \d+ [-–] (.+)$/i);
+  return match ? match[1] : rutina.nombre;
+}
+
+/** Format routine number as 3-digit code */
+export function formatNumero(n) {
+  return n ? `#${String(n).padStart(3, '0')}` : '';
+}
+
+/** Get emoji icon for routine type */
+export function getTipoIcon(tipo) {
+  return tipo === 'gimnasio' ? '🏋️' : tipo === 'cross' ? '🏃' : '';
+}
+
 // ── Shared render helpers ────────────────────
 
 export function renderTags(rutina, small = false) {

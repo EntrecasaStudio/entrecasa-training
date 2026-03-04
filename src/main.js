@@ -21,10 +21,24 @@ seedIfEmpty();
 // Load saved theme customizations
 loadSavedTheme();
 
-// Register service worker (use base path for production)
+// Register service worker with update detection
 if ('serviceWorker' in navigator) {
   const swPath = import.meta.env.BASE_URL + 'sw.js';
-  navigator.serviceWorker.register(swPath).catch(() => {});
+  navigator.serviceWorker.register(swPath).then((reg) => {
+    // Check for updates every 60s
+    setInterval(() => reg.update(), 60000);
+    reg.addEventListener('updatefound', () => {
+      const newSW = reg.installing;
+      if (newSW) {
+        newSW.addEventListener('statechange', () => {
+          if (newSW.state === 'activated') {
+            // New SW activated — reload to get fresh assets
+            window.location.reload();
+          }
+        });
+      }
+    });
+  }).catch(() => {});
 }
 
 // Mount persistent UI
