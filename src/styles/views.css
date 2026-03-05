@@ -478,6 +478,7 @@
   color: var(--color-text);
   border-radius: var(--radius-full);
   position: relative;
+  transition: background-color 150ms ease;
 }
 
 .cal-day--today {
@@ -485,18 +486,105 @@
   font-weight: var(--fw-bold);
 }
 
-.cal-day--active::after {
-  content: '';
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
+.cal-day--active {
+  background-color: color-mix(in srgb, var(--color-accent) 20%, transparent);
+  color: var(--color-accent);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cal-day--active:active {
+  background-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
+}
+
+.cal-day--today.cal-day--active {
   background-color: var(--color-accent);
-  position: absolute;
-  bottom: 2px;
+  color: var(--color-bg);
+}
+
+.cal-day--today.cal-day--active:active {
+  background-color: color-mix(in srgb, var(--color-accent) 80%, var(--color-bg));
 }
 
 .cal-day--outside {
   opacity: 0.2;
+}
+
+/* ── Calendar day detail modal ──────────────── */
+
+.cal-detail-modal {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.cal-detail-session {
+  margin-bottom: var(--space-md);
+}
+
+.cal-detail-session:last-child {
+  margin-bottom: 0;
+}
+
+.cal-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+}
+
+.cal-detail-name {
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+  font-size: var(--text-base);
+}
+
+.cal-detail-dur {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  background-color: color-mix(in srgb, var(--color-text) 8%, transparent);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.cal-detail-circuit {
+  margin-bottom: var(--space-sm);
+}
+
+.cal-detail-circuit:last-child {
+  margin-bottom: 0;
+}
+
+.cal-detail-circuit-head {
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-xs);
+}
+
+.cal-detail-ej {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text) 5%, transparent);
+}
+
+.cal-detail-ej:last-child {
+  border-bottom: none;
+}
+
+.cal-detail-ej-name {
+  font-size: var(--text-sm);
+  color: var(--color-text);
+}
+
+.cal-detail-ej-val {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Icon action buttons ─────────────────── */

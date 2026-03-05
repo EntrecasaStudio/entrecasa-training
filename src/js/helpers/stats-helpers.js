@@ -204,3 +204,19 @@ export function getMonthActivity(usuario, year, month) {
 
   return activeDays;
 }
+
+/**
+ * Sessions for a specific date.
+ * @param {string} usuario
+ * @param {number} year  Full year (e.g. 2026)
+ * @param {number} month 0-indexed (0=Jan, 11=Dec)
+ * @param {number} day   Day of month (1-31)
+ * @returns {Array} Session objects for that date
+ */
+export function getSessionsForDate(usuario, year, month, day) {
+  const sesiones = getSesiones().filter((s) => s.usuario === usuario);
+  return sesiones.filter((s) => {
+    const d = new Date(s.fecha);
+    return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day;
+  });
+}

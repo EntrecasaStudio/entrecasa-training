@@ -8,7 +8,7 @@ import {
   getPlanSemanal,
   setPlanDia,
 } from '@/store.js';
-import { navigate, refreshCurrentTab } from '@/router.js';
+import { navigate } from '@/router.js';
 import { icon, iconLg } from '@js/icons.js';
 import {
   DIAS_LABEL,
@@ -20,7 +20,7 @@ import {
   showDayAssignmentModal,
   getDisplayName,
 } from '@js/helpers/rutina-helpers.js';
-import { getWeeklyStreak, getSessionsThisWeek, getPlannedDaysThisWeek, getDaysSinceLastSession, getMonthActivity } from '@js/helpers/stats-helpers.js';
+import { getWeeklyStreak, getSessionsThisWeek, getPlannedDaysThisWeek, getDaysSinceLastSession, getMonthActivity, getSessionsForDate } from '@js/helpers/stats-helpers.js';
 import { getCurrentUser, auth, logout, switchAccount } from '@js/services/firebase.js';
 import { showToast } from '@js/components/toast.js';
 
@@ -60,7 +60,8 @@ function renderMonthCalendar(usuario) {
     let cls = 'cal-day';
     if (isToday) cls += ' cal-day--today';
     if (isActive) cls += ' cal-day--active';
-    cells += `<div class="${cls}">${d}</div>`;
+    const tapAttr = isActive ? ` data-action="cal-day-tap" data-cal-year="${calYear}" data-cal-month="${calMonth}" data-cal-day="${d}"` : '';
+    cells += `<div class="${cls}"${tapAttr}>${d}</div>`;
   }
 
   // Next month filler to complete grid
@@ -150,10 +151,12 @@ function renderWeekPlanner(usuario) {
   }).join('');
 
   return `
-    <div class="week-planner">${circles}</div>
-    <div class="week-planner-legend">
-      <span><span class="legend-dot gimnasio"></span>Gimnasio</span>
-      <span><span class="legend-dot cross"></span>Cross</span>
+    <div id="week-section">
+      <div class="week-planner">${circles}</div>
+      <div class="week-planner-legend">
+        <span><span class="legend-dot gimnasio"></span>Gimnasio</span>
+        <span><span class="legend-dot cross"></span>Cross</span>
+      </div>
     </div>
   `;
 }
@@ -241,13 +244,15 @@ function renderWeeklyRoutines(usuario) {
     })
     .join('');
 
-  if (!cards) return '';
+  if (!cards) return '<div id="weekly-section"></div>';
 
   return `
-    <div class="section-header">
-      <span class="section-title">Esta semana</span>
+    <div id="weekly-section">
+      <div class="section-header">
+        <span class="section-title">Esta semana</span>
+      </div>
+      ${cards}
     </div>
-    ${cards}
   `;
 }
 
@@ -328,11 +333,96 @@ export function render() {
     ${planner}
     ${quickStats}
     ${banner}
-    ${hero}
-    ${rest}
+    <div id="hero-section">${hero}${rest}</div>
     ${weekly}
     ${calendar}
   `;
+}
+
+// ── Inline refresh (no full page reload) ─────
+
+function refreshPlanSection() {
+  const usuario = getUsuarioActivo();
+
+  // Update week planner
+  const weekSection = document.getElementById('week-section');
+  if (weekSection) {
+    weekSection.outerHTML = renderWeekPlanner(usuario);
+  }
+
+  // Update weekly routines
+  const weeklySection = document.getElementById('weekly-section');
+  if (weeklySection) {
+    weeklySection.outerHTML = renderWeeklyRoutines(usuario);
+  }
+
+  // Update hero section (today could change between training/rest)
+  const heroSection = document.getElementById('hero-section');
+  if (heroSection) {
+    const rutinaHoy = getRutinaHoy(usuario);
+    const workoutActivo = getWorkoutActivo();
+    const isMyWorkout = workoutActivo && (!workoutActivo.usuario || workoutActivo.usuario === usuario);
+    const hero = rutinaHoy && !isMyWorkout ? renderEntrenoHero(rutinaHoy) : '';
+    const rest = !rutinaHoy && !isMyWorkout ? renderRestDay(getProximoEntrenamiento(usuario)) : '';
+    heroSection.innerHTML = hero + rest;
+  }
+}
+
+// ── Calendar day detail modal ────────────────
+
+function showCalendarDayDetail(sessions, day, month) {
+  const dateStr = `${day} de ${MONTH_NAMES[month]}`;
+
+  const sessionsHtml = sessions.map((s) => {
+    const dur = s.duracionMin ? `<span class="cal-detail-dur">${s.duracionMin} min</span>` : '';
+
+    const circuitsHtml = s.circuitos.map((c) => {
+      const ejsHtml = c.ejercicios.map((ej) => {
+        const peso = ej.pesoRealKg ?? ej.pesoKg ?? 0;
+        const reps = ej.repsReal ?? ej.repsObjetivo ?? 0;
+        return `<div class="cal-detail-ej">
+          <span class="cal-detail-ej-name">${ej.nombre}</span>
+          <span class="cal-detail-ej-val">${reps}r × ${peso}kg</span>
+        </div>`;
+      }).join('');
+
+      return `
+        <div class="cal-detail-circuit">
+          <div class="cal-detail-circuit-head">${c.grupoMuscular}</div>
+          ${ejsHtml}
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="cal-detail-session">
+        <div class="cal-detail-header">
+          <span class="cal-detail-name">${s.rutinaNombre}</span>
+          ${dur}
+        </div>
+        ${circuitsHtml}
+      </div>
+    `;
+  }).join('');
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box cal-detail-modal">
+      <div class="modal-title">${dateStr}</div>
+      <div class="modal-body">${sessionsHtml}</div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = () => {
+    overlay.classList.add('modal-closing');
+    overlay.addEventListener('animationend', () => overlay.remove(), { once: true });
+  };
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) close();
+  });
 }
 
 // ── Mount ─────────────────────────────────────
@@ -400,10 +490,10 @@ export function mount() {
         if (current === '') {
           // Empty day → set to gimnasio
           setPlanDia(usuario, dia, 'gimnasio');
-          refreshCurrentTab();
+          refreshPlanSection();
         } else {
           // Day has type → show assignment modal
-          showDayAssignmentModal(usuario, dia, current, () => refreshCurrentTab());
+          showDayAssignmentModal(usuario, dia, current, () => refreshPlanSection());
         }
         break;
       }
@@ -420,6 +510,17 @@ export function mount() {
         if (calEl) {
           const usuario = getUsuarioActivo();
           calEl.outerHTML = renderMonthCalendar(usuario);
+        }
+        break;
+      }
+      case 'cal-day-tap': {
+        const year = Number(btn.dataset.calYear);
+        const month = Number(btn.dataset.calMonth);
+        const day = Number(btn.dataset.calDay);
+        const usuario = getUsuarioActivo();
+        const sessions = getSessionsForDate(usuario, year, month, day);
+        if (sessions.length > 0) {
+          showCalendarDayDetail(sessions, day, month);
         }
         break;
       }
