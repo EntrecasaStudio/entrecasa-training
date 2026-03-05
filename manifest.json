@@ -1,0 +1,35 @@
+{
+  "name": "Entrecasa Treiner",
+  "short_name": "Treiner",
+  "description": "Tu plan de entrenamiento",
+  "start_url": "/entrecasa-training/",
+  "scope": "/entrecasa-training/",
+  "display": "standalone",
+  "background_color": "#1A1A1A",
+  "theme_color": "#1A1A1A",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/entrecasa-training/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/entrecasa-training/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/entrecasa-training/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/entrecasa-training/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
