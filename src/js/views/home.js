@@ -20,9 +20,70 @@ import {
   showDayAssignmentModal,
   getDisplayName,
 } from '@js/helpers/rutina-helpers.js';
-import { getWeeklyStreak, getSessionsThisWeek, getPlannedDaysThisWeek, getDaysSinceLastSession } from '@js/helpers/stats-helpers.js';
+import { getWeeklyStreak, getSessionsThisWeek, getPlannedDaysThisWeek, getDaysSinceLastSession, getMonthActivity } from '@js/helpers/stats-helpers.js';
 import { getCurrentUser, auth, logout, switchAccount } from '@js/services/firebase.js';
 import { showToast } from '@js/components/toast.js';
+
+// ── Month calendar state ────────────────────
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth(); // 0-indexed
+
+const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+const CAL_WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+
+function renderMonthCalendar(usuario) {
+  const activeDays = getMonthActivity(usuario, calYear, calMonth);
+  const today = new Date();
+  const isCurrentMonth = calYear === today.getFullYear() && calMonth === today.getMonth();
+
+  // First day of month (0=Sun, convert to Mon-based: 0=Mon)
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const startOffset = firstDay === 0 ? 6 : firstDay - 1; // Mon-based offset
+  const totalDays = new Date(calYear, calMonth + 1, 0).getDate();
+  const prevMonthDays = new Date(calYear, calMonth, 0).getDate();
+
+  // Weekday headers
+  const weekHeaders = CAL_WEEKDAYS.map((d) => `<div class="cal-weekday">${d}</div>`).join('');
+
+  // Calendar cells
+  let cells = '';
+
+  // Previous month filler days
+  for (let i = startOffset - 1; i >= 0; i--) {
+    cells += `<div class="cal-day cal-day--outside">${prevMonthDays - i}</div>`;
+  }
+
+  // Current month days
+  for (let d = 1; d <= totalDays; d++) {
+    const isToday = isCurrentMonth && d === today.getDate();
+    const isActive = activeDays.has(d);
+    let cls = 'cal-day';
+    if (isToday) cls += ' cal-day--today';
+    if (isActive) cls += ' cal-day--active';
+    cells += `<div class="${cls}">${d}</div>`;
+  }
+
+  // Next month filler to complete grid
+  const totalCells = startOffset + totalDays;
+  const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for (let d = 1; d <= remaining; d++) {
+    cells += `<div class="cal-day cal-day--outside">${d}</div>`;
+  }
+
+  return `
+    <div class="month-calendar animate-in" id="month-calendar">
+      <div class="cal-header">
+        <button class="cal-nav-btn" data-action="cal-prev">${icon.chevronLeft || '‹'}</button>
+        <span class="cal-header-title">${MONTH_NAMES[calMonth]} ${calYear}</span>
+        <button class="cal-nav-btn" data-action="cal-next">${icon.chevronRight || '›'}</button>
+      </div>
+      <div class="cal-grid">
+        ${weekHeaders}
+        ${cells}
+      </div>
+    </div>
+  `;
+}
 
 // ── Greeting ────────────────────────────────
 
@@ -111,7 +172,7 @@ function renderEntrenoHero(rutinaHoy) {
       <div class="entreno-meta">
         ${numCircuitos} circuitos &middot; ${numEjercicios} ejercicios &middot; ${renderLastDone(rutinaHoy)}
       </div>
-      <button class="entreno-cta glow-pulse" data-action="start" data-id="${rutinaHoy.id}">
+      <button class="entreno-cta" data-action="start" data-id="${rutinaHoy.id}">
         <span class="entreno-cta-icon">${iconLg('kettlebell', 48)}</span>
       </button>
       <div class="entreno-cta-label">Iniciar entrenamiento</div>
@@ -233,9 +294,9 @@ export function render() {
       </div>
     `;
   } else if (!auth) {
-    // Local mode — Lean / Nat toggle
+    // Local mode — Lean / Nat toggle with sliding pill
     userHeader = `
-      <div class="user-toggle">
+      <div class="user-toggle" data-active="${usuario === 'Nat' ? '1' : '0'}">
         <button class="user-toggle-btn ${usuario === 'Lean' ? 'active' : ''}" data-action="switch-user" data-user="Lean">Lean</button>
         <button class="user-toggle-btn ${usuario === 'Nat' ? 'active' : ''}" data-action="switch-user" data-user="Nat">Nat</button>
       </div>
@@ -258,6 +319,9 @@ export function render() {
   // Weekly routines
   const weekly = renderWeeklyRoutines(usuario);
 
+  // Month calendar
+  const calendar = renderMonthCalendar(usuario);
+
   return `
     ${userHeader}
     ${greeting}
@@ -267,6 +331,7 @@ export function render() {
     ${hero}
     ${rest}
     ${weekly}
+    ${calendar}
   `;
 }
 
@@ -283,10 +348,26 @@ export function mount() {
     const id = btn.dataset.id;
 
     switch (action) {
-      case 'switch-user':
-        setUsuarioActivo(btn.dataset.user);
-        navigate('/');
+      case 'switch-user': {
+        const newUser = btn.dataset.user;
+        const toggle = document.querySelector('.user-toggle');
+        if (toggle) {
+          // Animate pill slide
+          toggle.dataset.active = newUser === 'Nat' ? '1' : '0';
+          toggle.querySelectorAll('.user-toggle-btn').forEach((b) => {
+            b.classList.toggle('active', b.dataset.user === newUser);
+          });
+          // Wait for animation then navigate
+          setTimeout(() => {
+            setUsuarioActivo(newUser);
+            navigate('/');
+          }, 250);
+        } else {
+          setUsuarioActivo(newUser);
+          navigate('/');
+        }
         break;
+      }
       case 'switch-account':
         switchAccount().catch((err) => {
           // User closed popup — not an error
@@ -323,6 +404,22 @@ export function mount() {
         } else {
           // Day has type → show assignment modal
           showDayAssignmentModal(usuario, dia, current, () => refreshCurrentTab());
+        }
+        break;
+      }
+      case 'cal-prev':
+      case 'cal-next': {
+        if (action === 'cal-prev') {
+          calMonth--;
+          if (calMonth < 0) { calMonth = 11; calYear--; }
+        } else {
+          calMonth++;
+          if (calMonth > 11) { calMonth = 0; calYear++; }
+        }
+        const calEl = document.getElementById('month-calendar');
+        if (calEl) {
+          const usuario = getUsuarioActivo();
+          calEl.outerHTML = renderMonthCalendar(usuario);
         }
         break;
       }

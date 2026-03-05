@@ -103,6 +103,21 @@
   animation: glow-pulse 3s ease-in-out infinite;
 }
 
+/* ── CTA dramatic glow ─────────────────── */
+
+@keyframes cta-glow-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 40px color-mix(in srgb, var(--color-accent) 30%, transparent),
+      0 0 80px color-mix(in srgb, var(--color-accent) 10%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 60px color-mix(in srgb, var(--color-accent) 50%, transparent),
+      0 0 120px color-mix(in srgb, var(--color-accent) 15%, transparent);
+  }
+}
+
 /* ── Subtle fade-in utility ─────────────── */
 
 @keyframes fade-in {

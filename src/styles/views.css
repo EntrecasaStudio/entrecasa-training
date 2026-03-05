@@ -7,6 +7,24 @@
   border-radius: var(--radius-full);
   padding: 3px;
   margin-bottom: var(--space-lg);
+  position: relative;
+}
+
+.user-toggle::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  background-color: var(--color-accent);
+  border-radius: var(--radius-full);
+  transition: transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 0;
+}
+
+.user-toggle[data-active="1"]::before {
+  transform: translateX(calc(100% + 2px));
 }
 
 .user-toggle-btn {
@@ -16,11 +34,13 @@
   font-size: var(--text-sm);
   font-weight: var(--fw-semibold);
   color: var(--color-text-muted);
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast);
+  position: relative;
+  z-index: 1;
+  background: transparent;
 }
 
 .user-toggle-btn.active {
-  background-color: var(--color-accent);
   color: var(--color-bg);
 }
 
@@ -234,7 +254,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 50px color-mix(in srgb, var(--color-accent) 35%, transparent);
+  animation: cta-glow-pulse 2.5s ease-in-out infinite;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
@@ -343,12 +363,14 @@
 
 .mini-card[data-action] {
   cursor: pointer;
-  transition: background-color 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.15s, transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s;
 }
 
 .mini-card[data-action]:active {
-  background-color: color-mix(in srgb, var(--color-surface) 85%, var(--color-accent));
-  transform: scale(0.98);
+  background-color: color-mix(in srgb, var(--color-surface) 80%, var(--color-accent));
+  transform: scale(0.96);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .mini-card-left {
@@ -387,6 +409,94 @@
   display: flex;
   gap: var(--space-xs);
   flex-shrink: 0;
+}
+
+/* ── Month calendar (Apple Fitness style) ── */
+
+.month-calendar {
+  margin-top: var(--space-xl);
+  padding: var(--space-md);
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+}
+
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.cal-header-title {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+}
+
+.cal-nav-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  color: var(--color-text-muted);
+  transition: background var(--transition-fast);
+}
+
+.cal-nav-btn:active {
+  background: color-mix(in srgb, var(--color-text) 10%, transparent);
+}
+
+.cal-nav-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.cal-weekday {
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-muted);
+  text-align: center;
+  padding-bottom: var(--space-xs);
+  text-transform: uppercase;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  border-radius: var(--radius-full);
+  position: relative;
+}
+
+.cal-day--today {
+  color: var(--color-accent);
+  font-weight: var(--fw-bold);
+}
+
+.cal-day--active::after {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--color-accent);
+  position: absolute;
+  bottom: 2px;
+}
+
+.cal-day--outside {
+  opacity: 0.2;
 }
 
 /* ── Icon action buttons ─────────────────── */

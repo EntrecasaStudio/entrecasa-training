@@ -25,6 +25,8 @@ export const icon = {
   // Chevrons
   chevronUp: s('<path d="M18 15l-6-6-6 6"/>'),
   chevronDown: s('<path d="M6 9l6 6 6-6"/>'),
+  chevronLeft: s('<path d="M15 18l-6-6 6-6"/>'),
+  chevronRight: s('<path d="M9 18l6-6-6-6"/>'),
 
   // Media
   play: s('<polygon points="5 3 19 12 5 21 5 3"/>'),

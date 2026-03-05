@@ -297,7 +297,7 @@ function completeRest(app, params) {
   // Now advance circuit and re-render
   state.circuitoActual++;
   saveWorkoutActivo(state);
-  getWorkoutContainer().innerHTML = render(params);
+  transitionCircuit(getWorkoutContainer(), params, 'next');
 }
 
 // ── Timers ─────────────────────────────────
@@ -322,6 +322,21 @@ function stopTimer() {
 
 function getWorkoutContainer() {
   return document.querySelector('#view-container .other-view') || document.getElementById('app');
+}
+
+function transitionCircuit(container, params, direction) {
+  const exitClass = direction === 'next' ? 'circuit-exit-left' : 'circuit-exit-right';
+  const enterClass = direction === 'next' ? 'circuit-enter-right' : 'circuit-enter-left';
+
+  container.classList.add(exitClass);
+  container.addEventListener('animationend', () => {
+    container.classList.remove(exitClass);
+    container.innerHTML = render(params);
+    container.classList.add(enterClass);
+    container.addEventListener('animationend', () => {
+      container.classList.remove(enterClass);
+    }, { once: true });
+  }, { once: true });
 }
 
 export function mount(params) {
@@ -358,7 +373,7 @@ export function mount(params) {
           syncInputs();
           state.circuitoActual--;
           saveWorkoutActivo(state);
-          getWorkoutContainer().innerHTML = render(params);
+          transitionCircuit(getWorkoutContainer(), params, 'prev');
         }
         break;
 
@@ -366,7 +381,7 @@ export function mount(params) {
         syncInputs();
         state.circuitoActual++;
         saveWorkoutActivo(state);
-        getWorkoutContainer().innerHTML = render(params);
+        transitionCircuit(getWorkoutContainer(), params, 'next');
         break;
 
       case 'skip-rest':

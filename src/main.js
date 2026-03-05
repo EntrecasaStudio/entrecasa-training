@@ -53,6 +53,7 @@ function hideSplash() {
   const splash = document.getElementById('splash');
   if (splash) {
     splash.style.opacity = '0';
+    splash.style.transform = 'scale(1.05)';
     setTimeout(() => splash.remove(), 500);
   }
 }

@@ -183,3 +183,24 @@ export function getDaysSinceLastSession(usuario) {
   const now = new Date();
   return Math.floor((now - last) / 86400000);
 }
+
+/**
+ * Monthly activity: returns a Set of day numbers that have sessions in the given month.
+ * @param {string} usuario
+ * @param {number} year  Full year (e.g. 2026)
+ * @param {number} month 0-indexed (0=Jan, 11=Dec)
+ * @returns {Set<number>} Day-of-month numbers with sessions
+ */
+export function getMonthActivity(usuario, year, month) {
+  const sesiones = getSesiones().filter((s) => s.usuario === usuario);
+  const activeDays = new Set();
+
+  for (const s of sesiones) {
+    const d = new Date(s.fecha);
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      activeDays.add(d.getDate());
+    }
+  }
+
+  return activeDays;
+}
