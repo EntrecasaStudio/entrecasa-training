@@ -360,7 +360,9 @@ export function mount(params) {
 
       case 'next-circuit':
         syncInputs();
-        showRestTimer(app, params);
+        state.circuitoActual++;
+        saveWorkoutActivo(state);
+        app.innerHTML = render(params);
         break;
 
       case 'skip-rest':
