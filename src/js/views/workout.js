@@ -297,7 +297,7 @@ function completeRest(app, params) {
   // Now advance circuit and re-render
   state.circuitoActual++;
   saveWorkoutActivo(state);
-  app.innerHTML = render(params);
+  getWorkoutContainer().innerHTML = render(params);
 }
 
 // ── Timers ─────────────────────────────────
@@ -318,6 +318,10 @@ function stopTimer() {
     clearInterval(restInterval);
     restInterval = null;
   }
+}
+
+function getWorkoutContainer() {
+  return document.querySelector('#view-container .other-view') || document.getElementById('app');
 }
 
 export function mount(params) {
@@ -354,7 +358,7 @@ export function mount(params) {
           syncInputs();
           state.circuitoActual--;
           saveWorkoutActivo(state);
-          app.innerHTML = render(params);
+          getWorkoutContainer().innerHTML = render(params);
         }
         break;
 
@@ -362,7 +366,7 @@ export function mount(params) {
         syncInputs();
         state.circuitoActual++;
         saveWorkoutActivo(state);
-        app.innerHTML = render(params);
+        getWorkoutContainer().innerHTML = render(params);
         break;
 
       case 'skip-rest':
