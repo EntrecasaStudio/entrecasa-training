@@ -72,8 +72,9 @@ onAuth(async (user) => {
         }
       });
     } else if (!auth) {
-      // No Firebase configured — set default user for local-only mode
-      setUsuarioActivo('Usuario');
+      // No Firebase — keep stored user or default to 'Lean'
+      const stored = localStorage.getItem('gym_usuario');
+      if (!stored) setUsuarioActivo('Lean');
     }
 
     // Init router now that auth state is known

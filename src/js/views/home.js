@@ -2,6 +2,7 @@ import {
   getRutinas,
   getWorkoutActivo,
   getUsuarioActivo,
+  setUsuarioActivo,
   getRutinaHoy,
   getProximoEntrenamiento,
   getPlanSemanal,
@@ -20,7 +21,7 @@ import {
   getDisplayName,
 } from '@js/helpers/rutina-helpers.js';
 import { getWeeklyStreak, getSessionsThisWeek, getPlannedDaysThisWeek, getDaysSinceLastSession } from '@js/helpers/stats-helpers.js';
-import { getCurrentUser, logout, switchAccount } from '@js/services/firebase.js';
+import { getCurrentUser, auth, logout, switchAccount } from '@js/services/firebase.js';
 import { showToast } from '@js/components/toast.js';
 
 // ── Greeting ────────────────────────────────
@@ -211,7 +212,7 @@ export function render() {
       </div>`
     : '';
 
-  // User header (only when Firebase is active)
+  // User header: Firebase mode (avatar + switch/logout) or local mode (Lean/Nat toggle)
   const displayName = firebaseUser?.displayName?.split(' ')[0] || usuario;
   let userHeader = '';
   if (firebaseUser) {
@@ -229,6 +230,14 @@ export function render() {
             ${icon.logOut}
           </button>
         </div>
+      </div>
+    `;
+  } else if (!auth) {
+    // Local mode — Lean / Nat toggle
+    userHeader = `
+      <div class="user-toggle">
+        <button class="user-toggle-btn ${usuario === 'Lean' ? 'active' : ''}" data-action="switch-user" data-user="Lean">Lean</button>
+        <button class="user-toggle-btn ${usuario === 'Nat' ? 'active' : ''}" data-action="switch-user" data-user="Nat">Nat</button>
       </div>
     `;
   }
@@ -274,6 +283,10 @@ export function mount() {
     const id = btn.dataset.id;
 
     switch (action) {
+      case 'switch-user':
+        setUsuarioActivo(btn.dataset.user);
+        navigate('/');
+        break;
       case 'switch-account':
         switchAccount().catch((err) => {
           // User closed popup — not an error
