@@ -1,4 +1,4 @@
-import{O as $,n as g,g as b,u as f,i as d,Q as h,B as R}from"./index-0HqlbGei.js";const P={Core:"tag-core",Piernas:"tag-piernas",Pecho:"tag-pecho",Espalda:"tag-espalda",Brazos:"tag-brazos",Gluteos:"tag-gluteos",Hombros:"tag-hombros"};function j(a){return new Date(a).toLocaleDateString("es-MX",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}function u(a,e){return e==null?"":a>e?`<span class="progress-up">${d.arrowUp} +${a-e}</span>`:a<e?`<span class="progress-down">${d.arrowDown} -${e-a}</span>`:`<span class="progress-same">${d.equal}</span>`}function k(a){const e=h(a.rutinaId),s=e.findIndex(i=>i.id===a.id);return s>=0&&s<e.length-1?e[s+1]:null}function y(a){const e=Math.round(R(a)),s=a.circuitos.reduce((i,c)=>i+c.ejercicios.length,0);return`
+import{O as $,n as g,g as b,y as f,i as d,Q as h,G as R}from"./index-DbzCAPI6.js";const P={Core:"tag-core",Piernas:"tag-piernas",Pecho:"tag-pecho",Espalda:"tag-espalda",Brazos:"tag-brazos",Gluteos:"tag-gluteos",Hombros:"tag-hombros"};function j(a){return new Date(a).toLocaleDateString("es-MX",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}function u(a,e){return e==null?"":a>e?`<span class="progress-up">${d.arrowUp} +${a-e}</span>`:a<e?`<span class="progress-down">${d.arrowDown} -${e-a}</span>`:`<span class="progress-same">${d.equal}</span>`}function y(a){const e=h(a.rutinaId),s=e.findIndex(i=>i.id===a.id);return s>=0&&s<e.length-1?e[s+1]:null}function k(a){const e=Math.round(R(a)),s=a.circuitos.reduce((i,c)=>i+c.ejercicios.length,0);return`
     <div class="detalle-stats-strip animate-in">
       <div class="detalle-stat">
         <div class="detalle-stat-value">${a.duracionMin}</div>
@@ -41,7 +41,7 @@ import{O as $,n as g,g as b,u as f,i as d,Q as h,B as R}from"./index-0HqlbGei.js
       </div>
       ${c}
     </div>
-  `}function E(a){const e=$(a.id);if(!e)return g("/historial"),"";const s=k(e),i=e.usuario||b(),c=f(i),t=e.circuitos.map((n,l)=>{var o;return S(n,l,(o=s==null?void 0:s.circuitos)==null?void 0:o[l],c)}).join("");return`
+  `}function B(a){const e=$(a.id);if(!e)return g("/historial"),"";const s=y(e),i=e.usuario||b(),c=f(i),t=e.circuitos.map((n,l)=>{var o;return S(n,l,(o=s==null?void 0:s.circuitos)==null?void 0:o[l],c)}).join("");return`
     <div class="view-header">
       <button class="btn-back" data-action="back">${d.back}</button>
       <div class="view-header-title">${e.rutinaNombre}</div>
@@ -49,9 +49,9 @@ import{O as $,n as g,g as b,u as f,i as d,Q as h,B as R}from"./index-0HqlbGei.js
 
     <div class="sesion-detalle-fecha animate-in">${j(e.fecha)}</div>
 
-    ${y(e)}
+    ${k(e)}
 
     ${s?'<p class="detalle-comparison-note animate-in" style="animation-delay:80ms">Comparado con sesion anterior</p>':""}
 
     ${t}
-  `}function I(){const a=document.getElementById("app"),e=s=>{s.target.closest('[data-action="back"]')&&g("/historial")};return a.addEventListener("click",e),()=>{a.removeEventListener("click",e)}}export{I as mount,E as render};
+  `}function I(){const a=document.getElementById("app"),e=s=>{s.target.closest('[data-action="back"]')&&g("/historial")};return a.addEventListener("click",e),()=>{a.removeEventListener("click",e)}}export{I as mount,B as render};
