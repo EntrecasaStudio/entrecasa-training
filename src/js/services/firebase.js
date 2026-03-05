@@ -16,16 +16,23 @@ const firebaseConfig = {
   appId: '',
 };
 
+// Check if Firebase is actually configured (has real values)
+const isConfigured = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
+
 let app = null;
 let _auth = null;
 let _db = null;
 
-try {
-  app = initializeApp(firebaseConfig);
-  _auth = getAuth(app);
-  _db = getFirestore(app);
-} catch (err) {
-  console.warn('[firebase] Init failed — config not set:', err.message);
+if (isConfigured) {
+  try {
+    app = initializeApp(firebaseConfig);
+    _auth = getAuth(app);
+    _db = getFirestore(app);
+  } catch (err) {
+    console.warn('[firebase] Init failed:', err.message);
+  }
+} else {
+  console.info('[firebase] No config — running in local-only mode');
 }
 
 export const auth = _auth;
