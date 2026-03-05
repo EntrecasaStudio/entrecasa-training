@@ -1,11 +1,11 @@
 const CACHE_NAME = 'gym-app-v3';
 
 const PRECACHE_URLS = [
-  '/treiner/',
-  '/treiner/index.html',
-  '/treiner/manifest.json',
-  '/treiner/icons/icon-192.png',
-  '/treiner/icons/icon-512.png',
+  '/entrecasa-training/',
+  '/entrecasa-training/index.html',
+  '/entrecasa-training/manifest.json',
+  '/entrecasa-training/icons/icon-192.png',
+  '/entrecasa-training/icons/icon-512.png',
 ];
 
 self.addEventListener('install', (event) => {

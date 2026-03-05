@@ -4,7 +4,7 @@ import { resolve } from 'path';
 export default defineConfig(({ command }) => ({
   root: '.',
   publicDir: 'public',
-  base: command === 'build' ? '/treiner/' : '/',
+  base: command === 'build' ? '/entrecasa-training/' : '/',
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
