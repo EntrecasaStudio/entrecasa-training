@@ -103,7 +103,7 @@ export function render() {
   if (rutinasUsuario.length === 0) {
     content = `
       <div class="empty-state">
-        <div class="empty-state-icon">${iconLg('dumbbell')}</div>
+        <div class="empty-state-icon">${iconLg('kettlebell')}</div>
         <div class="empty-state-text">No tienes rutinas creadas.<br>Crea tu primera rutina para empezar.</div>
         <button class="btn btn-primary" data-action="new-rutina">${icon.plus} Nueva rutina</button>
       </div>`;

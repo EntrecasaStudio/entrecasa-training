@@ -10,7 +10,36 @@
 .user-header-info {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
+  background: none;
+  border: none;
+  padding: 4px;
+  margin: -4px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--transition-fast);
+}
+
+.user-header-info:active {
+  background: color-mix(in srgb, var(--color-text) 10%, transparent);
+}
+
+.user-switch-hint {
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+}
+
+.user-switch-hint svg {
+  width: 16px;
+  height: 16px;
+}
+
+.user-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
 }
 
 .user-avatar {
@@ -1797,6 +1826,8 @@
 .login-icon {
   margin-bottom: var(--space-lg);
   color: var(--color-accent);
+  display: flex;
+  justify-content: center;
 }
 
 .login-icon svg {

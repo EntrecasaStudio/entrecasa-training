@@ -11,7 +11,7 @@ export function render() {
   return `
     <div class="login-screen">
       <div class="login-hero">
-        <div class="login-icon">${iconLg('dumbbell', 64)}</div>
+        <div class="login-icon">${iconLg('kettlebell', 64)}</div>
         <h1 class="login-title">Mi Entrenamiento</h1>
         <p class="login-subtitle">Tu plan de entrenamiento sincronizado en todos tus dispositivos</p>
       </div>

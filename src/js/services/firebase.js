@@ -48,6 +48,20 @@ export function logout() {
 }
 
 /**
+ * Switch account — opens Google account picker popup.
+ * Forces the user to choose an account even if already signed in.
+ */
+export function switchAccount() {
+  if (!_auth || !googleProvider) {
+    return Promise.reject(new Error('Firebase not configured'));
+  }
+  googleProvider.setCustomParameters({ prompt: 'select_account' });
+  return signInWithPopup(_auth, googleProvider).finally(() => {
+    googleProvider.setCustomParameters({});
+  });
+}
+
+/**
  * Listen for auth state changes.
  * callback(user) — user is null when logged out, or a Firebase User object.
  */

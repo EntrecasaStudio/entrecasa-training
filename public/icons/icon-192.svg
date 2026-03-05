@@ -1,10 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
   <rect width="192" height="192" rx="40" fill="#1A1A1A"/>
   <g transform="translate(96,96) scale(4) translate(-12,-12)" fill="none" stroke="#FFCD00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="2" y="8" width="4" height="8" rx="1"/>
-    <rect x="18" y="8" width="4" height="8" rx="1"/>
-    <rect x="4" y="6" width="2" height="12" rx="0.5"/>
-    <rect x="18" y="6" width="2" height="12" rx="0.5"/>
-    <path d="M6 12h12"/>
+    <path d="M9 6a3.5 3.5 0 0 1 6 0"/>
+    <path d="M9 6v3"/>
+    <path d="M15 6v3"/>
+    <circle cx="12" cy="14" r="5.5"/>
   </g>
 </svg>

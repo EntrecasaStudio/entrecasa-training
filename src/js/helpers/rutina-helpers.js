@@ -96,7 +96,7 @@ export function showPreview(rutinaId) {
   showModal({
     title: rutina.nombre,
     body: `<div class="preview-body">${circuitsHtml}</div>`,
-    confirmText: `${icon.dumbbell} Iniciar`,
+    confirmText: `${icon.kettlebell} Iniciar`,
     cancelText: 'Volver',
     onConfirm: () => navigate(`/workout/${rutinaId}`),
     html: true,

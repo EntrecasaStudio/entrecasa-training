@@ -12,7 +12,7 @@ import { mountNavBar } from '@js/components/nav-bar.js';
 import { mountVoiceFab } from '@js/components/voice-fab.js';
 import { loadSavedTheme } from '@js/services/theme-manager.js';
 import { onAuth } from '@js/services/firebase.js';
-import { startRealtimeSync, stopRealtimeSync } from '@js/services/sync.js';
+import { startRealtimeSync, stopRealtimeSync, downloadAllData } from '@js/services/sync.js';
 import { setUsuarioActivo } from './store.js';
 
 // Seed initial rutinas from Notion data (only if empty)
@@ -57,7 +57,7 @@ function hideSplash() {
   }
 }
 
-onAuth((user) => {
+onAuth(async (user) => {
   if (!authResolved) {
     authResolved = true;
 
@@ -79,25 +79,29 @@ onAuth((user) => {
     return;
   }
 
-  // ── Subsequent auth state changes ──────
+  // ── Subsequent auth state changes (account switch) ──────
   if (user) {
+    stopRealtimeSync();
     const nombre = user.displayName?.split(' ')[0] || 'Usuario';
     setUsuarioActivo(nombre);
+    try {
+      await downloadAllData();
+    } catch (err) {
+      console.warn('[app] Download after switch failed:', err.message);
+    }
     startRealtimeSync(() => {
       if (window.location.hash === '' || window.location.hash === '#/') {
         navigate('/');
       }
     });
-    if (window.location.hash === '#/login') {
-      navigate('/');
-    }
+    navigate('/');
   } else {
     stopRealtimeSync();
     navigate('/login');
   }
 });
 
-// Fallback: if Firebase never resolves (misconfigured), init after 3s
+// Fallback: if Firebase never resolves (misconfigured), init after 10s
 setTimeout(() => {
   if (!authResolved) {
     authResolved = true;
@@ -105,4 +109,4 @@ setTimeout(() => {
     initRouter();
     hideSplash();
   }
-}, 3000);
+}, 10000);

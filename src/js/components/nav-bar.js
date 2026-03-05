@@ -12,7 +12,7 @@ function navHTML() {
   return `
     <nav class="nav-bottom" role="navigation" aria-label="Menu principal">
       <a href="#/" class="nav-bottom-item" data-tab="entrenamiento" aria-label="Entreno">
-        <span class="nav-bottom-icon" aria-hidden="true">${icon.dumbbell}</span>
+        <span class="nav-bottom-icon" aria-hidden="true">${icon.kettlebell}</span>
         <span>Entreno</span>
       </a>
       <a href="#/rutinas" class="nav-bottom-item" data-tab="rutinas" aria-label="Rutinas">

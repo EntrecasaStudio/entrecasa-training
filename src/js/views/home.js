@@ -20,7 +20,8 @@ import {
   getDisplayName,
 } from '@js/helpers/rutina-helpers.js';
 import { getWeeklyStreak, getSessionsThisWeek, getPlannedDaysThisWeek, getDaysSinceLastSession } from '@js/helpers/stats-helpers.js';
-import { getCurrentUser, logout } from '@js/services/firebase.js';
+import { getCurrentUser, logout, switchAccount } from '@js/services/firebase.js';
+import { showToast } from '@js/components/toast.js';
 
 // ── Greeting ────────────────────────────────
 
@@ -110,7 +111,7 @@ function renderEntrenoHero(rutinaHoy) {
         ${numCircuitos} circuitos &middot; ${numEjercicios} ejercicios &middot; ${renderLastDone(rutinaHoy)}
       </div>
       <button class="entreno-cta glow-pulse" data-action="start" data-id="${rutinaHoy.id}">
-        <span class="entreno-cta-icon">${iconLg('dumbbell', 48)}</span>
+        <span class="entreno-cta-icon">${iconLg('kettlebell', 48)}</span>
       </button>
       <div class="entreno-cta-label">Iniciar entrenamiento</div>
     </div>
@@ -122,7 +123,7 @@ function renderEntrenoHero(rutinaHoy) {
 function renderRestDay(proximo) {
   return `
     <div class="entreno-hero">
-      <div class="rest-day-icon">${iconLg('dumbbell')}</div>
+      <div class="rest-day-icon">${iconLg('kettlebell')}</div>
       <div class="rest-day-title">Hoy descansas</div>
       ${
         proximo
@@ -201,7 +202,7 @@ export function render() {
   const isMyWorkout = workoutActivo && (!workoutActivo.usuario || workoutActivo.usuario === usuario);
   const banner = isMyWorkout
     ? `<div class="workout-banner" data-action="resume-workout">
-        <span class="workout-banner-icon">${icon.dumbbell}</span>
+        <span class="workout-banner-icon">${icon.kettlebell}</span>
         <div class="workout-banner-text">
           <div class="workout-banner-title">Entrenamiento en curso</div>
           <div class="workout-banner-sub">${workoutActivo.rutinaNombre}</div>
@@ -217,12 +218,15 @@ export function render() {
     : `<div class="user-avatar-placeholder">${displayName[0] || '?'}</div>`;
   const userHeader = `
     <div class="user-header">
-      <div class="user-header-info">
+      <button class="user-header-info" data-action="switch-account" title="Cambiar cuenta">
         ${avatarHtml}
-      </div>
-      <button class="btn-icon-action" data-action="logout" title="Cerrar sesion">
-        ${icon.logOut}
+        <span class="user-switch-hint">${icon.chevronDown}</span>
       </button>
+      <div class="user-header-actions">
+        <button class="btn-icon-action" data-action="logout" title="Cerrar sesion">
+          ${icon.logOut}
+        </button>
+      </div>
     </div>
   `;
 
@@ -267,6 +271,15 @@ export function mount() {
     const id = btn.dataset.id;
 
     switch (action) {
+      case 'switch-account':
+        switchAccount().catch((err) => {
+          // User closed popup — not an error
+          if (err.code !== 'auth/popup-closed-by-user') {
+            showToast('Error al cambiar cuenta');
+            console.warn('[home] switchAccount error:', err);
+          }
+        });
+        break;
       case 'logout':
         if (confirm('¿Cerrar sesion?')) {
           logout();
