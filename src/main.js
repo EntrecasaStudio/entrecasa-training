@@ -11,7 +11,7 @@ import { seedIfEmpty } from './seed.js';
 import { mountNavBar } from '@js/components/nav-bar.js';
 import { mountVoiceFab } from '@js/components/voice-fab.js';
 import { loadSavedTheme } from '@js/services/theme-manager.js';
-import { onAuth } from '@js/services/firebase.js';
+import { onAuth, auth } from '@js/services/firebase.js';
 import { startRealtimeSync, stopRealtimeSync, downloadAllData } from '@js/services/sync.js';
 import { setUsuarioActivo } from './store.js';
 
@@ -71,6 +71,9 @@ onAuth(async (user) => {
           navigate('/');
         }
       });
+    } else if (!auth) {
+      // No Firebase configured — set default user for local-only mode
+      setUsuarioActivo('Usuario');
     }
 
     // Init router now that auth state is known

@@ -211,24 +211,27 @@ export function render() {
       </div>`
     : '';
 
-  // User header (replaces the old Lean/Nat toggle)
+  // User header (only when Firebase is active)
   const displayName = firebaseUser?.displayName?.split(' ')[0] || usuario;
-  const avatarHtml = firebaseUser?.photoURL
-    ? `<img class="user-avatar" src="${firebaseUser.photoURL}" alt="" referrerpolicy="no-referrer" />`
-    : `<div class="user-avatar-placeholder">${displayName[0] || '?'}</div>`;
-  const userHeader = `
-    <div class="user-header">
-      <button class="user-header-info" data-action="switch-account" title="Cambiar cuenta">
-        ${avatarHtml}
-        <span class="user-switch-hint">${icon.chevronDown}</span>
-      </button>
-      <div class="user-header-actions">
-        <button class="btn-icon-action" data-action="logout" title="Cerrar sesion">
-          ${icon.logOut}
+  let userHeader = '';
+  if (firebaseUser) {
+    const avatarHtml = firebaseUser.photoURL
+      ? `<img class="user-avatar" src="${firebaseUser.photoURL}" alt="" referrerpolicy="no-referrer" />`
+      : `<div class="user-avatar-placeholder">${displayName[0] || '?'}</div>`;
+    userHeader = `
+      <div class="user-header">
+        <button class="user-header-info" data-action="switch-account" title="Cambiar cuenta">
+          ${avatarHtml}
+          <span class="user-switch-hint">${icon.chevronDown}</span>
         </button>
+        <div class="user-header-actions">
+          <button class="btn-icon-action" data-action="logout" title="Cerrar sesion">
+            ${icon.logOut}
+          </button>
+        </div>
       </div>
-    </div>
-  `;
+    `;
+  }
 
   // Greeting
   const greeting = `<div class="home-greeting animate-in">${getGreeting(displayName)}</div>`;

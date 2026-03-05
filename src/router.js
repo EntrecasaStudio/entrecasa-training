@@ -1,6 +1,6 @@
 import { getDataVersion } from '@/store.js';
 import { setActiveTab, setNavBarVisible } from '@js/components/nav-bar.js';
-import { getCurrentUser } from '@js/services/firebase.js';
+import { getCurrentUser, auth } from '@js/services/firebase.js';
 
 // ── Route definitions ───────────────────────────
 
@@ -175,14 +175,16 @@ async function handleRoute() {
   // Normalize: bare '#' or '' → '#/'
   if (hash === '#' || hash === '') hash = '#/';
 
-  // ── Auth guard ───────────────────────
-  if (hash !== '#/login' && !getCurrentUser()) {
-    window.location.hash = '#/login';
-    return;
-  }
-  if (hash === '#/login' && getCurrentUser()) {
-    window.location.hash = '#/';
-    return;
+  // ── Auth guard (only when Firebase is configured) ──
+  if (auth) {
+    if (hash !== '#/login' && !getCurrentUser()) {
+      window.location.hash = '#/login';
+      return;
+    }
+    if (hash === '#/login' && getCurrentUser()) {
+      window.location.hash = '#/';
+      return;
+    }
   }
 
   // 1. Check tab routes (exact match)
