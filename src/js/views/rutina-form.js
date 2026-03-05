@@ -1,11 +1,10 @@
-import { getRutinaById, saveRutina, getUsuarioActivo, getRutinas, getPlanSemanal, assignRutinaADia } from '@/store.js';
+import { getRutinaById, saveRutina, getUsuarioActivo } from '@/store.js';
 import { generateId } from '@/id.js';
 import { navigate } from '@/router.js';
 import { icon } from '@js/icons.js';
 import { buscarEjerciciosPorCategorias, addEjercicioCustom } from '@js/ejercicios-catalogo.js';
 import { showModal } from '@js/components/modal.js';
 import { showToast } from '@js/components/toast.js';
-import { DIAS_LABEL, DIAS_ABREV, DIAS_ORDEN } from '@js/helpers/rutina-helpers.js';
 
 const GRUPOS_MUSCULARES = ['Pecho', 'Espalda', 'Piernas', 'Core', 'Brazos', 'Glúteos', 'Hombros'];
 const MIN_EJERCICIOS = 2;
@@ -172,6 +171,7 @@ export function render(params) {
     rutina = {
       id: generateId(),
       nombre: '',
+      tipo: 'gimnasio',
       usuario: getUsuarioActivo(),
       diaSemana: null,
       creada: new Date().toISOString(),
@@ -184,64 +184,6 @@ export function render(params) {
   isDirty = false;
 
   return renderForm(isEdit);
-}
-
-function truncateName(str, maxLen) {
-  if (!str) return '';
-  return str.length > maxLen ? str.substring(0, maxLen) + '…' : str;
-}
-
-function renderWeekStrip() {
-  const usuario = rutina.usuario || getUsuarioActivo();
-  const plan = getPlanSemanal(usuario);
-  const allRutinas = getRutinas().filter((r) => r.usuario === usuario && r.id !== rutina.id);
-
-  const circles = DIAS_ORDEN.map((d) => {
-    const tipo = plan[d] || '';
-    const isSelected = rutina.diaSemana === d;
-    const otherRutina = allRutinas.find((r) => r.diaSemana === d);
-    const iconInner = tipo === 'gimnasio' ? '🏋️' : tipo === 'cross' ? '🏃' : '';
-
-    // CSS classes
-    let btnClass = 'week-strip-btn';
-    if (isSelected) {
-      btnClass += ' selected';
-    } else if (otherRutina) {
-      btnClass += tipo ? ` ${tipo}` : ' occupied';
-    } else if (tipo) {
-      btnClass += ` ${tipo} plan-only`;
-    }
-
-    // Routine name label
-    let nameLabel = '';
-    if (isSelected) {
-      nameLabel = `<span class="week-strip-name selected">${truncateName(rutina.nombre, 5) || '·'}</span>`;
-    } else if (otherRutina) {
-      nameLabel = `<span class="week-strip-name">${truncateName(otherRutina.nombre, 5)}</span>`;
-    }
-
-    return `
-      <div class="week-strip-day">
-        <button class="${btnClass}" data-action="set-dia" data-dia="${d}">
-          ${isSelected ? '✓' : iconInner}
-        </button>
-        <span class="week-strip-label">${DIAS_ABREV[d]}</span>
-        ${nameLabel}
-      </div>
-    `;
-  }).join('');
-
-  return `
-    <div class="form-section">
-      <div class="week-strip-header">
-        <label class="input-label">Dia de entrenamiento</label>
-        <button class="week-strip-cal-btn" data-action="open-calendar" title="Calendario (proximamente)">
-          ${icon.calendar}
-        </button>
-      </div>
-      <div class="week-strip">${circles}</div>
-    </div>
-  `;
 }
 
 function renderForm(isEdit) {
@@ -259,7 +201,13 @@ function renderForm(isEdit) {
              value="${rutina.nombre}">
     </div>
 
-    ${renderWeekStrip()}
+    <div class="form-section">
+      <label class="input-label">Tipo</label>
+      <div class="user-toggle" data-active="${rutina.tipo === 'cross' ? '1' : '0'}">
+        <button class="user-toggle-btn ${rutina.tipo !== 'cross' ? 'active' : ''}" data-action="set-tipo" data-tipo="gimnasio">🏋️ Gimnasio</button>
+        <button class="user-toggle-btn ${rutina.tipo === 'cross' ? 'active' : ''}" data-action="set-tipo" data-tipo="cross">🏃 Cross</button>
+      </div>
+    </div>
 
     <div class="form-section">
       <div class="form-section-title">Circuitos</div>
@@ -361,53 +309,20 @@ export function mount(params) {
             confirmText: 'Descartar',
             cancelText: 'Seguir editando',
             danger: true,
-            onConfirm: () => navigate('/'),
+            onConfirm: () => navigate('/rutinas'),
           });
         } else {
-          navigate('/');
+          navigate('/rutinas');
         }
         break;
 
-      case 'set-dia': {
-        const dia = parseInt(btn.dataset.dia);
+      case 'set-tipo': {
         syncFromInputs();
-
-        // Toggle off: tapping the already-selected day
-        if (rutina.diaSemana === dia) {
-          rutina.diaSemana = null;
-          isDirty = true;
-          reRender();
-          break;
-        }
-
-        // Check if another routine occupies this day
-        const allRut = getRutinas().filter(
-          (r) => r.usuario === (rutina.usuario || getUsuarioActivo()) && r.id !== rutina.id,
-        );
-        const existing = allRut.find((r) => r.diaSemana === dia);
-
-        if (existing) {
-          showModal({
-            title: `${DIAS_LABEL[dia]} ya tiene rutina`,
-            body: `"${existing.nombre}" esta asignada a este dia. ¿Reemplazarla?`,
-            confirmText: 'Reemplazar',
-            onConfirm: () => {
-              rutina.diaSemana = dia;
-              isDirty = true;
-              reRender();
-            },
-          });
-        } else {
-          rutina.diaSemana = dia;
-          isDirty = true;
-          reRender();
-        }
+        rutina.tipo = btn.dataset.tipo;
+        isDirty = true;
+        reRender();
         break;
       }
-
-      case 'open-calendar':
-        showToast('Calendario: proximamente');
-        break;
 
       case 'add-circuito':
         syncFromInputs();
@@ -528,12 +443,8 @@ export function mount(params) {
             return;
           }
           saveRutina(rutina);
-          // Clear day conflicts (another routine on the same day)
-          if (rutina.diaSemana !== null) {
-            assignRutinaADia(rutina.id, rutina.diaSemana, rutina.usuario || getUsuarioActivo());
-          }
           showToast('Rutina guardada');
-          navigate('/');
+          navigate('/rutinas');
         }
         break;
     }

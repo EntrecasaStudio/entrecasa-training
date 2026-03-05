@@ -603,7 +603,6 @@
 .btn-icon-action svg {
   width: 18px;
   height: 18px;
-  stroke-width: 1.5;
 }
 
 .btn-icon-action:active {
@@ -645,6 +644,46 @@
 .btn-icon-header:active {
   background-color: color-mix(in srgb, var(--color-accent) 25%, transparent);
   transform: scale(0.92);
+}
+
+/* ── Collapsible section ────────────────── */
+
+.rutinas-section {
+  margin-bottom: var(--space-md);
+}
+
+.rutinas-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--space-sm) 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  background: none;
+  border: none;
+}
+
+.rutinas-section-chevron {
+  color: var(--color-text-muted);
+  transition: transform 200ms ease;
+}
+
+.rutinas-section-chevron.open {
+  transform: rotate(90deg);
+}
+
+.rutinas-section-chevron svg {
+  width: 16px;
+  height: 16px;
+}
+
+.rutinas-section-list {
+  overflow: hidden;
+}
+
+.rutinas-section-list.collapsed {
+  display: none;
 }
 
 .rutinas-list {

@@ -1,6 +1,6 @@
 // Iconos SVG vectoriales — 24x24 viewBox, stroke-based
 const s = (d, size = 24) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 
 export const icon = {
   // Navigation
@@ -32,7 +32,7 @@ export const icon = {
   play: s('<polygon points="5 3 19 12 5 21 5 3"/>'),
 
   // Fitness
-  kettlebell: s('<path d="M9 6a3.5 3.5 0 0 1 6 0"/><path d="M9 6v3"/><path d="M15 6v3"/><circle cx="12" cy="14" r="5.5"/>'),
+  kettlebell: s('<path d="M9 5a3 3 0 0 1 6 0"/><path d="M9 5v4"/><path d="M15 5v4"/><circle cx="12" cy="14.5" r="6"/>'),
 
   // Timer
   clock: s('<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>'),
@@ -56,7 +56,7 @@ export const icon = {
 // Larger icons for empty states and banners
 export function iconLg(name, size = 48) {
   const map = {
-    kettlebell: `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6a3.5 3.5 0 0 1 6 0"/><path d="M9 6v3"/><path d="M15 6v3"/><circle cx="12" cy="14" r="5.5"/></svg>`,
+    kettlebell: `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5a3 3 0 0 1 6 0"/><path d="M9 5v4"/><path d="M15 5v4"/><circle cx="12" cy="14.5" r="6"/></svg>`,
     barChart: `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="18" y="3" width="4" height="18" rx="1"/><rect x="10" y="8" width="4" height="13" rx="1"/><rect x="2" y="13" width="4" height="8" rx="1"/></svg>`,
   };
   return map[name] || '';

@@ -60,13 +60,19 @@ function renderRutinaCard(rutina) {
   `;
 }
 
-function renderSection(title, count, rutinas, spaced = false) {
+function renderSection(title, count, rutinas, collapsed = true) {
   if (rutinas.length === 0) return '';
+  const sectionId = title.toLowerCase().replace(/\s+/g, '-');
   return `
-    <div class="section-header ${spaced ? 'section-header-spaced' : ''}">
-      <span class="section-title">${title} <span class="section-count">(${count})</span></span>
+    <div class="rutinas-section" data-section="${sectionId}">
+      <button class="rutinas-section-header" data-action="toggle-section" data-section="${sectionId}">
+        <span class="section-title">${title} <span class="section-count">(${count})</span></span>
+        <span class="rutinas-section-chevron ${collapsed ? '' : 'open'}">${icon.chevronRight}</span>
+      </button>
+      <div class="rutinas-section-list ${collapsed ? 'collapsed' : ''}">
+        ${rutinas.map(renderRutinaCard).join('')}
+      </div>
     </div>
-    <div class="rutinas-list">${rutinas.map(renderRutinaCard).join('')}</div>
   `;
 }
 
@@ -77,12 +83,8 @@ export function render() {
   const usuario = getUsuarioActivo();
   const rutinasUsuario = getRutinas().filter((r) => r.usuario === usuario);
 
-  const programadas = rutinasUsuario
-    .filter((r) => r.diaSemana != null)
-    .sort((a, b) => a.diaSemana - b.diaSemana);
-
   const gimnasio = rutinasUsuario
-    .filter((r) => r.tipo === 'gimnasio')
+    .filter((r) => r.tipo === 'gimnasio' || !r.tipo)
     .sort((a, b) => (b.numero || 0) - (a.numero || 0));
 
   const cross = rutinasUsuario
@@ -108,9 +110,8 @@ export function render() {
         <button class="btn btn-primary" data-action="new-rutina">${icon.plus} Nueva rutina</button>
       </div>`;
   } else {
-    content += renderSection('Programadas', programadas.length, programadas);
-    content += renderSection('Gimnasio', gimnasio.length, gimnasio, programadas.length > 0);
-    content += renderSection('Cross Training', cross.length, cross, true);
+    content += renderSection('Gimnasio', gimnasio.length, gimnasio);
+    content += renderSection('Cross Training', cross.length, cross);
   }
 
   return `
@@ -149,6 +150,17 @@ export function mount() {
             deleteRutina(copia.id);
             navigate('/rutinas');
           });
+        }
+        break;
+      }
+      case 'toggle-section': {
+        const sectionId = btn.dataset.section;
+        const section = document.querySelector(`.rutinas-section[data-section="${sectionId}"]`);
+        if (section) {
+          const list = section.querySelector('.rutinas-section-list');
+          const chevron = section.querySelector('.rutinas-section-chevron');
+          list.classList.toggle('collapsed');
+          chevron.classList.toggle('open');
         }
         break;
       }
