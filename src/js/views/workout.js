@@ -107,25 +107,34 @@ function getElapsedStr() {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-function renderProgressBar() {
+function renderCircuitSelector() {
   const total = state.resultados.length;
   const pct = (state.circuitoActual / total) * 100;
 
-  const dots = state.resultados
-    .map((_, i) => {
-      let cls = 'workout-progress-dot';
-      if (i < state.circuitoActual) cls += ' done';
-      else if (i === state.circuitoActual) cls += ' current';
-      return `<span class="${cls}"></span>`;
+  const segments = state.resultados
+    .map((circ, i) => {
+      let cls = 'circuit-seg';
+      let numHtml;
+      if (i < state.circuitoActual) {
+        cls += ' done';
+        numHtml = `<span class="circuit-seg-num">${icon.check}</span>`;
+      } else if (i === state.circuitoActual) {
+        cls += ' current';
+        numHtml = `<span class="circuit-seg-num">${i + 1}</span>`;
+      } else {
+        numHtml = `<span class="circuit-seg-num">${i + 1}</span>`;
+      }
+      const label = circ.grupoMuscular || '';
+      return `<button class="${cls}" data-action="goto-circuit" data-idx="${i}">${numHtml}<span class="circuit-seg-label">${label}</span></button>`;
     })
     .join('');
 
   return `
-    <div class="workout-progress-bar-wrap">
+    <div class="circuit-selector-wrap">
+      <div class="circuit-selector" id="circuit-selector">${segments}</div>
       <div class="workout-progress-bar">
         <div class="workout-progress-fill" style="width:${pct}%"></div>
       </div>
-      <div class="workout-progress-dots">${dots}</div>
     </div>
   `;
 }
@@ -150,6 +159,14 @@ function shouldSuggestOverload(nombre, ej) {
 function renderEjercicio(ej, ejIdx) {
   const overload = shouldSuggestOverload(ej.nombre, ej);
   const isBodyweight = ej.pesoObjetivoKg === 0;
+  const showPeso = !isBodyweight || ej.addedPeso;
+
+  // Add-peso toggle for bodyweight exercises
+  const addPesoBtn = isBodyweight
+    ? `<button class="workout-add-peso-btn ${ej.addedPeso ? 'active' : ''}" data-action="toggle-peso" data-ej="${ejIdx}">
+         ${icon.kettlebell} ${ej.addedPeso ? 'Con peso' : 'Agregar peso'}
+       </button>`
+    : '';
 
   // Vest toggle
   const vestHtml = `
@@ -174,13 +191,13 @@ function renderEjercicio(ej, ejIdx) {
     <div class="workout-vuelta-headers">
       <span class="workout-vuelta-header-spacer"></span>
       <span class="workout-vuelta-header">Reps</span>
-      ${isBodyweight ? '' : '<span class="workout-vuelta-header">Peso (kg)</span>'}
+      ${showPeso ? '<span class="workout-vuelta-header">Peso (kg)</span>' : ''}
     </div>
   `;
 
   // Round rows
   const vueltasHtml = ej.vueltas.map((v, vIdx) => {
-    const weightStepper = isBodyweight ? '' : `
+    const weightStepper = showPeso ? `
       <div class="workout-vuelta-group">
         <div class="stepper workout-stepper-sm" role="group">
           <button class="stepper-btn" data-action="dec" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="pesoRealKg" aria-label="Disminuir peso vuelta ${vIdx + 1}">-</button>
@@ -190,7 +207,7 @@ function renderEjercicio(ej, ejIdx) {
           <button class="stepper-btn" data-action="inc" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="pesoRealKg" aria-label="Aumentar peso vuelta ${vIdx + 1}">+</button>
         </div>
       </div>
-    `;
+    ` : '';
 
     return `
       <div class="workout-vuelta-row">
@@ -222,6 +239,7 @@ function renderEjercicio(ej, ejIdx) {
       </div>
       ${overload ? '<div class="workout-overload-hint">&#9650; Subir peso?</div>' : ''}
       ${renderExerciseHistory(ej.nombre)}
+      ${addPesoBtn}
       ${vestHtml}
       ${columnHeaders}
       <div class="workout-vueltas">
@@ -267,6 +285,14 @@ export function render(params) {
   const isLast = state.circuitoActual === state.resultados.length - 1;
   const ejercicios = circ.ejercicios.map((ej, i) => renderEjercicio(ej, i)).join('');
 
+  const lastBanner = isLast
+    ? '<div class="workout-last-banner">🏆 Último circuito</div>'
+    : '';
+
+  const finishBtn = isLast
+    ? `<button class="btn btn-finish btn-full" data-action="finish">${icon.check} Finalizar</button>`
+    : `<button class="btn btn-primary btn-full" data-action="next-circuit">Siguiente →</button>`;
+
   return `
     <div class="workout-header">
       <div>
@@ -276,10 +302,9 @@ export function render(params) {
       <button class="workout-end-btn" data-action="end-workout">Salir</button>
     </div>
 
-    <div class="workout-progress">
-      ${renderProgressBar()}
-      <span class="workout-progress-label">${state.circuitoActual + 1}/${state.resultados.length} &middot; ${circ.grupoMuscular}</span>
-    </div>
+    ${renderCircuitSelector()}
+
+    ${lastBanner}
 
     ${ejercicios}
 
@@ -290,9 +315,7 @@ export function render(params) {
 
     <div class="workout-nav-btns">
       ${state.circuitoActual > 0 ? `<button class="btn btn-ghost workout-prev-btn" data-action="prev-circuit">← Anterior</button>` : ''}
-      <button class="btn btn-primary btn-full" data-action="${isLast ? 'finish' : 'next-circuit'}">
-        ${isLast ? 'Finalizar Entrenamiento' : 'Siguiente Circuito →'}
-      </button>
+      ${finishBtn}
     </div>
   `;
 }
@@ -480,10 +503,83 @@ function transitionCircuit(container, params, direction) {
   }, { once: true });
 }
 
+// ── Auto-scroll circuit selector ──────────
+function scrollToActiveSegment() {
+  const selector = document.getElementById('circuit-selector');
+  if (!selector) return;
+  const active = selector.querySelector('.circuit-seg.current');
+  if (active) {
+    active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }
+}
+
 export function mount(params) {
   startTimer();
   const app = document.getElementById('app');
 
+  // Auto-scroll selector on mount
+  requestAnimationFrame(() => scrollToActiveSegment());
+
+  // ── Swipe between circuits ──────────────
+  let swipeStartX = 0;
+  let swipeStartY = 0;
+  let swipeTracking = false;
+
+  const handleTouchStart = (e) => {
+    // Don't track if rest overlay is showing
+    if (document.querySelector('.rest-overlay')) return;
+
+    const touch = e.touches[0];
+    // Exclude left edge zone (<35px) to avoid conflict with swipe-back
+    if (touch.clientX < 35) return;
+    // Exclude interactive elements: steppers, inputs, buttons
+    const target = e.target;
+    if (target.closest('.stepper-btn, .stepper-value, input, button, .workout-vest-toggle, .workout-add-peso-btn')) return;
+
+    swipeStartX = touch.clientX;
+    swipeStartY = touch.clientY;
+    swipeTracking = true;
+  };
+
+  const handleTouchMove = () => {
+    // Passive — just tracking
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!swipeTracking) return;
+    swipeTracking = false;
+
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - swipeStartX;
+    const dy = Math.abs(touch.clientY - swipeStartY);
+
+    // Must be horizontal: |dx| > 60 and |dy| < 50
+    if (Math.abs(dx) < 60 || dy > 50) return;
+
+    if (dx < 0 && state.circuitoActual < state.resultados.length - 1) {
+      // Swipe left → next circuit
+      syncInputs();
+      state.circuitoActual++;
+      saveWorkoutActivo(state);
+      haptic.light();
+      transitionCircuit(getWorkoutContainer(), params, 'next');
+      setTimeout(scrollToActiveSegment, 300);
+    } else if (dx > 0 && state.circuitoActual > 0) {
+      // Swipe right → prev circuit
+      syncInputs();
+      state.circuitoActual--;
+      saveWorkoutActivo(state);
+      haptic.light();
+      transitionCircuit(getWorkoutContainer(), params, 'prev');
+      setTimeout(scrollToActiveSegment, 300);
+    }
+  };
+
+  app.addEventListener('touchstart', handleTouchStart, { passive: true });
+  app.addEventListener('touchmove', handleTouchMove, { passive: true });
+  app.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+  // ── Click handler ──────────────────────
   const handleClick = (e) => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
@@ -503,12 +599,43 @@ export function mount(params) {
         break;
       }
 
+      case 'goto-circuit': {
+        const idx = parseInt(btn.dataset.idx);
+        if (idx >= 0 && idx < state.resultados.length && idx !== state.circuitoActual) {
+          syncInputs();
+          const direction = idx > state.circuitoActual ? 'next' : 'prev';
+          state.circuitoActual = idx;
+          saveWorkoutActivo(state);
+          haptic.light();
+          transitionCircuit(getWorkoutContainer(), params, direction);
+          setTimeout(scrollToActiveSegment, 300);
+        }
+        break;
+      }
+
+      case 'toggle-peso': {
+        const ejIdx = parseInt(btn.dataset.ej);
+        const circ = state.resultados[state.circuitoActual];
+        const ej = circ?.ejercicios[ejIdx];
+        if (ej) {
+          ej.addedPeso = !ej.addedPeso;
+          saveWorkoutActivo(state);
+          haptic.medium();
+          // Re-render in place without transition
+          const container = getWorkoutContainer();
+          container.innerHTML = render(params);
+          scrollToActiveSegment();
+        }
+        break;
+      }
+
       case 'prev-circuit':
         if (state.circuitoActual > 0) {
           syncInputs();
           state.circuitoActual--;
           saveWorkoutActivo(state);
           transitionCircuit(getWorkoutContainer(), params, 'prev');
+          setTimeout(scrollToActiveSegment, 300);
         }
         break;
 
@@ -517,6 +644,7 @@ export function mount(params) {
         state.circuitoActual++;
         saveWorkoutActivo(state);
         transitionCircuit(getWorkoutContainer(), params, 'next');
+        setTimeout(scrollToActiveSegment, 300);
         break;
 
       case 'skip-rest':
@@ -569,7 +697,7 @@ export function mount(params) {
       case 'finish':
         showModal({
           title: 'Finalizar entrenamiento',
-          body: 'Se guardara esta sesion en tu historial.',
+          body: 'Se guardará esta sesión en tu historial.',
           confirmText: 'Finalizar',
           onConfirm: () => finishWorkout(),
         });
@@ -643,6 +771,9 @@ export function mount(params) {
     app.removeEventListener('pointerdown', handlePointerDown);
     app.removeEventListener('pointerup', handlePointerUp);
     app.removeEventListener('pointercancel', handlePointerUp);
+    app.removeEventListener('touchstart', handleTouchStart);
+    app.removeEventListener('touchmove', handleTouchMove);
+    app.removeEventListener('touchend', handleTouchEnd);
     clearLongPress();
     stopTimer();
   };

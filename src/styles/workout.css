@@ -29,30 +29,101 @@
   background-color: color-mix(in srgb, var(--color-danger) 15%, transparent);
 }
 
-/* ── Progress bar + dots ─────────────────── */
+/* ── Circuit selector (segmented control) ── */
 
-.workout-progress {
+.circuit-selector-wrap {
+  margin-bottom: var(--space-md);
+}
+
+.circuit-selector {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: var(--space-xs) 0;
+}
+
+.circuit-selector::-webkit-scrollbar {
+  display: none;
+}
+
+.circuit-seg {
+  flex: 1;
+  min-width: 80px;
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-lg);
-  padding: var(--space-md);
-  background-color: var(--color-surface);
+  justify-content: center;
+  gap: 4px;
+  padding: var(--space-sm) var(--space-sm);
+  min-height: 44px;
   border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  scroll-snap-align: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
 }
 
-.workout-progress-bar-wrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.circuit-seg:active {
+  transform: scale(0.96);
 }
 
+.circuit-seg.done {
+  background-color: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
+.circuit-seg.current {
+  background-color: color-mix(in srgb, var(--color-accent) 20%, transparent);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 20%, transparent);
+}
+
+.circuit-seg-num {
+  font-size: var(--text-xs);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.circuit-seg.done .circuit-seg-num {
+  color: var(--color-accent);
+}
+
+.circuit-seg.done .circuit-seg-num svg {
+  width: 14px;
+  height: 14px;
+}
+
+.circuit-seg.current .circuit-seg-num {
+  color: var(--color-accent);
+  font-weight: var(--fw-bold);
+}
+
+.circuit-seg-label {
+  font-size: var(--text-xs);
+  font-weight: var(--fw-medium);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.circuit-seg.current .circuit-seg-label {
+  color: var(--color-text);
+  font-weight: var(--fw-semibold);
+}
+
+/* Progress bar below selector */
 .workout-progress-bar {
-  height: 4px;
+  height: 3px;
   background: var(--color-border);
   border-radius: var(--radius-full);
   overflow: hidden;
+  margin-top: var(--space-xs);
 }
 
 .workout-progress-fill {
@@ -60,36 +131,6 @@
   background: var(--color-accent);
   border-radius: var(--radius-full);
   transition: width 500ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.workout-progress-dots {
-  display: flex;
-  gap: 6px;
-}
-
-.workout-progress-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: var(--radius-full);
-  background-color: var(--color-border);
-  transition: background-color var(--transition-fast);
-}
-
-.workout-progress-dot.done {
-  background-color: var(--color-accent);
-  animation: dot-pop 300ms ease-out;
-}
-
-.workout-progress-dot.current {
-  background-color: var(--color-accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 30%, transparent);
-}
-
-.workout-progress-label {
-  font-size: var(--text-sm);
-  font-weight: var(--fw-semibold);
-  color: var(--color-text-muted);
-  white-space: nowrap;
 }
 
 /* ── Exercise input rows ─────────────────── */
@@ -162,6 +203,68 @@
   margin-bottom: var(--space-sm);
   opacity: 0.85;
   letter-spacing: 0.3px;
+}
+
+/* ── Add-peso button (bodyweight toggle) ── */
+
+.workout-add-peso-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  min-height: 36px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-medium);
+  color: var(--color-text-muted);
+  background-color: var(--color-surface);
+  transition: all var(--transition-fast);
+  margin-bottom: var(--space-sm);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.workout-add-peso-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.workout-add-peso-btn.active {
+  border-color: var(--color-accent);
+  background-color: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  color: var(--color-accent);
+  font-weight: var(--fw-semibold);
+}
+
+/* ── Last circuit banner ──────────────────── */
+
+.workout-last-banner {
+  text-align: center;
+  padding: var(--space-sm);
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  border-radius: var(--radius-md);
+  color: var(--color-accent);
+  font-weight: var(--fw-semibold);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-md);
+}
+
+/* ── Finish button ────────────────────────── */
+
+.btn-finish {
+  background: #22c55e;
+  color: #fff;
+  border: none;
+  animation: finish-pulse 2s ease-in-out infinite;
+}
+
+.btn-finish:active {
+  background: #16a34a;
+}
+
+@keyframes finish-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
 }
 
 /* ── Vest toggle ────────────────────────── */
@@ -510,10 +613,4 @@
 .circuit-exit-right { animation: circuit-slide-out-right 150ms ease-in forwards; }
 .circuit-enter-left  { animation: circuit-slide-in-left 200ms ease-out forwards; }
 
-/* ── Progress dot pop ──────────────────── */
-
-@keyframes dot-pop {
-  0%   { transform: scale(1); }
-  50%  { transform: scale(1.6); }
-  100% { transform: scale(1); }
-}
+/* (dot-pop animation removed — replaced by circuit selector) */
