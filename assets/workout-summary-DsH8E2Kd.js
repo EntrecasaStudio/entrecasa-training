@@ -1,4 +1,4 @@
-import{O as v,n as u,g as p,y,P as g,G as m,h as $,i as l}from"./index-DbzCAPI6.js";function b(o){if(o<60)return`${o} min`;const s=Math.floor(o/60),n=o%60;return`${s}h ${n}m`}function d(o,s,n="",e=!1){return`
+import{O as v,n as u,g as p,y,P as g,G as m,h as $,i as l}from"./index-BTNJYZkc.js";function b(o){if(o<60)return`${o} min`;const s=Math.floor(o/60),n=o%60;return`${s}h ${n}m`}function d(o,s,n="",e=!1){return`
     <div class="summary-stat ${e?"summary-stat-accent":""}">
       <div class="summary-stat-value">${s}<span class="summary-stat-unit">${n}</span></div>
       <div class="summary-stat-label">${o}</div>
