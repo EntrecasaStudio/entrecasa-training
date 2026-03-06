@@ -2,6 +2,7 @@ import { getSesionById, getPersonalRecords, calcVolumenSesion, getPreviousSesion
 import { navigate } from '@/router.js';
 import { icon } from '@js/icons.js';
 import { showToast } from '@js/components/toast.js';
+import { haptic } from '@js/helpers/haptics.js';
 
 function formatDuration(min) {
   if (min < 60) return `${min} min`;
@@ -79,6 +80,75 @@ function renderPRs(sesion, records) {
   `;
 }
 
+// ── Donut chart: volume by muscle group ──
+
+const MUSCLE_COLORS = {
+  piernas: '#3b82f6',
+  pecho: '#ef4444',
+  espalda: '#22c55e',
+  brazos: '#a855f7',
+  hombros: '#f97316',
+  core: '#eab308',
+  gluteos: '#ec4899',
+  cardio: '#06b6d4',
+};
+
+function renderDonutChart(sesion) {
+  // Aggregate volume by muscle group
+  const groups = {};
+  for (const c of sesion.circuitos) {
+    const group = (c.grupoMuscular || 'Otro').toLowerCase();
+    const vol = c.ejercicios.reduce((sum, ej) => {
+      const peso = ej.pesoRealKg ?? ej.pesoKg ?? 0;
+      const reps = ej.repsReal ?? ej.repsObjetivo ?? 0;
+      return sum + peso * reps;
+    }, 0);
+    groups[group] = (groups[group] || 0) + vol;
+  }
+
+  const entries = Object.entries(groups).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+  if (entries.length === 0) return '';
+
+  const total = entries.reduce((s, [, v]) => s + v, 0);
+  const r = 40;
+  const circumference = 2 * Math.PI * r;
+
+  let offset = 0;
+  const segments = entries.map(([name]) => {
+    const pct = groups[name] / total;
+    const dash = pct * circumference;
+    const color = MUSCLE_COLORS[name] || '#888';
+    const seg = `<circle cx="50" cy="50" r="${r}" fill="none" stroke="${color}" stroke-width="12"
+      stroke-dasharray="${dash} ${circumference - dash}" stroke-dashoffset="${-offset}"
+      transform="rotate(-90 50 50)"/>`;
+    offset += dash;
+    return seg;
+  }).join('');
+
+  const legend = entries.map(([name]) => {
+    const pct = Math.round((groups[name] / total) * 100);
+    const color = MUSCLE_COLORS[name] || '#888';
+    const label = name.charAt(0).toUpperCase() + name.slice(1);
+    return `<div class="donut-legend-item">
+      <span class="donut-legend-dot" style="background:${color}"></span>
+      <span class="donut-legend-label">${label}</span>
+      <span class="donut-legend-pct">${pct}%</span>
+    </div>`;
+  }).join('');
+
+  return `
+    <div class="summary-donut animate-in" style="animation-delay:350ms">
+      <div class="summary-section-title">Distribucion por grupo</div>
+      <div class="donut-wrap">
+        <svg viewBox="0 0 100 100" class="donut-svg">
+          ${segments}
+        </svg>
+        <div class="donut-legend">${legend}</div>
+      </div>
+    </div>
+  `;
+}
+
 export function render(params) {
   const sesion = getSesionById(params.id);
   if (!sesion) {
@@ -107,6 +177,7 @@ export function render(params) {
         ${renderStatCard('Circuitos', sesion.circuitos.length)}
       </div>
 
+      ${renderDonutChart(sesion)}
       ${renderComparison(sesion, previous)}
       ${renderPRs(sesion, records)}
 
@@ -120,6 +191,9 @@ export function render(params) {
 }
 
 export function mount(params) {
+  // Celebration haptic on summary load
+  haptic.success();
+
   const app = document.getElementById('app');
 
   const handleClick = (e) => {

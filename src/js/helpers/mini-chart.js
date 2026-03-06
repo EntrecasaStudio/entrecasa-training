@@ -1,5 +1,6 @@
 /**
  * Render a mini sparkline chart on a canvas element.
+ * Uses smooth bezier curves for a premium look.
  * @param {HTMLCanvasElement} canvas
  * @param {number[]} dataPoints - Array of numeric values
  * @param {object} options
@@ -14,6 +15,7 @@ export function renderMiniChart(canvas, dataPoints, options = {}) {
     lineWidth = 2,
     dotRadius = 3,
     padding = 8,
+    labels = null,
   } = options;
 
   const ctx = canvas.getContext('2d');
@@ -40,12 +42,20 @@ export function renderMiniChart(canvas, dataPoints, options = {}) {
     return padding + plotH - ((val - min) / range) * plotH;
   }
 
-  // Gradient fill
-  ctx.beginPath();
-  ctx.moveTo(getX(0), getY(dataPoints[0]));
-  for (let i = 1; i < dataPoints.length; i++) {
-    ctx.lineTo(getX(i), getY(dataPoints[i]));
+  // Smooth bezier path helper
+  function drawSmoothPath() {
+    ctx.moveTo(getX(0), getY(dataPoints[0]));
+    for (let i = 0; i < dataPoints.length - 1; i++) {
+      const x0 = getX(i), y0 = getY(dataPoints[i]);
+      const x1 = getX(i + 1), y1 = getY(dataPoints[i + 1]);
+      const cpx = (x0 + x1) / 2;
+      ctx.bezierCurveTo(cpx, y0, cpx, y1, x1, y1);
+    }
   }
+
+  // Gradient fill under curve
+  ctx.beginPath();
+  drawSmoothPath();
   ctx.lineTo(getX(dataPoints.length - 1), h - padding);
   ctx.lineTo(getX(0), h - padding);
   ctx.closePath();
@@ -56,22 +66,56 @@ export function renderMiniChart(canvas, dataPoints, options = {}) {
   ctx.fillStyle = gradient;
   ctx.fill();
 
-  // Line
+  // Smooth line
   ctx.beginPath();
-  ctx.moveTo(getX(0), getY(dataPoints[0]));
-  for (let i = 1; i < dataPoints.length; i++) {
-    ctx.lineTo(getX(i), getY(dataPoints[i]));
-  }
+  drawSmoothPath();
   ctx.strokeStyle = lineColor;
   ctx.lineWidth = lineWidth;
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
   ctx.stroke();
 
-  // Last dot (highlight)
+  // Last dot — glow ring if it's a PR (max value)
   const lastIdx = dataPoints.length - 1;
+  const lastVal = dataPoints[lastIdx];
+  const isPR = lastVal >= max;
+
+  if (isPR) {
+    ctx.beginPath();
+    ctx.arc(getX(lastIdx), getY(lastVal), dotRadius + 3, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255, 205, 0, 0.35)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
   ctx.beginPath();
-  ctx.arc(getX(lastIdx), getY(dataPoints[lastIdx]), dotRadius, 0, Math.PI * 2);
+  ctx.arc(getX(lastIdx), getY(lastVal), dotRadius, 0, Math.PI * 2);
   ctx.fillStyle = dotColor;
   ctx.fill();
+
+  // Interactive tap: show value + date
+  if (labels) {
+    canvas.onclick = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      let closestIdx = 0;
+      let closestDist = Infinity;
+      for (let i = 0; i < dataPoints.length; i++) {
+        const dist = Math.abs(getX(i) - clickX);
+        if (dist < closestDist) { closestDist = dist; closestIdx = i; }
+      }
+      const existing = canvas.parentElement.querySelector('.sparkline-tooltip');
+      if (existing) existing.remove();
+
+      const tip = document.createElement('div');
+      tip.className = 'sparkline-tooltip fade-in';
+      const fecha = labels[closestIdx];
+      const fechaStr = fecha ? new Date(fecha).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' }) : '';
+      tip.textContent = `${dataPoints[closestIdx]} kg${fechaStr ? ` · ${fechaStr}` : ''}`;
+      canvas.parentElement.style.position = 'relative';
+      tip.style.cssText = 'position:absolute;right:0;top:-20px';
+      canvas.parentElement.appendChild(tip);
+      setTimeout(() => tip.remove(), 2500);
+    };
+  }
 }

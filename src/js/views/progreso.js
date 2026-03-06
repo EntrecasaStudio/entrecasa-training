@@ -53,7 +53,9 @@ function renderActivityGrid(usuario) {
   const cells = activity
     .map((w, i) => {
       const level = w.count === 0 ? 0 : Math.min(Math.ceil((w.count / maxCount) * 3), 3);
-      return `<div class="activity-cell level-${level} animate-in" style="animation-delay:${300 + i * 30}ms" title="${w.count} sesiones"></div>`;
+      const d = new Date(w.weekStart);
+      const label = `${d.getDate()}/${d.getMonth() + 1}`;
+      return `<div class="activity-cell level-${level} animate-in" style="animation-delay:${300 + i * 30}ms" data-action="activity-tap" data-week-label="Sem ${label}" data-count="${w.count}"></div>`;
     })
     .join('');
 
@@ -92,7 +94,7 @@ function renderExerciseCards(usuario) {
             ${ex.mejora !== 0 ? `<span class="exercise-progress-trend ${cls}">${arrow} ${sign}${ex.mejora} kg</span>` : ''}
           </div>
         </div>
-        <canvas class="exercise-sparkline" data-exercise="${ex.nombre}" width="100" height="40"></canvas>
+        <canvas class="exercise-sparkline" data-exercise="${ex.nombre}" width="120" height="48"></canvas>
       </div>
     `;
     })
@@ -157,6 +159,7 @@ export function render() {
 
 export function mount() {
   const usuario = getUsuarioActivo();
+  const app = document.getElementById('app');
 
   // Render sparklines for each exercise card
   document.querySelectorAll('.exercise-sparkline').forEach((canvas) => {
@@ -166,7 +169,36 @@ export function mount() {
       renderMiniChart(
         canvas,
         data.map((d) => d.peso),
+        { labels: data.map((d) => d.fecha) },
       );
     }
   });
+
+  // Activity grid tap → floating tooltip
+  let tooltip = null;
+  const handleClick = (e) => {
+    const cell = e.target.closest('[data-action="activity-tap"]');
+    if (!cell) {
+      if (tooltip) { tooltip.remove(); tooltip = null; }
+      return;
+    }
+    const label = cell.dataset.weekLabel;
+    const count = cell.dataset.count;
+    if (tooltip) tooltip.remove();
+    tooltip = document.createElement('div');
+    tooltip.className = 'activity-tooltip fade-in';
+    tooltip.textContent = `${label} — ${count} sesion${count !== '1' ? 'es' : ''}`;
+    const rect = cell.getBoundingClientRect();
+    tooltip.style.left = `${rect.left + rect.width / 2}px`;
+    tooltip.style.top = `${rect.top - 8}px`;
+    document.body.appendChild(tooltip);
+    setTimeout(() => { if (tooltip) { tooltip.remove(); tooltip = null; } }, 2000);
+  };
+
+  app.addEventListener('click', handleClick);
+
+  return () => {
+    app.removeEventListener('click', handleClick);
+    if (tooltip) tooltip.remove();
+  };
 }
