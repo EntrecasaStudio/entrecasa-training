@@ -18,6 +18,7 @@ import { startRealtimeSync, stopRealtimeSync, downloadAllData, uploadAllData } f
 import { setUsuarioActivo } from './store.js';
 import { initSwipeBack } from '@js/helpers/swipe-back.js';
 import { initPullToRefresh } from '@js/helpers/pull-to-refresh.js';
+import { mountOfflineBanner } from '@js/components/offline-banner.js';
 
 // Seed initial rutinas from Notion data (only if empty)
 seedIfEmpty();
@@ -49,6 +50,7 @@ if ('serviceWorker' in navigator) {
 mountNavBar();
 mountVoiceFab();
 mountAvatarMenu();
+mountOfflineBanner();
 
 // Gesture navigation
 initSwipeBack();

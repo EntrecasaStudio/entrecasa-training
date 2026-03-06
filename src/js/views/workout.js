@@ -126,21 +126,23 @@ function renderEjercicio(ej, ejIdx) {
       ${renderExerciseHistory(ej.nombre)}
       <div class="workout-ejercicio-inputs">
         <div class="workout-input-group">
-          <span class="workout-input-label">Reps</span>
-          <div class="stepper workout-stepper">
-            <button class="stepper-btn" data-action="dec" data-ej="${ejIdx}" data-field="repsReal">-</button>
+          <span class="workout-input-label" id="label-reps-${ejIdx}">Reps</span>
+          <div class="stepper workout-stepper" role="group" aria-labelledby="label-reps-${ejIdx}">
+            <button class="stepper-btn" data-action="dec" data-ej="${ejIdx}" data-field="repsReal" aria-label="Disminuir repeticiones">-</button>
             <input type="number" class="stepper-value" inputmode="numeric"
-                   value="${ej.repsReal}" data-ej="${ejIdx}" data-field="repsReal">
-            <button class="stepper-btn" data-action="inc" data-ej="${ejIdx}" data-field="repsReal">+</button>
+                   value="${ej.repsReal}" data-ej="${ejIdx}" data-field="repsReal"
+                   aria-label="Repeticiones" aria-valuemin="0">
+            <button class="stepper-btn" data-action="inc" data-ej="${ejIdx}" data-field="repsReal" aria-label="Aumentar repeticiones">+</button>
           </div>
         </div>
         <div class="workout-input-group">
-          <span class="workout-input-label">Peso (kg)</span>
-          <div class="stepper workout-stepper">
-            <button class="stepper-btn" data-action="dec" data-ej="${ejIdx}" data-field="pesoRealKg">-</button>
+          <span class="workout-input-label" id="label-peso-${ejIdx}">Peso (kg)</span>
+          <div class="stepper workout-stepper" role="group" aria-labelledby="label-peso-${ejIdx}">
+            <button class="stepper-btn" data-action="dec" data-ej="${ejIdx}" data-field="pesoRealKg" aria-label="Disminuir peso">-</button>
             <input type="number" class="stepper-value" inputmode="decimal" step="0.5"
-                   value="${ej.pesoRealKg}" data-ej="${ejIdx}" data-field="pesoRealKg">
-            <button class="stepper-btn" data-action="inc" data-ej="${ejIdx}" data-field="pesoRealKg">+</button>
+                   value="${ej.pesoRealKg}" data-ej="${ejIdx}" data-field="pesoRealKg"
+                   aria-label="Peso en kilogramos" aria-valuemin="0">
+            <button class="stepper-btn" data-action="inc" data-ej="${ejIdx}" data-field="pesoRealKg" aria-label="Aumentar peso">+</button>
           </div>
         </div>
       </div>
