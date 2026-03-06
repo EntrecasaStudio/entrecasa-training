@@ -7,12 +7,12 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyC72hE9OkVdmnt5TuhtNamrfq8DY3bdIlM',
-  authDomain: 'entrecasa-treiner.firebaseapp.com',
-  projectId: 'entrecasa-treiner',
-  storageBucket: 'entrecasa-treiner.firebasestorage.app',
-  messagingSenderId: '398542503159',
-  appId: '1:398542503159:web:408be61789b3e3938027f2',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
 };
 
 // Check if Firebase is actually configured (has real values)
