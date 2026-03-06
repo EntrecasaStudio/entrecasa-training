@@ -3,13 +3,13 @@
  * Supports multi-command voice interface.
  */
 
-const PROD_URL = '/treiner/api/voice-rutina.php';
-const DEV_URL = 'http://localhost:8080/api/voice-rutina.php';
+const VERCEL_URL = 'https://entrecasa-training.vercel.app/api/voice-rutina';
+const DEV_URL = 'http://localhost:3000/api/voice-rutina';
 
 function getApiUrl() {
   return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? DEV_URL
-    : PROD_URL;
+    : VERCEL_URL;
 }
 
 /**
