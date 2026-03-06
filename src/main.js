@@ -5,6 +5,7 @@ import './styles/components.css';
 import './styles/views.css';
 import './styles/workout.css';
 import './styles/animations.css';
+import './styles/skeleton.css';
 
 import { initRouter, navigate } from './router.js';
 import { seedIfEmpty } from './seed.js';

@@ -1,0 +1,109 @@
+/* ── Skeleton Loading States ─────────────── */
+
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface) 25%,
+    var(--color-surface-alt) 50%,
+    var(--color-surface) 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-text {
+  height: 1em;
+  margin-bottom: 0.5em;
+}
+
+.skeleton-text-sm {
+  height: 0.75em;
+  width: 60%;
+}
+
+.skeleton-circle {
+  border-radius: var(--radius-full);
+}
+
+/* ── Home Skeleton ─────────────────────── */
+
+.skeleton-home {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.skeleton-greeting {
+  height: 2rem;
+  width: 70%;
+}
+
+.skeleton-week-planner {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.skeleton-day-circle {
+  width: 40px;
+  height: 40px;
+}
+
+.skeleton-quick-stats {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.skeleton-stat {
+  flex: 1;
+  height: 64px;
+  border-radius: var(--radius-md);
+}
+
+.skeleton-hero {
+  height: 200px;
+  border-radius: var(--radius-lg);
+}
+
+.skeleton-card {
+  height: 88px;
+  border-radius: var(--radius-md);
+}
+
+/* ── Rutinas Skeleton ──────────────────── */
+
+.skeleton-rutinas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.skeleton-rutina-card {
+  height: 120px;
+  border-radius: var(--radius-md);
+}
+
+/* ── Progreso Skeleton ─────────────────── */
+
+.skeleton-progreso-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-sm);
+}
+
+.skeleton-progreso-stat {
+  height: 72px;
+  border-radius: var(--radius-md);
+}
+
+.skeleton-activity-grid {
+  height: 48px;
+  width: 100%;
+  border-radius: var(--radius-sm);
+}

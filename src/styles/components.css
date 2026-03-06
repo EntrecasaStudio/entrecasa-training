@@ -65,6 +65,12 @@
   border-radius: var(--radius-md);
   padding: var(--space-md);
   box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.card:active {
+  transform: scale(0.98);
+  opacity: 0.9;
 }
 
 .card + .card {
@@ -375,24 +381,43 @@ select.input {
 
 .empty-state {
   text-align: center;
-  padding: var(--space-2xl) var(--space-md);
+  padding: var(--space-2xl) var(--space-lg);
   color: var(--color-text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
 }
 
 .empty-state-icon {
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-sm);
   display: flex;
   justify-content: center;
 }
 
 .empty-state-icon svg {
-  width: 56px;
-  height: 56px;
-  padding: var(--space-md);
+  width: 64px;
+  height: 64px;
+  padding: 18px;
   border-radius: var(--radius-full);
-  background-color: var(--color-accent-dim);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-accent) 15%, transparent),
+    color-mix(in srgb, var(--color-accent) 5%, transparent)
+  );
   color: var(--color-accent);
-  opacity: 0.6;
+  opacity: 0.8;
+}
+
+.empty-state-text {
+  font-size: var(--text-base);
+  line-height: var(--lh-normal);
+  max-width: 280px;
+}
+
+.empty-state .btn {
+  margin-top: var(--space-sm);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--color-accent) 20%, transparent);
 }
 
 .empty-state-text {
