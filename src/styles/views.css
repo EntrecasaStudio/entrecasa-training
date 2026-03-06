@@ -16,8 +16,8 @@
 }
 
 .day-circle-btn {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
@@ -29,7 +29,8 @@
 }
 
 .day-circle-btn:active {
-  transform: scale(0.9);
+  transform: scale(0.88);
+  opacity: 0.8;
 }
 
 .day-circle-btn.gimnasio {
@@ -57,7 +58,7 @@
 .day-circle-rutina {
   font-size: 9px;
   color: var(--color-text-muted);
-  max-width: 48px;
+  max-width: 52px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

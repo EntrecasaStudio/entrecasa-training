@@ -4,6 +4,7 @@ import { navigate } from '@/router.js';
 import { showModal } from '@js/components/modal.js';
 import { playCountdownTick, playFinishBeep } from '@js/helpers/audio.js';
 import { getExerciseProgressData } from '@js/helpers/stats-helpers.js';
+import { haptic } from '@js/helpers/haptics.js';
 
 let state = null;
 let timerInterval = null;
@@ -13,6 +14,8 @@ const PESO_STEPS = [1, 2.5, 5];
 const REST_STEPS = [60, 90, 120];
 let pesoStepIdx = 1; // default 2.5
 let restStepIdx = 1; // default 90s
+let longPressTimer = null;
+let longPressInterval = null;
 
 function initState(rutinaId) {
   const activo = getWorkoutActivo();
@@ -272,15 +275,18 @@ function showRestTimer(app, params) {
       ring.style.strokeDashoffset = circumference * (1 - pct);
     }
 
+    // Subtle haptic tick each second
+    if (restRemaining > 3) haptic.light();
+
     // Countdown feedback: tick + vibrate at 3, 2, 1
     if (restRemaining > 0 && restRemaining <= 3) {
       playCountdownTick();
-      if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+      haptic.heavy();
     }
 
     if (restRemaining <= 0) {
       playFinishBeep();
-      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+      haptic.warning();
       completeRest(app, params);
     }
   }, 1000);
@@ -320,6 +326,29 @@ function stopTimer() {
   }
 }
 
+// ── Stepper action (extracted for long-press reuse) ──
+
+function stepperAction(btn, action) {
+  const ejIdx = parseInt(btn.dataset.ej);
+  const field = btn.dataset.field;
+  const input = document.querySelector(`.stepper-value[data-ej="${ejIdx}"][data-field="${field}"]`);
+  if (!input) return;
+  const step = field === 'pesoRealKg' ? PESO_STEPS[pesoStepIdx] : 1;
+  let val = parseFloat(input.value) || 0;
+  val = action === 'inc' ? val + step : Math.max(0, val - step);
+  input.value = val;
+  haptic.medium();
+  input.classList.remove('value-bump');
+  void input.offsetWidth;
+  input.classList.add('value-bump');
+  syncInputs();
+}
+
+function clearLongPress() {
+  if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+  if (longPressInterval) { clearInterval(longPressInterval); longPressInterval = null; }
+}
+
 function getWorkoutContainer() {
   return document.querySelector('#view-container .other-view') || document.getElementById('app');
 }
@@ -352,19 +381,7 @@ export function mount(params) {
     switch (action) {
       case 'inc':
       case 'dec': {
-        const ejIdx = parseInt(btn.dataset.ej);
-        const field = btn.dataset.field;
-        const input = document.querySelector(`.stepper-value[data-ej="${ejIdx}"][data-field="${field}"]`);
-        if (!input) return;
-        const step = field === 'pesoRealKg' ? PESO_STEPS[pesoStepIdx] : 1;
-        let val = parseFloat(input.value) || 0;
-        val = action === 'inc' ? val + step : Math.max(0, val - step);
-        input.value = val;
-        if (navigator.vibrate) navigator.vibrate(30);
-        input.classList.remove('value-bump');
-        void input.offsetWidth;
-        input.classList.add('value-bump');
-        syncInputs();
+        stepperAction(btn, action);
         break;
       }
 
@@ -416,13 +433,14 @@ export function mount(params) {
               const pct = restRemaining / REST_STEPS[restStepIdx];
               rr.style.strokeDashoffset = circumference * (1 - pct);
             }
+            if (restRemaining > 3) haptic.light();
             if (restRemaining > 0 && restRemaining <= 3) {
               playCountdownTick();
-              if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+              haptic.heavy();
             }
             if (restRemaining <= 0) {
               playFinishBeep();
-              if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+              haptic.warning();
               completeRest(app, params);
             }
           }, 1000);
@@ -474,12 +492,32 @@ export function mount(params) {
     }
   };
 
+  // Long-press repeat for stepper buttons
+  const handlePointerDown = (e) => {
+    const btn = e.target.closest('.stepper-btn[data-action]');
+    if (!btn) return;
+    clearLongPress();
+    const action = btn.dataset.action;
+    longPressTimer = setTimeout(() => {
+      longPressInterval = setInterval(() => stepperAction(btn, action), 120);
+    }, 350);
+  };
+
+  const handlePointerUp = () => clearLongPress();
+
   app.addEventListener('click', handleClick);
   app.addEventListener('change', handleChange);
+  app.addEventListener('pointerdown', handlePointerDown);
+  app.addEventListener('pointerup', handlePointerUp);
+  app.addEventListener('pointercancel', handlePointerUp);
 
   return () => {
     app.removeEventListener('click', handleClick);
     app.removeEventListener('change', handleChange);
+    app.removeEventListener('pointerdown', handlePointerDown);
+    app.removeEventListener('pointerup', handlePointerUp);
+    app.removeEventListener('pointercancel', handlePointerUp);
+    clearLongPress();
     stopTimer();
   };
 }

@@ -150,18 +150,28 @@
   letter-spacing: 0.5px;
 }
 
-/* Larger stepper for workout */
+/* Larger stepper for workout — gym-friendly 56px touch targets */
 
 .workout-stepper .stepper-btn {
-  width: var(--touch-min);
-  height: 52px;
+  width: 56px;
+  height: 56px;
   font-size: var(--text-xl);
+  border-radius: var(--radius-md);
+}
+
+.workout-stepper .stepper-btn:first-child {
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+.workout-stepper .stepper-btn:last-child {
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
 }
 
 .workout-stepper .stepper-value {
-  width: 56px;
-  height: 52px;
-  font-size: var(--text-xl);
+  width: 72px;
+  height: 56px;
+  font-size: var(--text-2xl);
+  font-variant-numeric: tabular-nums;
 }
 
 .workout-stepper {
@@ -263,8 +273,8 @@
 
 .rest-ring-wrap {
   position: relative;
-  width: 180px;
-  height: 180px;
+  width: 200px;
+  height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
