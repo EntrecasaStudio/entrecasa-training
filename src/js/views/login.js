@@ -62,8 +62,6 @@ export function mount() {
         showToast('Sesion iniciada');
         navigate('/');
       } catch (err) {
-        // signInWithRedirect was triggered — page will reload, don't show error
-        if (!err) return;
         console.error('Login error:', err);
         btn.disabled = false;
         btn.innerHTML = `

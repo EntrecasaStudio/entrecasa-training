@@ -3,7 +3,7 @@
  * Replace firebaseConfig with your project's config from Firebase Console.
  */
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -39,26 +39,13 @@ export const db = _db;
 
 const googleProvider = _auth ? new GoogleAuthProvider() : null;
 
-// Handle redirect result (from signInWithRedirect fallback)
-if (_auth) {
-  getRedirectResult(_auth).catch(() => {});
-}
-
 // ── Auth helpers ─────────────────────────
 
-export async function loginWithGoogle() {
+export function loginWithGoogle() {
   if (!_auth || !googleProvider) {
-    throw new Error('Firebase not configured. Add your config to firebase.js');
+    return Promise.reject(new Error('Firebase not configured. Add your config to firebase.js'));
   }
-  try {
-    return await signInWithPopup(_auth, googleProvider);
-  } catch (err) {
-    if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
-      // Fallback to redirect-based login
-      return signInWithRedirect(_auth, googleProvider);
-    }
-    throw err;
-  }
+  return signInWithPopup(_auth, googleProvider);
 }
 
 export function logout() {
