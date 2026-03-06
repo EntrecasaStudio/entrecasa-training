@@ -98,15 +98,20 @@ onAuth(async (user) => {
     return;
   }
 
-  // ── Subsequent auth state changes (account switch) ──────
+  // ── Subsequent auth state changes (login / account switch) ──────
   if (user) {
     stopRealtimeSync();
-    const nombre = user.displayName?.split(' ')[0] || 'Usuario';
-    setUsuarioActivo(nombre);
+    // Keep existing stored user name (Lean/Nat) — only set if none stored
+    const stored = localStorage.getItem('gym_usuario');
+    if (!stored) {
+      setUsuarioActivo('Lean'); // default to Lean for new logins
+    }
+    // First login: upload local data; subsequent: download from Firestore
     try {
+      await uploadAllData();
       await downloadAllData();
     } catch (err) {
-      console.warn('[app] Download after switch failed:', err.message);
+      console.warn('[app] Sync after login failed:', err.message);
     }
     startRealtimeSync(() => {
       if (window.location.hash === '' || window.location.hash === '#/') {
