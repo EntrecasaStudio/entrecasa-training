@@ -87,14 +87,14 @@ onAuth(async (user) => {
       // Keep existing stored user name (Lean/Nat) — only set if none stored
       const stored = localStorage.getItem('gym_usuario');
       if (!stored) {
-        const nombre = user.displayName?.split(' ')[0] || 'Usuario';
-        setUsuarioActivo(nombre);
+        setUsuarioActivo('Lean'); // default to Lean — must match seed data
       }
-      // Upload existing local data to Firestore on first login
+      // Sync with Firestore: download cloud data, upload local data
       try {
-        await uploadAllData();
+        const hadCloud = await downloadAllData();
+        if (!hadCloud) await uploadAllData();
       } catch (err) {
-        console.warn('[app] Initial upload failed:', err.message);
+        console.warn('[app] Initial sync failed:', err.message);
       }
       startRealtimeSync(() => {
         // Remote data changed — refresh if on home

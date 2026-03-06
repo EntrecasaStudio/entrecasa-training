@@ -62,6 +62,8 @@ export function mount() {
         showToast('Sesion iniciada');
         navigate('/');
       } catch (err) {
+        // signInWithRedirect was triggered — page will reload, don't show error
+        if (!err) return;
         console.error('Login error:', err);
         btn.disabled = false;
         btn.innerHTML = `
@@ -73,7 +75,7 @@ export function mount() {
           </svg>
           Iniciar con Google
         `;
-        showToast(err.code === 'auth/popup-closed-by-user' ? 'Login cancelado' : 'Error al iniciar sesion', 'error');
+        showToast('Error al iniciar sesion', 'error');
       }
     }
   };
