@@ -5,6 +5,7 @@ import { getUsuarioActivo, setUsuarioActivo, getRutinas, assignRutinaADia } from
 import { showVoicePreview } from '@js/components/voice-preview.js';
 import { showToast } from '@js/components/toast.js';
 import { navigate } from '@/router.js';
+import { updateAvatarMenu } from '@js/components/avatar-menu.js';
 import {
   applyThemeChanges,
   applyLightMode,
@@ -215,6 +216,7 @@ function dispatchAction(result) {
     case 'switch_user':
       if (data?.usuario) {
         setUsuarioActivo(data.usuario);
+        updateAvatarMenu();
         navigate('/');
         if (confirmMessage) showToast(confirmMessage);
       }

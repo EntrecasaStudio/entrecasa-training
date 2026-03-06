@@ -10,9 +10,10 @@ import { initRouter, navigate } from './router.js';
 import { seedIfEmpty } from './seed.js';
 import { mountNavBar } from '@js/components/nav-bar.js';
 import { mountVoiceFab } from '@js/components/voice-fab.js';
+import { mountAvatarMenu, updateAvatarMenu } from '@js/components/avatar-menu.js';
 import { loadSavedTheme } from '@js/services/theme-manager.js';
 import { onAuth, auth } from '@js/services/firebase.js';
-import { startRealtimeSync, stopRealtimeSync, downloadAllData } from '@js/services/sync.js';
+import { startRealtimeSync, stopRealtimeSync, downloadAllData, uploadAllData } from '@js/services/sync.js';
 import { setUsuarioActivo } from './store.js';
 
 // Seed initial rutinas from Notion data (only if empty)
@@ -44,6 +45,7 @@ if ('serviceWorker' in navigator) {
 // Mount persistent UI
 mountNavBar();
 mountVoiceFab();
+mountAvatarMenu();
 
 // ── Auth-aware initialization ──────────────
 
@@ -64,8 +66,18 @@ onAuth(async (user) => {
 
     // First auth callback — user session restored (or null)
     if (user) {
-      const nombre = user.displayName?.split(' ')[0] || 'Usuario';
-      setUsuarioActivo(nombre);
+      // Keep existing stored user name (Lean/Nat) — only set if none stored
+      const stored = localStorage.getItem('gym_usuario');
+      if (!stored) {
+        const nombre = user.displayName?.split(' ')[0] || 'Usuario';
+        setUsuarioActivo(nombre);
+      }
+      // Upload existing local data to Firestore on first login
+      try {
+        await uploadAllData();
+      } catch (err) {
+        console.warn('[app] Initial upload failed:', err.message);
+      }
       startRealtimeSync(() => {
         // Remote data changed — refresh if on home
         if (window.location.hash === '' || window.location.hash === '#/') {
@@ -77,6 +89,8 @@ onAuth(async (user) => {
       const stored = localStorage.getItem('gym_usuario');
       if (!stored) setUsuarioActivo('Lean');
     }
+
+    updateAvatarMenu();
 
     // Init router now that auth state is known
     initRouter();
@@ -99,9 +113,11 @@ onAuth(async (user) => {
         navigate('/');
       }
     });
+    updateAvatarMenu();
     navigate('/');
   } else {
     stopRealtimeSync();
+    updateAvatarMenu();
     navigate('/login');
   }
 });

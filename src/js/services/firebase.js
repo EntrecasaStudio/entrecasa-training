@@ -6,14 +6,13 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// TODO: Replace with your Firebase project config
 const firebaseConfig = {
-  apiKey: '',
-  authDomain: '',
-  projectId: '',
-  storageBucket: '',
-  messagingSenderId: '',
-  appId: '',
+  apiKey: 'AIzaSyC72hE9OkVdmnt5TuhtNamrfq8DY3bdIlM',
+  authDomain: 'entrecasa-treiner.firebaseapp.com',
+  projectId: 'entrecasa-treiner',
+  storageBucket: 'entrecasa-treiner.firebasestorage.app',
+  messagingSenderId: '398542503159',
+  appId: '1:398542503159:web:408be61789b3e3938027f2',
 };
 
 // Check if Firebase is actually configured (has real values)

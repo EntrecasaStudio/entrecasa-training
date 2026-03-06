@@ -1,5 +1,6 @@
 import { getDataVersion } from '@/store.js';
 import { setActiveTab, setNavBarVisible } from '@js/components/nav-bar.js';
+import { setAvatarMenuVisible } from '@js/components/avatar-menu.js';
 import { getCurrentUser, auth } from '@js/services/firebase.js';
 
 // ── Route definitions ───────────────────────────
@@ -39,8 +40,9 @@ async function handleTabRoute(hashKey, tabDef) {
   const container = getContainer();
   if (!container) return;
 
-  // Show nav bar for tab routes
+  // Show nav bar + avatar for tab routes
   setNavBarVisible(true);
+  setAvatarMenuVisible(true);
   setActiveTab(tabDef.tab);
 
   const dataVer = getDataVersion();
@@ -113,8 +115,9 @@ async function handleOtherRoute(route, hash) {
   const match = hash.match(route.pattern);
   if (!match) return;
 
-  // Show/hide nav bar
+  // Show/hide nav bar + avatar
   setNavBarVisible(!route.fullscreen);
+  setAvatarMenuVisible(!route.fullscreen);
 
   // Clean up current view
   cleanupCurrentView(container);

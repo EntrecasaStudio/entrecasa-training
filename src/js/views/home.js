@@ -2,7 +2,6 @@ import {
   getRutinas,
   getWorkoutActivo,
   getUsuarioActivo,
-  setUsuarioActivo,
   getRutinaHoy,
   getProximoEntrenamiento,
   getPlanSemanal,
@@ -21,7 +20,7 @@ import {
   getDisplayName,
 } from '@js/helpers/rutina-helpers.js';
 import { getWeeklyStreak, getSessionsThisWeek, getPlannedDaysThisWeek, getDaysSinceLastSession, getMonthActivity, getSessionsForDate } from '@js/helpers/stats-helpers.js';
-import { getCurrentUser, auth, logout, switchAccount } from '@js/services/firebase.js';
+import { getCurrentUser } from '@js/services/firebase.js';
 import { showToast } from '@js/components/toast.js';
 
 // ── Month calendar state ────────────────────
@@ -278,37 +277,8 @@ export function render() {
       </div>`
     : '';
 
-  // User header: Firebase mode (avatar + switch/logout) or local mode (Lean/Nat toggle)
+  // Greeting (user name from Firebase or local)
   const displayName = firebaseUser?.displayName?.split(' ')[0] || usuario;
-  let userHeader = '';
-  if (firebaseUser) {
-    const avatarHtml = firebaseUser.photoURL
-      ? `<img class="user-avatar" src="${firebaseUser.photoURL}" alt="" referrerpolicy="no-referrer" />`
-      : `<div class="user-avatar-placeholder">${displayName[0] || '?'}</div>`;
-    userHeader = `
-      <div class="user-header">
-        <button class="user-header-info" data-action="switch-account" title="Cambiar cuenta">
-          ${avatarHtml}
-          <span class="user-switch-hint">${icon.chevronDown}</span>
-        </button>
-        <div class="user-header-actions">
-          <button class="btn-icon-action" data-action="logout" title="Cerrar sesion">
-            ${icon.logOut}
-          </button>
-        </div>
-      </div>
-    `;
-  } else if (!auth) {
-    // Local mode — Lean / Nat toggle with sliding pill
-    userHeader = `
-      <div class="user-toggle" data-active="${usuario === 'Nat' ? '1' : '0'}">
-        <button class="user-toggle-btn ${usuario === 'Lean' ? 'active' : ''}" data-action="switch-user" data-user="Lean">Lean</button>
-        <button class="user-toggle-btn ${usuario === 'Nat' ? 'active' : ''}" data-action="switch-user" data-user="Nat">Nat</button>
-      </div>
-    `;
-  }
-
-  // Greeting
   const greeting = `<div class="home-greeting animate-in">${getGreeting(displayName)}</div>`;
 
   // Quick stats strip
@@ -328,7 +298,6 @@ export function render() {
   const calendar = renderMonthCalendar(usuario);
 
   return `
-    ${userHeader}
     ${greeting}
     ${planner}
     ${quickStats}
@@ -438,40 +407,6 @@ export function mount() {
     const id = btn.dataset.id;
 
     switch (action) {
-      case 'switch-user': {
-        const newUser = btn.dataset.user;
-        const toggle = document.querySelector('.user-toggle');
-        if (toggle) {
-          // Animate pill slide
-          toggle.dataset.active = newUser === 'Nat' ? '1' : '0';
-          toggle.querySelectorAll('.user-toggle-btn').forEach((b) => {
-            b.classList.toggle('active', b.dataset.user === newUser);
-          });
-          // Wait for animation then navigate
-          setTimeout(() => {
-            setUsuarioActivo(newUser);
-            navigate('/');
-          }, 250);
-        } else {
-          setUsuarioActivo(newUser);
-          navigate('/');
-        }
-        break;
-      }
-      case 'switch-account':
-        switchAccount().catch((err) => {
-          // User closed popup — not an error
-          if (err.code !== 'auth/popup-closed-by-user') {
-            showToast('Error al cambiar cuenta');
-            console.warn('[home] switchAccount error:', err);
-          }
-        });
-        break;
-      case 'logout':
-        if (confirm('¿Cerrar sesion?')) {
-          logout();
-        }
-        break;
       case 'start':
       case 'preview-routine':
         showPreview(id);

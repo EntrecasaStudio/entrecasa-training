@@ -15,7 +15,7 @@ body {
   max-width: 480px;
   margin: 0 auto;
   padding: var(--space-md);
-  padding-top: env(safe-area-inset-top, 0px);
+  padding-top: calc(56px + env(safe-area-inset-top, 0px));
 }
 
 /* View container for tab views */
