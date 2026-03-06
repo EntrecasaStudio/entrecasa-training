@@ -671,7 +671,35 @@
 
 .circuito-form-card {
   margin-bottom: var(--space-md);
+  border-left: 3px solid var(--color-border);
+  transition: border-color 200ms ease;
 }
+
+/* ── Circuit color coding ────────────────── */
+
+.circuito-color-pecho { border-left-color: var(--color-tag-pecho); }
+.circuito-color-espalda { border-left-color: var(--color-tag-espalda); }
+.circuito-color-piernas { border-left-color: var(--color-tag-piernas); }
+.circuito-color-core { border-left-color: var(--color-tag-core); }
+.circuito-color-brazos { border-left-color: var(--color-tag-brazos); }
+.circuito-color-gluteos { border-left-color: var(--color-tag-gluteos); }
+.circuito-color-hombros { border-left-color: var(--color-tag-hombros); }
+
+.circuito-num-pecho { color: var(--color-tag-pecho); }
+.circuito-num-espalda { color: var(--color-tag-espalda); }
+.circuito-num-piernas { color: var(--color-tag-piernas); }
+.circuito-num-core { color: var(--color-tag-core); }
+.circuito-num-brazos { color: var(--color-tag-brazos); }
+.circuito-num-gluteos { color: var(--color-tag-gluteos); }
+.circuito-num-hombros { color: var(--color-tag-hombros); }
+
+.circuito-select-pecho { border-color: color-mix(in srgb, var(--color-tag-pecho) 40%, var(--color-border)); color: var(--color-tag-pecho); }
+.circuito-select-espalda { border-color: color-mix(in srgb, var(--color-tag-espalda) 40%, var(--color-border)); color: var(--color-tag-espalda); }
+.circuito-select-piernas { border-color: color-mix(in srgb, var(--color-tag-piernas) 40%, var(--color-border)); color: var(--color-tag-piernas); }
+.circuito-select-core { border-color: color-mix(in srgb, var(--color-tag-core) 40%, var(--color-border)); color: var(--color-tag-core); }
+.circuito-select-brazos { border-color: color-mix(in srgb, var(--color-tag-brazos) 40%, var(--color-border)); color: var(--color-tag-brazos); }
+.circuito-select-gluteos { border-color: color-mix(in srgb, var(--color-tag-gluteos) 40%, var(--color-border)); color: var(--color-tag-gluteos); }
+.circuito-select-hombros { border-color: color-mix(in srgb, var(--color-tag-hombros) 40%, var(--color-border)); color: var(--color-tag-hombros); }
 
 .circuito-form-header {
   display: flex;

@@ -7,6 +7,15 @@ import { showModal } from '@js/components/modal.js';
 import { showToast } from '@js/components/toast.js';
 
 const GRUPOS_MUSCULARES = ['Pecho', 'Espalda', 'Piernas', 'Core', 'Brazos', 'Glúteos', 'Hombros'];
+const GRUPO_COLOR_SLUG = {
+  Pecho: 'pecho',
+  Espalda: 'espalda',
+  Piernas: 'piernas',
+  Core: 'core',
+  Brazos: 'brazos',
+  'Glúteos': 'gluteos',
+  Hombros: 'hombros',
+};
 const MIN_EJERCICIOS = 2;
 const MAX_EJERCICIOS = 4;
 const MIN_REPS = 6;
@@ -127,6 +136,7 @@ function renderEjercicio(ej, circIdx, ejIdx, totalEj) {
 }
 
 function renderCircuito(circ, idx) {
+  const colorSlug = GRUPO_COLOR_SLUG[circ.grupoMuscular] || 'pecho';
   const opciones = GRUPOS_MUSCULARES.map(
     (g) => `<option value="${g}" ${circ.grupoMuscular === g ? 'selected' : ''}>${g}</option>`,
   ).join('');
@@ -136,10 +146,10 @@ function renderCircuito(circ, idx) {
   const canAdd = circ.ejercicios.length < MAX_EJERCICIOS;
 
   return `
-    <div class="card circuito-form-card" data-circuito-idx="${idx}">
+    <div class="card circuito-form-card circuito-color-${colorSlug}" data-circuito-idx="${idx}">
       <div class="circuito-form-header">
-        <span class="circuito-form-number">${idx + 1}</span>
-        <select class="input" data-action="change-grupo" data-circ="${idx}">
+        <span class="circuito-form-number circuito-num-${colorSlug}">${idx + 1}</span>
+        <select class="input circuito-select-${colorSlug}" data-action="change-grupo" data-circ="${idx}">
           ${opciones}
         </select>
         <button class="btn-remove" data-action="remove-circuito" data-circ="${idx}"
@@ -453,6 +463,7 @@ export function mount(params) {
   const handleChange = (e) => {
     if (e.target.matches('[data-action="change-grupo"]')) {
       const circIdx = parseInt(e.target.dataset.circ);
+      syncFromInputs();
       rutina.circuitos[circIdx].grupoMuscular = e.target.value;
       isDirty = true;
       // Close picker when group changes (exercises will differ)
@@ -460,6 +471,7 @@ export function mount(params) {
         activePicker = null;
         pickerQuery = '';
       }
+      reRender();
     }
     // Mark dirty on any numeric field change
     if (e.target.matches('[data-field]')) {
