@@ -1105,28 +1105,13 @@ select.input {
   color: var(--color-danger);
 }
 
-/* Gmail-style account items */
-.avatar-account-item {
+/* Google account info row (non-interactive) */
+.avatar-account-info-row {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  width: 100%;
   padding: var(--space-sm) var(--space-md);
-  background: none;
-  border: none;
-  color: var(--color-text);
   font-size: var(--text-sm);
-  cursor: pointer;
-  transition: background var(--transition-fast);
-  -webkit-tap-highlight-color: transparent;
-}
-
-.avatar-account-item:active {
-  background: color-mix(in srgb, var(--color-text) 8%, transparent);
-}
-
-.avatar-account-item.active {
-  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
 }
 
 .avatar-account-info {

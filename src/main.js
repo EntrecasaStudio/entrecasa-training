@@ -11,7 +11,7 @@ import { initRouter, navigate } from './router.js';
 import { seedIfEmpty } from './seed.js';
 import { mountNavBar } from '@js/components/nav-bar.js';
 import { mountVoiceFab } from '@js/components/voice-fab.js';
-import { mountAvatarMenu, updateAvatarMenu, registerAccount } from '@js/components/avatar-menu.js';
+import { mountAvatarMenu, updateAvatarMenu } from '@js/components/avatar-menu.js';
 import { loadSavedTheme } from '@js/services/theme-manager.js';
 import { onAuth, auth } from '@js/services/firebase.js';
 import { startRealtimeSync, stopRealtimeSync, downloadAllData, uploadAllData } from '@js/services/sync.js';
@@ -84,9 +84,8 @@ onAuth(async (user) => {
 
     // First auth callback — user session restored (or null)
     if (user) {
-      // Register account and set profile (Lean/Nat) based on uid mapping
-      const profile = registerAccount(user);
-      setUsuarioActivo(profile || 'Lean');
+      // Keep stored profile or default to 'Lean'
+      if (!localStorage.getItem('gym_usuario')) setUsuarioActivo('Lean');
       // Sync with Firestore: download cloud data, upload local data
       try {
         const hadCloud = await downloadAllData();
@@ -95,15 +94,13 @@ onAuth(async (user) => {
         console.warn('[app] Initial sync failed:', err.message);
       }
       startRealtimeSync(() => {
-        // Remote data changed — refresh if on home
-        if (window.location.hash === '' || window.location.hash === '#/') {
-          navigate('/');
-        }
+        // Remote data changed — refresh current view
+        const hash = window.location.hash || '#/';
+        navigate(hash.replace('#', '') || '/');
       });
     } else if (!auth) {
       // No Firebase — keep stored user or default to 'Lean'
-      const stored = localStorage.getItem('gym_usuario');
-      if (!stored) setUsuarioActivo('Lean');
+      if (!localStorage.getItem('gym_usuario')) setUsuarioActivo('Lean');
     }
 
     updateAvatarMenu();
@@ -114,12 +111,11 @@ onAuth(async (user) => {
     return;
   }
 
-  // ── Subsequent auth state changes (login / account switch) ──────
+  // ── Subsequent auth state changes (login / logout) ──────
   if (user) {
     stopRealtimeSync();
-    // Register account and switch to their profile
-    const profile = registerAccount(user);
-    setUsuarioActivo(profile || 'Lean');
+    // Keep stored profile or default to 'Lean'
+    if (!localStorage.getItem('gym_usuario')) setUsuarioActivo('Lean');
     // Sync data for this account
     try {
       await uploadAllData();
@@ -128,9 +124,8 @@ onAuth(async (user) => {
       console.warn('[app] Sync after login failed:', err.message);
     }
     startRealtimeSync(() => {
-      if (window.location.hash === '' || window.location.hash === '#/') {
-        navigate('/');
-      }
+      const hash = window.location.hash || '#/';
+      navigate(hash.replace('#', '') || '/');
     });
     updateAvatarMenu();
     navigate('/');
