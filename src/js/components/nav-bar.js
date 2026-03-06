@@ -1,4 +1,5 @@
 import { icon } from '@js/icons.js';
+import { haptic } from '@js/helpers/haptics.js';
 
 const TAB_MAP = {
   entrenamiento: '#/',
@@ -38,7 +39,22 @@ function navHTML() {
 /** Render nav once into #nav-bar container */
 export function mountNavBar() {
   const container = document.getElementById('nav-bar');
-  if (container) container.innerHTML = navHTML();
+  if (!container) return;
+  container.innerHTML = navHTML();
+
+  // Haptic + icon bounce on tab tap
+  container.addEventListener('click', (e) => {
+    const item = e.target.closest('.nav-bottom-item');
+    if (!item) return;
+
+    haptic.light();
+
+    // Bounce animation
+    item.classList.add('nav-icon-bounce');
+    item.addEventListener('animationend', () => {
+      item.classList.remove('nav-icon-bounce');
+    }, { once: true });
+  });
 }
 
 /** Update active tab class without re-rendering */

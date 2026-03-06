@@ -16,6 +16,8 @@ import { loadSavedTheme } from '@js/services/theme-manager.js';
 import { onAuth, auth } from '@js/services/firebase.js';
 import { startRealtimeSync, stopRealtimeSync, downloadAllData, uploadAllData } from '@js/services/sync.js';
 import { setUsuarioActivo } from './store.js';
+import { initSwipeBack } from '@js/helpers/swipe-back.js';
+import { initPullToRefresh } from '@js/helpers/pull-to-refresh.js';
 
 // Seed initial rutinas from Notion data (only if empty)
 seedIfEmpty();
@@ -47,6 +49,19 @@ if ('serviceWorker' in navigator) {
 mountNavBar();
 mountVoiceFab();
 mountAvatarMenu();
+
+// Gesture navigation
+initSwipeBack();
+initPullToRefresh(async () => {
+  try {
+    await downloadAllData();
+  } catch (e) {
+    // Offline or not logged in — ignore
+  }
+  // Re-render current view
+  const hash = window.location.hash || '#/';
+  if (hash === '#/' || hash === '#') navigate('/');
+});
 
 // ── Auth-aware initialization ──────────────
 

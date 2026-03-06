@@ -30,6 +30,32 @@ let currentCleanup = null;
 let currentViewEl = null;
 let isTransitioning = false;
 
+// ── Transition direction tracking ────────────
+// 'tab' = tab-to-tab crossfade, 'push' = slide from right, 'pop' = slide from left
+let transitionDirection = 'tab';
+let currentRouteType = null; // 'tab' | 'other'
+
+function detectDirection(hash) {
+  const isTab = !!TAB_ROUTES[hash];
+  if (isTab && currentRouteType === 'other') return 'pop';
+  if (isTab) return 'tab';
+  return 'push';
+}
+
+/** Force next transition direction (used by swipe-back). */
+export function setTransitionDirection(dir) {
+  transitionDirection = dir;
+}
+
+function getEnterClass() {
+  switch (transitionDirection) {
+    case 'push': return 'view-push-entering';
+    case 'pop':  return 'view-pop-entering';
+    case 'tab':  return 'view-tab-entering';
+    default:     return 'view-entering';
+  }
+}
+
 function getContainer() {
   return document.getElementById('view-container');
 }
@@ -84,10 +110,11 @@ async function handleTabRoute(hashKey, tabDef) {
   container.appendChild(wrapper);
   showTabWrapper(container, wrapper);
 
-  // Enter animation
-  wrapper.classList.add('view-entering');
+  // Enter animation — direction-aware
+  const enterCls = getEnterClass();
+  wrapper.classList.add(enterCls);
   wrapper.addEventListener('animationend', () => {
-    wrapper.classList.remove('view-entering');
+    wrapper.classList.remove(enterCls);
     isTransitioning = false;
   }, { once: true });
 
@@ -143,10 +170,11 @@ async function handleOtherRoute(route, hash) {
   wrapper.innerHTML = mod.render(params);
   container.appendChild(wrapper);
 
-  // Enter animation
-  wrapper.classList.add('view-entering');
+  // Enter animation — direction-aware
+  const enterCls = getEnterClass();
+  wrapper.classList.add(enterCls);
   wrapper.addEventListener('animationend', () => {
-    wrapper.classList.remove('view-entering');
+    wrapper.classList.remove(enterCls);
     isTransitioning = false;
   }, { once: true });
 
@@ -190,9 +218,13 @@ async function handleRoute() {
     }
   }
 
+  // Detect transition direction before rendering
+  transitionDirection = detectDirection(hash);
+
   // 1. Check tab routes (exact match)
   if (TAB_ROUTES[hash]) {
     await handleTabRoute(hash, TAB_ROUTES[hash]);
+    currentRouteType = 'tab';
     return;
   }
 
@@ -200,6 +232,7 @@ async function handleRoute() {
   for (const route of OTHER_ROUTES) {
     if (hash.match(route.pattern)) {
       await handleOtherRoute(route, hash);
+      currentRouteType = 'other';
       return;
     }
   }
