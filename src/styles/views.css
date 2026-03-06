@@ -712,6 +712,13 @@
   flex: 1;
 }
 
+.circuito-reorder {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
 .circuito-form-number {
   font-size: var(--text-sm);
   font-weight: var(--fw-bold);
@@ -1045,6 +1052,29 @@
 
 .ej-picker-add:active {
   background-color: color-mix(in srgb, var(--color-accent) 15%, transparent);
+}
+
+.ej-picker-info {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  opacity: 0.5;
+  transition: opacity 150ms ease, color 150ms ease;
+}
+
+.ej-picker-info:active {
+  opacity: 1;
+  color: var(--color-accent);
+}
+
+.ej-picker-info svg {
+  width: 16px;
+  height: 16px;
 }
 
 .add-ejercicio-btn,
@@ -2180,4 +2210,49 @@
   margin-top: var(--space-lg);
   font-size: var(--text-xs);
   color: var(--color-text-muted);
+}
+
+/* ── View loader (snow-ball spinner) ───── */
+
+.view-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  animation: fade-in 100ms ease-out;
+}
+
+.view-loader-spinner {
+  width: 44px;
+  height: 44px;
+  position: relative;
+}
+
+.view-loader-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2.5px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+.view-loader-orbit {
+  position: absolute;
+  inset: 0;
+  animation: loader-spin 1.1s linear infinite;
+}
+
+.view-loader-ball {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%,
+    color-mix(in srgb, var(--color-accent), white 20%),
+    var(--color-accent));
+  box-shadow:
+    0 0 12px color-mix(in srgb, var(--color-accent) 40%, transparent),
+    0 1px 3px rgba(0,0,0,0.3);
 }

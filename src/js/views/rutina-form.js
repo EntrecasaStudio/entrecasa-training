@@ -5,6 +5,7 @@ import { icon } from '@js/icons.js';
 import { buscarEjerciciosPorCategorias, addEjercicioCustom } from '@js/ejercicios-catalogo.js';
 import { showModal } from '@js/components/modal.js';
 import { showToast } from '@js/components/toast.js';
+import { showExerciseDetail } from '@js/helpers/ejercicio-detail.js';
 
 const GRUPOS_MUSCULARES = ['Pecho', 'Espalda', 'Piernas', 'Core', 'Brazos', 'Glúteos', 'Hombros'];
 const GRUPO_COLOR_SLUG = {
@@ -66,6 +67,7 @@ function renderPicker(circIdx, ejIdx) {
             data-circ="${circIdx}" data-ej="${ejIdx}" data-nombre="${e.nombre}">
       <span class="ej-picker-option-name">${e.nombre}</span>
       <span class="ej-item-type ${e.tipo}">${e.tipo === 'maquina' ? 'Máquina' : 'Funcional'}</span>
+      <span class="ej-picker-info" data-action="show-ejercicio-detail" data-nombre="${e.nombre}" title="Ver detalle">${icon.info}</span>
     </button>
   `,
     )
@@ -145,6 +147,9 @@ function renderCircuito(circ, idx) {
   const ejercicios = circ.ejercicios.map((ej, ejIdx) => renderEjercicio(ej, idx, ejIdx, totalEj)).join('');
   const canAdd = circ.ejercicios.length < MAX_EJERCICIOS;
 
+  const canMoveCircUp = idx > 0;
+  const canMoveCircDown = idx < rutina.circuitos.length - 1;
+
   return `
     <div class="card circuito-form-card circuito-color-${colorSlug}" data-circuito-idx="${idx}">
       <div class="circuito-form-header">
@@ -152,6 +157,12 @@ function renderCircuito(circ, idx) {
         <select class="input circuito-select-${colorSlug}" data-action="change-grupo" data-circ="${idx}">
           ${opciones}
         </select>
+        <div class="circuito-reorder" style="${rutina.circuitos.length <= 1 ? 'visibility:hidden' : ''}">
+          <button class="btn-reorder" data-action="move-circuito-up" data-circ="${idx}"
+                  ${canMoveCircUp ? '' : 'disabled'} title="Mover arriba">${icon.chevronUp}</button>
+          <button class="btn-reorder" data-action="move-circuito-down" data-circ="${idx}"
+                  ${canMoveCircDown ? '' : 'disabled'} title="Mover abajo">${icon.chevronDown}</button>
+        </div>
         <button class="btn-remove" data-action="remove-circuito" data-circ="${idx}"
                 title="Eliminar circuito" style="${rutina.circuitos.length <= 1 ? 'visibility:hidden' : ''}">${icon.trash}</button>
       </div>
@@ -444,6 +455,33 @@ export function mount(params) {
         break;
       }
 
+      case 'move-circuito-up': {
+        if (circIdx > 0) {
+          syncFromInputs();
+          isDirty = true;
+          activePicker = null;
+          [rutina.circuitos[circIdx - 1], rutina.circuitos[circIdx]] = [rutina.circuitos[circIdx], rutina.circuitos[circIdx - 1]];
+          reRender();
+        }
+        break;
+      }
+
+      case 'move-circuito-down': {
+        if (circIdx < rutina.circuitos.length - 1) {
+          syncFromInputs();
+          isDirty = true;
+          activePicker = null;
+          [rutina.circuitos[circIdx], rutina.circuitos[circIdx + 1]] = [rutina.circuitos[circIdx + 1], rutina.circuitos[circIdx]];
+          reRender();
+        }
+        break;
+      }
+
+      case 'show-ejercicio-detail': {
+        showExerciseDetail(btn.dataset.nombre);
+        break;
+      }
+
       case 'save':
         syncFromInputs();
         {
@@ -502,6 +540,7 @@ export function mount(params) {
                         data-circ="${circIdx}" data-ej="${ejIdx}" data-nombre="${r.nombre}">
                   <span class="ej-picker-option-name">${r.nombre}</span>
                   <span class="ej-item-type ${r.tipo}">${r.tipo === 'maquina' ? 'Máquina' : 'Funcional'}</span>
+                  <span class="ej-picker-info" data-action="show-ejercicio-detail" data-nombre="${r.nombre}" title="Ver detalle">${icon.info}</span>
                 </button>
               `,
                 )

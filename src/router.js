@@ -60,6 +60,29 @@ function getContainer() {
   return document.getElementById('view-container');
 }
 
+// ── View loader (snow-ball spinner) ────────
+function showViewLoader() {
+  const container = getContainer();
+  if (!container || container.querySelector('.view-loader')) return;
+  const loader = document.createElement('div');
+  loader.className = 'view-loader';
+  loader.innerHTML = `
+    <div class="view-loader-spinner">
+      <div class="view-loader-track"></div>
+      <div class="view-loader-orbit">
+        <div class="view-loader-ball"></div>
+      </div>
+    </div>`;
+  container.appendChild(loader);
+}
+
+function hideViewLoader() {
+  const container = getContainer();
+  if (!container) return;
+  const loader = container.querySelector('.view-loader');
+  if (loader) loader.remove();
+}
+
 // ── Tab route handling (with cache) ─────────────
 
 async function handleTabRoute(hashKey, tabDef) {
@@ -101,7 +124,10 @@ async function handleTabRoute(hashKey, tabDef) {
   // Clean up current view
   cleanupCurrentView(container);
 
+  showViewLoader();
   const mod = await tabDef.load();
+  hideViewLoader();
+
   const wrapper = document.createElement('div');
   wrapper.className = 'tab-view';
   wrapper.dataset.tabKey = hashKey;
@@ -162,7 +188,10 @@ async function handleOtherRoute(route, hash) {
     child.style.display = 'none';
   }
 
+  showViewLoader();
   const mod = await route.load();
+  hideViewLoader();
+
   const params = { ...(route.params || {}), id: match[1] || null };
 
   const wrapper = document.createElement('div');
