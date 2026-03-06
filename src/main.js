@@ -11,7 +11,7 @@ import { initRouter, navigate } from './router.js';
 import { seedIfEmpty } from './seed.js';
 import { mountNavBar } from '@js/components/nav-bar.js';
 import { mountVoiceFab } from '@js/components/voice-fab.js';
-import { mountAvatarMenu, updateAvatarMenu } from '@js/components/avatar-menu.js';
+import { mountAvatarMenu, updateAvatarMenu, registerAccount } from '@js/components/avatar-menu.js';
 import { loadSavedTheme } from '@js/services/theme-manager.js';
 import { onAuth, auth } from '@js/services/firebase.js';
 import { startRealtimeSync, stopRealtimeSync, downloadAllData, uploadAllData } from '@js/services/sync.js';
@@ -84,11 +84,9 @@ onAuth(async (user) => {
 
     // First auth callback — user session restored (or null)
     if (user) {
-      // Keep existing stored user name (Lean/Nat) — only set if none stored
-      const stored = localStorage.getItem('gym_usuario');
-      if (!stored) {
-        setUsuarioActivo('Lean'); // default to Lean — must match seed data
-      }
+      // Register account and set profile (Lean/Nat) based on uid mapping
+      const profile = registerAccount(user);
+      setUsuarioActivo(profile || 'Lean');
       // Sync with Firestore: download cloud data, upload local data
       try {
         const hadCloud = await downloadAllData();
@@ -119,12 +117,10 @@ onAuth(async (user) => {
   // ── Subsequent auth state changes (login / account switch) ──────
   if (user) {
     stopRealtimeSync();
-    // Keep existing stored user name (Lean/Nat) — only set if none stored
-    const stored = localStorage.getItem('gym_usuario');
-    if (!stored) {
-      setUsuarioActivo('Lean'); // default to Lean for new logins
-    }
-    // First login: upload local data; subsequent: download from Firestore
+    // Register account and switch to their profile
+    const profile = registerAccount(user);
+    setUsuarioActivo(profile || 'Lean');
+    // Sync data for this account
     try {
       await uploadAllData();
       await downloadAllData();

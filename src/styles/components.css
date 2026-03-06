@@ -1105,6 +1105,51 @@ select.input {
   color: var(--color-danger);
 }
 
+/* Gmail-style account items */
+.avatar-account-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  background: none;
+  border: none;
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.avatar-account-item:active {
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+.avatar-account-item.active {
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
+.avatar-account-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  text-align: left;
+}
+
+.avatar-account-name {
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+}
+
+.avatar-account-email {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* ── Offline banner ────────────────────────── */
 
 .offline-banner {
