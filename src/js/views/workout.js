@@ -5,6 +5,8 @@ import { showModal } from '@js/components/modal.js';
 import { playCountdownTick, playFinishBeep } from '@js/helpers/audio.js';
 import { getExerciseProgressData } from '@js/helpers/stats-helpers.js';
 import { haptic } from '@js/helpers/haptics.js';
+import { showExerciseDetail } from '@js/helpers/ejercicio-detail.js';
+import { icon } from '@js/icons.js';
 
 let state = null;
 let timerInterval = null;
@@ -12,6 +14,7 @@ let restInterval = null;
 let restRemaining = 0;
 const PESO_STEPS = [1, 2.5, 5];
 const REST_STEPS = [60, 90, 120];
+const NUM_VUELTAS = 3;
 let pesoStepIdx = 1; // default 2.5
 let restStepIdx = 1; // default 90s
 let longPressTimer = null;
@@ -35,7 +38,23 @@ function initState(rutinaId) {
   if (lastSesion) {
     lastSesion.circuitos.forEach((c) => {
       c.ejercicios.forEach((e) => {
-        lastMap[e.nombre] = { reps: e.repsReal, peso: e.pesoRealKg };
+        if (e.vueltas?.length > 0) {
+          lastMap[e.nombre] = {
+            vueltas: e.vueltas,
+            chaleco: e.chaleco || false,
+            pesoChalecoKg: e.pesoChalecoKg || 0,
+          };
+        } else {
+          // Old format: replicate single value into all rounds
+          lastMap[e.nombre] = {
+            vueltas: Array.from({ length: NUM_VUELTAS }, () => ({
+              repsReal: e.repsReal,
+              pesoRealKg: e.pesoRealKg,
+            })),
+            chaleco: false,
+            pesoChalecoKg: 0,
+          };
+        }
       });
     });
   }
@@ -50,12 +69,27 @@ function initState(rutinaId) {
       grupoMuscular: circ.grupoMuscular,
       ejercicios: circ.ejercicios.map((ej) => {
         const prev = lastMap[ej.nombre];
+        const defaultVueltas = Array.from({ length: NUM_VUELTAS }, () => ({
+          repsReal: ej.repsObjetivo,
+          pesoRealKg: ej.pesoKg,
+        }));
+
+        // If prev has fewer rounds than NUM_VUELTAS, pad with last round values
+        let vueltas = defaultVueltas;
+        if (prev) {
+          vueltas = Array.from({ length: NUM_VUELTAS }, (_, i) => {
+            const src = prev.vueltas[i] || prev.vueltas[prev.vueltas.length - 1];
+            return { repsReal: src.repsReal, pesoRealKg: src.pesoRealKg };
+          });
+        }
+
         return {
           nombre: ej.nombre,
           repsObjetivo: ej.repsObjetivo,
-          repsReal: prev ? prev.reps : ej.repsObjetivo,
           pesoObjetivoKg: ej.pesoKg,
-          pesoRealKg: prev ? prev.peso : ej.pesoKg,
+          chaleco: prev ? prev.chaleco : false,
+          pesoChalecoKg: prev ? prev.pesoChalecoKg : 0,
+          vueltas,
         };
       }),
     })),
@@ -110,41 +144,88 @@ function shouldSuggestOverload(nombre, ej) {
   const points = getExerciseProgressData(state.usuario, nombre);
   if (points.length < 2) return false;
   const last2 = points.slice(-2);
-  // Check if the last 2 sessions met or exceeded the target reps and peso
   return last2.every((p) => p.reps >= ej.repsObjetivo && p.peso >= ej.pesoObjetivoKg);
 }
 
 function renderEjercicio(ej, ejIdx) {
   const overload = shouldSuggestOverload(ej.nombre, ej);
+  const isBodyweight = ej.pesoObjetivoKg === 0;
+
+  // Vest toggle
+  const vestHtml = `
+    <div class="workout-vest-row">
+      <label class="workout-vest-toggle">
+        <input type="checkbox" class="workout-vest-checkbox" data-ej="${ejIdx}"
+               ${ej.chaleco ? 'checked' : ''}>
+        <span class="workout-vest-icon">${icon.vest}</span>
+        <span class="workout-vest-text">Chaleco</span>
+      </label>
+      <div class="workout-vest-peso ${ej.chaleco ? '' : 'hidden'}">
+        <input type="number" class="workout-vest-input" inputmode="decimal" step="0.5"
+               value="${ej.pesoChalecoKg}" data-ej="${ejIdx}" data-field="pesoChalecoKg"
+               placeholder="kg">
+        <span class="workout-vest-unit">kg</span>
+      </div>
+    </div>
+  `;
+
+  // Column headers
+  const columnHeaders = `
+    <div class="workout-vuelta-headers">
+      <span class="workout-vuelta-header-spacer"></span>
+      <span class="workout-vuelta-header">Reps</span>
+      ${isBodyweight ? '' : '<span class="workout-vuelta-header">Peso (kg)</span>'}
+    </div>
+  `;
+
+  // Round rows
+  const vueltasHtml = ej.vueltas.map((v, vIdx) => {
+    const weightStepper = isBodyweight ? '' : `
+      <div class="workout-vuelta-group">
+        <div class="stepper workout-stepper-sm" role="group">
+          <button class="stepper-btn" data-action="dec" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="pesoRealKg" aria-label="Disminuir peso vuelta ${vIdx + 1}">-</button>
+          <input type="number" class="stepper-value" inputmode="decimal" step="0.5"
+                 value="${v.pesoRealKg}" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="pesoRealKg"
+                 aria-label="Peso vuelta ${vIdx + 1}" aria-valuemin="0">
+          <button class="stepper-btn" data-action="inc" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="pesoRealKg" aria-label="Aumentar peso vuelta ${vIdx + 1}">+</button>
+        </div>
+      </div>
+    `;
+
+    return `
+      <div class="workout-vuelta-row">
+        <span class="workout-vuelta-label">V${vIdx + 1}</span>
+        <div class="workout-vuelta-group">
+          <div class="stepper workout-stepper-sm" role="group">
+            <button class="stepper-btn" data-action="dec" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="repsReal" aria-label="Disminuir reps vuelta ${vIdx + 1}">-</button>
+            <input type="number" class="stepper-value" inputmode="numeric"
+                   value="${v.repsReal}" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="repsReal"
+                   aria-label="Reps vuelta ${vIdx + 1}" aria-valuemin="0">
+            <button class="stepper-btn" data-action="inc" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="repsReal" aria-label="Aumentar reps vuelta ${vIdx + 1}">+</button>
+          </div>
+        </div>
+        ${weightStepper}
+      </div>
+    `;
+  }).join('');
+
   return `
     <div class="workout-ejercicio animate-in" style="animation-delay:${ejIdx * 60}ms">
-      <div class="workout-ejercicio-name">${ej.nombre}</div>
+      <div class="workout-ejercicio-header">
+        <div class="workout-ejercicio-name">${ej.nombre}</div>
+        <button class="workout-info-btn" data-action="show-detail" data-nombre="${ej.nombre}" aria-label="Info de ${ej.nombre}">
+          ${icon.info}
+        </button>
+      </div>
       <div class="workout-ejercicio-target">
-        Objetivo: ${ej.repsObjetivo} reps &middot; ${ej.pesoObjetivoKg} kg
+        Objetivo: ${ej.repsObjetivo} reps${isBodyweight ? '' : ` &middot; ${ej.pesoObjetivoKg} kg`}
       </div>
       ${overload ? '<div class="workout-overload-hint">&#9650; Subir peso?</div>' : ''}
       ${renderExerciseHistory(ej.nombre)}
-      <div class="workout-ejercicio-inputs">
-        <div class="workout-input-group">
-          <span class="workout-input-label" id="label-reps-${ejIdx}">Reps</span>
-          <div class="stepper workout-stepper" role="group" aria-labelledby="label-reps-${ejIdx}">
-            <button class="stepper-btn" data-action="dec" data-ej="${ejIdx}" data-field="repsReal" aria-label="Disminuir repeticiones">-</button>
-            <input type="number" class="stepper-value" inputmode="numeric"
-                   value="${ej.repsReal}" data-ej="${ejIdx}" data-field="repsReal"
-                   aria-label="Repeticiones" aria-valuemin="0">
-            <button class="stepper-btn" data-action="inc" data-ej="${ejIdx}" data-field="repsReal" aria-label="Aumentar repeticiones">+</button>
-          </div>
-        </div>
-        <div class="workout-input-group">
-          <span class="workout-input-label" id="label-peso-${ejIdx}">Peso (kg)</span>
-          <div class="stepper workout-stepper" role="group" aria-labelledby="label-peso-${ejIdx}">
-            <button class="stepper-btn" data-action="dec" data-ej="${ejIdx}" data-field="pesoRealKg" aria-label="Disminuir peso">-</button>
-            <input type="number" class="stepper-value" inputmode="decimal" step="0.5"
-                   value="${ej.pesoRealKg}" data-ej="${ejIdx}" data-field="pesoRealKg"
-                   aria-label="Peso en kilogramos" aria-valuemin="0">
-            <button class="stepper-btn" data-action="inc" data-ej="${ejIdx}" data-field="pesoRealKg" aria-label="Aumentar peso">+</button>
-          </div>
-        </div>
+      ${vestHtml}
+      ${columnHeaders}
+      <div class="workout-vueltas">
+        ${vueltasHtml}
       </div>
     </div>
   `;
@@ -219,14 +300,36 @@ export function render(params) {
 function syncInputs() {
   if (!state) return;
   const circ = state.resultados[state.circuitoActual];
+
+  // Sync per-round stepper values
   document.querySelectorAll('.stepper-value').forEach((input) => {
     const ejIdx = parseInt(input.dataset.ej);
+    const vueltaIdx = input.dataset.vuelta != null ? parseInt(input.dataset.vuelta) : null;
     const field = input.dataset.field;
-    if (circ.ejercicios[ejIdx]) {
-      const val = parseFloat(input.value) || 0;
-      circ.ejercicios[ejIdx][field] = val;
+    const ej = circ.ejercicios[ejIdx];
+    if (!ej) return;
+
+    const val = parseFloat(input.value) || 0;
+    if (vueltaIdx != null && ej.vueltas[vueltaIdx]) {
+      ej.vueltas[vueltaIdx][field] = val;
     }
   });
+
+  // Sync vest checkbox and peso
+  document.querySelectorAll('.workout-vest-checkbox').forEach((cb) => {
+    const ejIdx = parseInt(cb.dataset.ej);
+    if (circ.ejercicios[ejIdx]) {
+      circ.ejercicios[ejIdx].chaleco = cb.checked;
+    }
+  });
+
+  document.querySelectorAll('.workout-vest-input').forEach((input) => {
+    const ejIdx = parseInt(input.dataset.ej);
+    if (circ.ejercicios[ejIdx]) {
+      circ.ejercicios[ejIdx].pesoChalecoKg = parseFloat(input.value) || 0;
+    }
+  });
+
   saveWorkoutActivo(state);
 }
 
@@ -332,8 +435,15 @@ function stopTimer() {
 
 function stepperAction(btn, action) {
   const ejIdx = parseInt(btn.dataset.ej);
+  const vueltaIdx = btn.dataset.vuelta;
   const field = btn.dataset.field;
-  const input = document.querySelector(`.stepper-value[data-ej="${ejIdx}"][data-field="${field}"]`);
+
+  let selector = `.stepper-value[data-ej="${ejIdx}"][data-field="${field}"]`;
+  if (vueltaIdx != null) {
+    selector += `[data-vuelta="${vueltaIdx}"]`;
+  }
+
+  const input = document.querySelector(selector);
   if (!input) return;
   const step = field === 'pesoRealKg' ? PESO_STEPS[pesoStepIdx] : 1;
   let val = parseFloat(input.value) || 0;
@@ -384,6 +494,12 @@ export function mount(params) {
       case 'inc':
       case 'dec': {
         stepperAction(btn, action);
+        break;
+      }
+
+      case 'show-detail': {
+        const nombre = btn.dataset.nombre;
+        if (nombre) showExerciseDetail(nombre);
         break;
       }
 
@@ -490,6 +606,14 @@ export function mount(params) {
 
   const handleChange = (e) => {
     if (e.target.matches('.stepper-value')) {
+      syncInputs();
+    }
+    if (e.target.matches('.workout-vest-checkbox')) {
+      const vestPeso = e.target.closest('.workout-vest-row')?.querySelector('.workout-vest-peso');
+      if (vestPeso) vestPeso.classList.toggle('hidden', !e.target.checked);
+      syncInputs();
+    }
+    if (e.target.matches('.workout-vest-input')) {
       syncInputs();
     }
   };

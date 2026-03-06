@@ -1149,6 +1149,31 @@
   font-weight: var(--fw-semibold);
 }
 
+/* Per-round rows in session detail */
+.detalle-vueltas {
+  margin-top: var(--space-xs);
+}
+
+.detalle-vuelta-row {
+  display: flex;
+  gap: var(--space-md);
+  padding: 2px 0;
+  font-size: var(--text-sm);
+}
+
+.detalle-vuelta-label {
+  width: 24px;
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.vest-badge {
+  font-size: var(--text-xs);
+  color: var(--color-accent);
+  margin-left: var(--space-xs);
+}
+
 /* ── Routine preview (modal) ────────────── */
 
 .preview-body {

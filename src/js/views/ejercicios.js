@@ -1,5 +1,5 @@
 import { CATEGORIAS, getEjerciciosPorCategoria } from '@js/ejercicios-catalogo.js';
-import { getSesiones, getUsuarioActivo, getNotaEjercicio } from '@/store.js';
+import { getSesiones, getUsuarioActivo, getNotaEjercicio, getEjBestRound } from '@/store.js';
 import { showExerciseDetail } from '@js/helpers/ejercicio-detail.js';
 
 /**
@@ -14,9 +14,10 @@ function buildLastUsedMap() {
     for (const circ of sesion.circuitos) {
       for (const ej of circ.ejercicios) {
         if (!map[ej.nombre]) {
+          const best = getEjBestRound(ej);
           map[ej.nombre] = {
-            reps: ej.repsReal,
-            peso: ej.pesoRealKg,
+            reps: best.repsReal,
+            peso: best.pesoRealKg,
             fecha: sesion.fecha,
           };
         }

@@ -1,4 +1,4 @@
-import { getSesiones, calcVolumenSesion } from '@/store.js';
+import { getSesiones, calcVolumenSesion, getEjBestRound } from '@/store.js';
 
 /**
  * Weekly streak: consecutive weeks (Mon-Sun) with at least 1 session.
@@ -97,11 +97,12 @@ export function getExerciseProgressData(usuario, nombre) {
     for (const c of s.circuitos) {
       for (const ej of c.ejercicios) {
         if (ej.nombre === nombre) {
+          const best = getEjBestRound(ej);
           points.push({
             fecha: s.fecha,
-            peso: ej.pesoRealKg,
-            reps: ej.repsReal,
-            volumen: ej.repsReal * ej.pesoRealKg,
+            peso: best.pesoRealKg,
+            reps: best.repsReal,
+            volumen: best.repsReal * best.pesoRealKg,
           });
         }
       }
@@ -123,12 +124,13 @@ export function getTopExercises(usuario, limit = 5) {
   for (const s of [...sesiones].reverse()) {
     for (const c of s.circuitos) {
       for (const ej of c.ejercicios) {
-        if (ej.pesoRealKg <= 0) continue;
+        const best = getEjBestRound(ej);
+        if (best.pesoRealKg <= 0) continue;
         if (!exerciseData[ej.nombre]) {
-          exerciseData[ej.nombre] = { first: ej.pesoRealKg, last: ej.pesoRealKg, maxPeso: ej.pesoRealKg, count: 1 };
+          exerciseData[ej.nombre] = { first: best.pesoRealKg, last: best.pesoRealKg, maxPeso: best.pesoRealKg, count: 1 };
         } else {
-          exerciseData[ej.nombre].last = ej.pesoRealKg;
-          exerciseData[ej.nombre].maxPeso = Math.max(exerciseData[ej.nombre].maxPeso, ej.pesoRealKg);
+          exerciseData[ej.nombre].last = best.pesoRealKg;
+          exerciseData[ej.nombre].maxPeso = Math.max(exerciseData[ej.nombre].maxPeso, best.pesoRealKg);
           exerciseData[ej.nombre].count++;
         }
       }

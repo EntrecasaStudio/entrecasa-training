@@ -1,4 +1,4 @@
-import { getSesionById, getPersonalRecords, calcVolumenSesion, getPreviousSesion, getUsuarioActivo } from '@/store.js';
+import { getSesionById, getPersonalRecords, calcVolumenSesion, getPreviousSesion, getUsuarioActivo, getEjVueltas, getEjBestRound } from '@/store.js';
 import { navigate } from '@/router.js';
 import { icon } from '@js/icons.js';
 import { showToast } from '@js/components/toast.js';
@@ -50,8 +50,9 @@ function renderPRs(sesion, records) {
     for (const ej of c.ejercicios) {
       const rec = records[ej.nombre];
       // PR if current peso matches the all-time max and this is from this session
-      if (rec && ej.pesoRealKg >= rec.maxPeso && ej.pesoRealKg > 0) {
-        prs.push({ nombre: ej.nombre, peso: ej.pesoRealKg });
+      const best = getEjBestRound(ej);
+      if (rec && best.pesoRealKg >= rec.maxPeso && best.pesoRealKg > 0) {
+        prs.push({ nombre: ej.nombre, peso: best.pesoRealKg });
       }
     }
   }
@@ -99,9 +100,8 @@ function renderDonutChart(sesion) {
   for (const c of sesion.circuitos) {
     const group = (c.grupoMuscular || 'Otro').toLowerCase();
     const vol = c.ejercicios.reduce((sum, ej) => {
-      const peso = ej.pesoRealKg ?? ej.pesoKg ?? 0;
-      const reps = ej.repsReal ?? ej.repsObjetivo ?? 0;
-      return sum + peso * reps;
+      const vueltas = getEjVueltas(ej);
+      return sum + vueltas.reduce((vs, v) => vs + (v.pesoRealKg * v.repsReal), 0);
     }, 0);
     groups[group] = (groups[group] || 0) + vol;
   }

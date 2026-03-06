@@ -1,4 +1,4 @@
-import { getSesionById, getSesionesByRutina, getPersonalRecords, calcVolumenSesion, getUsuarioActivo } from '@/store.js';
+import { getSesionById, getSesionesByRutina, getPersonalRecords, calcVolumenSesion, getUsuarioActivo, getEjVueltas, getEjBestRound } from '@/store.js';
 import { navigate } from '@/router.js';
 import { icon } from '@js/icons.js';
 
@@ -62,28 +62,46 @@ function renderStatsStrip(sesion) {
 function renderCircuito(circ, circIdx, prevCirc, records) {
   const ejercicios = circ.ejercicios
     .map((ej, ejIdx) => {
-      const prevEj = prevCirc?.ejercicios?.[ejIdx];
-      const pesoProgress = prevEj ? getProgressIcon(ej.pesoRealKg, prevEj.pesoRealKg) : '';
-      const repsProgress = prevEj ? getProgressIcon(ej.repsReal, prevEj.repsReal) : '';
+      const vueltas = getEjVueltas(ej);
+      const best = getEjBestRound(ej);
 
-      // PR badge: if this exercise's weight matches the all-time record
+      // PR badge
       const rec = records[ej.nombre];
-      const isPR = rec && ej.pesoRealKg > 0 && ej.pesoRealKg >= rec.maxPeso;
+      const isPR = rec && best.pesoRealKg > 0 && best.pesoRealKg >= rec.maxPeso;
       const prBadge = isPR ? '<span class="pr-badge">PR</span>' : '';
+
+      // Vest badge
+      const vestBadge = ej.chaleco ? `<span class="vest-badge">Chaleco ${ej.pesoChalecoKg}kg</span>` : '';
+
+      // Comparison with previous session (use best round)
+      const prevEj = prevCirc?.ejercicios?.[ejIdx];
+      const prevBest = prevEj ? getEjBestRound(prevEj) : null;
+      const pesoProgress = prevBest ? getProgressIcon(best.pesoRealKg, prevBest.pesoRealKg) : '';
+      const repsProgress = prevBest ? getProgressIcon(best.repsReal, prevBest.repsReal) : '';
+
+      // Per-round rows
+      const vueltasHtml = vueltas.length > 1
+        ? `<div class="detalle-vueltas">
+            ${vueltas.map((v, i) => `
+              <div class="detalle-vuelta-row">
+                <span class="detalle-vuelta-label">V${i + 1}</span>
+                <span>${v.repsReal} reps</span>
+                <span>${v.pesoRealKg > 0 ? v.pesoRealKg + ' kg' : ''}</span>
+              </div>
+            `).join('')}
+          </div>`
+        : '';
 
       return `
         <div class="ejercicio-detalle-row">
-          <div class="ejercicio-detalle-name">${ej.nombre} ${prBadge}</div>
+          <div class="ejercicio-detalle-name">${ej.nombre} ${prBadge} ${vestBadge}</div>
           <div class="ejercicio-detalle-values">
             <div class="ejercicio-detalle-col">
-              <div class="ejercicio-detalle-col-label">Reps</div>
-              <div class="ejercicio-detalle-col-value">${ej.repsReal} ${repsProgress}</div>
-            </div>
-            <div class="ejercicio-detalle-col">
-              <div class="ejercicio-detalle-col-label">Peso</div>
-              <div class="ejercicio-detalle-col-value">${ej.pesoRealKg} kg ${pesoProgress}</div>
+              <div class="ejercicio-detalle-col-label">Mejor</div>
+              <div class="ejercicio-detalle-col-value">${best.repsReal}r × ${best.pesoRealKg > 0 ? best.pesoRealKg + 'kg' : 'corporal'} ${repsProgress} ${pesoProgress}</div>
             </div>
           </div>
+          ${vueltasHtml}
         </div>
       `;
     })

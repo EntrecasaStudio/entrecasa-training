@@ -6,6 +6,7 @@ import {
   getProximoEntrenamiento,
   getPlanSemanal,
   setPlanDia,
+  getEjBestRound,
 } from '@/store.js';
 import { navigate } from '@/router.js';
 import { icon, iconLg } from '@js/icons.js';
@@ -347,11 +348,10 @@ function showCalendarDayDetail(sessions, day, month) {
 
     const circuitsHtml = s.circuitos.map((c) => {
       const ejsHtml = c.ejercicios.map((ej) => {
-        const peso = ej.pesoRealKg ?? ej.pesoKg ?? 0;
-        const reps = ej.repsReal ?? ej.repsObjetivo ?? 0;
+        const best = getEjBestRound(ej);
         return `<div class="cal-detail-ej">
           <span class="cal-detail-ej-name">${ej.nombre}</span>
-          <span class="cal-detail-ej-val">${reps}r × ${peso}kg</span>
+          <span class="cal-detail-ej-val">${best.repsReal}r × ${best.pesoRealKg}kg</span>
         </div>`;
       }).join('');
 

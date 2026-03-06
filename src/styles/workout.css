@@ -103,10 +103,44 @@
   box-shadow: var(--shadow-sm);
 }
 
+/* Exercise header: name + info button */
+.workout-ejercicio-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.workout-ejercicio-header .workout-ejercicio-name {
+  flex: 1;
+  margin-bottom: 0;
+}
+
 .workout-ejercicio-name {
   font-size: var(--text-lg);
   font-weight: var(--fw-semibold);
   margin-bottom: var(--space-xs);
+}
+
+.workout-info-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.workout-info-btn:active {
+  background-color: var(--color-surface-alt);
+}
+
+.workout-info-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
 .workout-ejercicio-target {
@@ -125,57 +159,165 @@
 .workout-ej-history {
   font-size: var(--text-xs);
   color: var(--color-accent);
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-sm);
   opacity: 0.85;
   letter-spacing: 0.3px;
 }
 
-.workout-ejercicio-inputs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+/* ── Vest toggle ────────────────────────── */
+
+.workout-vest-row {
+  display: flex;
+  align-items: center;
   gap: var(--space-md);
+  margin-bottom: var(--space-sm);
+  padding: var(--space-xs) 0;
 }
 
-.workout-input-group {
+.workout-vest-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  cursor: pointer;
+}
+
+.workout-vest-checkbox {
+  display: none;
+}
+
+.workout-vest-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  transition: all var(--transition-fast);
+}
+
+.workout-vest-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.workout-vest-checkbox:checked + .workout-vest-icon {
+  border-color: var(--color-accent);
+  background-color: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  color: var(--color-accent);
+}
+
+.workout-vest-text {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.workout-vest-peso {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.workout-vest-peso.hidden {
+  display: none;
+}
+
+.workout-vest-input {
+  width: 56px;
+  height: 36px;
+  text-align: center;
+  background-color: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  -moz-appearance: textfield;
+}
+
+.workout-vest-input::-webkit-outer-spin-button,
+.workout-vest-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+.workout-vest-unit {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+/* ── Vuelta (round) rows ─────────────────── */
+
+.workout-vuelta-headers {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0 0 var(--space-xs) 0;
+}
+
+.workout-vuelta-header-spacer {
+  width: 28px;
+  flex-shrink: 0;
+}
+
+.workout-vuelta-header {
+  flex: 1;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   text-align: center;
 }
 
-.workout-input-label {
-  display: block;
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-  font-weight: var(--fw-medium);
+.workout-vuelta-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
   margin-bottom: var(--space-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
-/* Larger stepper for workout — gym-friendly 56px touch targets */
-
-.workout-stepper .stepper-btn {
-  width: 56px;
-  height: 56px;
-  font-size: var(--text-xl);
-  border-radius: var(--radius-md);
+.workout-vuelta-row:last-child {
+  margin-bottom: 0;
 }
 
-.workout-stepper .stepper-btn:first-child {
-  border-radius: var(--radius-md) 0 0 var(--radius-md);
+.workout-vuelta-label {
+  width: 28px;
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-muted);
+  text-align: center;
+  flex-shrink: 0;
 }
 
-.workout-stepper .stepper-btn:last-child {
-  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+.workout-vuelta-group {
+  flex: 1;
 }
 
-.workout-stepper .stepper-value {
-  width: 72px;
-  height: 56px;
-  font-size: var(--text-2xl);
-  font-variant-numeric: tabular-nums;
-}
+/* Compact stepper for multi-round layout — 48px touch targets */
 
-.workout-stepper {
+.workout-stepper-sm {
   justify-content: center;
+}
+
+.workout-stepper-sm .stepper-btn {
+  width: 44px;
+  height: 44px;
+  font-size: var(--text-lg);
+  border-radius: var(--radius-sm);
+}
+
+.workout-stepper-sm .stepper-btn:first-child {
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.workout-stepper-sm .stepper-btn:last-child {
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.workout-stepper-sm .stepper-value {
+  width: 52px;
+  height: 44px;
+  font-size: var(--text-xl);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Peso step toggle ────────────────────── */
