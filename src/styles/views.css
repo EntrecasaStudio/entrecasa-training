@@ -1,96 +1,346 @@
-/* ── Week planner ────────────────────────── */
+/* ── Unified Calendar ────────────────────── */
 
-.week-planner {
-  display: flex;
-  justify-content: space-between;
-  gap: 4px;
-  margin-bottom: var(--space-lg);
+.cal-unified {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
 }
 
-.day-circle {
+.cal-unified-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.cal-unified-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cal-expand-chevron {
+  display: inline-flex;
+  transition: transform 250ms ease;
+}
+
+.cal-expand-chevron.expanded {
+  transform: rotate(180deg);
+}
+
+.cal-expand-chevron svg {
+  width: 14px;
+  height: 14px;
+}
+
+.cal-nav-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  color: var(--color-text-muted);
+  transition: background var(--transition-fast);
+}
+
+.cal-nav-btn:active {
+  background: color-mix(in srgb, var(--color-text) 10%, transparent);
+}
+
+.cal-nav-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.cal-today-btn {
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--color-accent);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cal-today-btn:active {
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
+/* ── Week strip ────────────────────────── */
+
+.cal-strip {
+  display: flex;
+  justify-content: space-around;
+  gap: 2px;
+}
+
+.cal-strip-day {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
+  padding: var(--space-xs) 0;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 150ms ease;
 }
 
-.day-circle-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-full);
+.cal-strip-day:active {
+  background-color: color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+.cal-strip-weekday {
+  font-size: 10px;
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+
+.cal-strip-number {
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  border: 2px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text);
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.cal-strip-day--today .cal-strip-number {
+  color: var(--color-accent);
+  font-weight: var(--fw-bold);
+}
+
+.cal-strip-day--selected .cal-strip-number {
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+  font-weight: var(--fw-bold);
+}
+
+.cal-strip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: transparent;
+}
+
+.cal-strip-dot--completed {
+  background-color: var(--color-accent);
+}
+
+.cal-strip-dot--planned {
+  border: 1.5px solid var(--color-accent);
+  background: transparent;
+}
+
+.cal-strip-dot--planned-cross {
+  border-color: var(--color-tag-espalda);
+}
+
+/* ── Month grid ────────────────────────── */
+
+.cal-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.cal-month-weekday {
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
   color: var(--color-text-muted);
-  transition: all var(--transition-fast);
+  text-align: center;
+  padding-bottom: var(--space-xs);
+  text-transform: uppercase;
 }
 
-.day-circle-btn:active {
-  transform: scale(0.88);
-  opacity: 0.8;
+.cal-month-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  border-radius: var(--radius-full);
+  position: relative;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 150ms ease;
+  gap: 1px;
 }
 
-.day-circle-btn.gimnasio {
-  border-color: var(--color-accent);
+.cal-month-day:active {
+  background-color: color-mix(in srgb, var(--color-text) 10%, transparent);
+}
+
+.cal-month-day--today {
+  color: var(--color-accent);
+  font-weight: var(--fw-bold);
+}
+
+.cal-month-day--selected {
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+  font-weight: var(--fw-bold);
+}
+
+.cal-month-day--selected:active {
+  background-color: color-mix(in srgb, var(--color-accent) 80%, var(--color-bg));
+}
+
+.cal-month-day--today.cal-month-day--selected {
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.cal-month-day--outside {
+  opacity: 0.2;
+  cursor: default;
+}
+
+.cal-month-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-full);
+  position: absolute;
+  bottom: 3px;
+}
+
+.cal-month-dot--completed {
+  background-color: var(--color-accent);
+}
+
+.cal-month-dot--planned {
+  border: 1.5px solid var(--color-accent);
+  background: transparent;
+  width: 4px;
+  height: 4px;
+}
+
+.cal-month-day--selected .cal-month-dot--completed {
+  background-color: var(--color-bg);
+}
+
+.cal-month-day--selected .cal-month-dot--planned {
+  border-color: var(--color-bg);
+}
+
+/* ── Day detail panel ──────────────────── */
+
+.cal-day-detail {
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  animation: cal-detail-enter 250ms ease-out;
+}
+
+.cal-day-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+}
+
+.cal-day-detail-date {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+}
+
+.cal-day-detail-badge {
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cal-day-detail-badge--gym {
   background-color: color-mix(in srgb, var(--color-accent) 15%, transparent);
   color: var(--color-accent);
 }
 
-.day-circle-btn.cross {
-  border-color: var(--color-tag-espalda);
+.cal-day-detail-badge--cross {
   background-color: color-mix(in srgb, var(--color-tag-espalda) 15%, transparent);
   color: var(--color-tag-espalda);
 }
 
-.day-circle-label {
-  font-size: var(--text-xs);
+.cal-day-detail-badge--completed {
+  background-color: color-mix(in srgb, var(--color-success, #22c55e) 15%, transparent);
+  color: var(--color-success, #22c55e);
+}
+
+.cal-day-detail-routine {
+  margin-bottom: var(--space-md);
+}
+
+.cal-day-detail-routine-name {
+  font-size: var(--text-base);
   font-weight: var(--fw-semibold);
-  color: var(--color-text-muted);
+  margin-bottom: 2px;
 }
 
-.day-circle-label.today {
-  color: var(--color-accent);
-}
-
-.day-circle-rutina {
-  font-size: 9px;
-  color: var(--color-text-muted);
-  max-width: 52px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: center;
-  line-height: 1.1;
-}
-
-.week-planner-legend {
+.cal-day-detail-routine-tags {
   display: flex;
-  justify-content: center;
-  gap: var(--space-lg);
-  margin-top: calc(-1 * var(--space-sm));
-  margin-bottom: var(--space-lg);
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-xs);
+}
+
+.cal-day-detail-routine-meta {
   font-size: var(--text-xs);
   color: var(--color-text-muted);
 }
 
-.legend-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: var(--radius-full);
-  margin-right: 4px;
-  vertical-align: middle;
+.cal-day-detail-session-info {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-sm);
 }
 
-.legend-dot.gimnasio {
-  background-color: var(--color-accent);
+.cal-day-detail-actions {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
 }
 
-.legend-dot.cross {
-  background-color: var(--color-tag-espalda);
+.cal-day-detail-actions .btn {
+  flex: 1;
+  min-width: 0;
+}
+
+.cal-day-detail-actions .btn-primary {
+  flex: 2;
+}
+
+.cal-day-detail-empty {
+  text-align: center;
+  padding: var(--space-md) 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.cal-day-detail-empty-title {
+  font-weight: var(--fw-medium);
+  margin-bottom: var(--space-sm);
+}
+
+@keyframes cal-detail-enter {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Entrenamiento hero (centered CTA) ────── */
@@ -234,247 +484,8 @@
 
 /* ── Mini routine cards ──────────────────── */
 
-.mini-card.today {
-  border-left: 3px solid var(--color-accent);
-}
-
-.mini-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-md);
-  background-color: var(--color-surface);
-  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
-  margin-bottom: var(--space-sm);
-  box-shadow: var(--shadow-sm);
-}
-
-.mini-card[data-action] {
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: background-color 0.15s, transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s;
-}
-
-.mini-card[data-action]:active {
-  background-color: color-mix(in srgb, var(--color-surface) 80%, var(--color-accent));
-  transform: scale(0.96);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.mini-card-left {
-  flex: 1;
-  min-width: 0;
-}
-
-.mini-card-day {
-  font-size: var(--text-xs);
-  font-weight: var(--fw-semibold);
-  color: var(--color-accent);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 2px;
-}
-
-.mini-card-name {
-  font-size: var(--text-base);
-  font-weight: var(--fw-medium);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.mini-card-meta {
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-  margin-top: 2px;
-}
-
 .rutina-last-done {
   font-weight: var(--fw-normal);
-}
-
-.mini-card-actions {
-  display: flex;
-  gap: var(--space-xs);
-  flex-shrink: 0;
-}
-
-/* ── Month calendar (Apple Fitness style) ── */
-
-.month-calendar {
-  margin-top: var(--space-xl);
-  padding: var(--space-md);
-  background-color: var(--color-surface);
-  border-radius: var(--radius-lg);
-}
-
-.cal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-md);
-}
-
-.cal-header-title {
-  font-size: var(--text-sm);
-  font-weight: var(--fw-semibold);
-  color: var(--color-text);
-}
-
-.cal-nav-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-full);
-  color: var(--color-text-muted);
-  transition: background var(--transition-fast);
-}
-
-.cal-nav-btn:active {
-  background: color-mix(in srgb, var(--color-text) 10%, transparent);
-}
-
-.cal-nav-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
-.cal-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-}
-
-.cal-weekday {
-  font-size: var(--text-xs);
-  font-weight: var(--fw-semibold);
-  color: var(--color-text-muted);
-  text-align: center;
-  padding-bottom: var(--space-xs);
-  text-transform: uppercase;
-}
-
-.cal-day {
-  aspect-ratio: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--text-sm);
-  color: var(--color-text);
-  border-radius: var(--radius-full);
-  position: relative;
-  transition: background-color 150ms ease;
-}
-
-.cal-day--today {
-  color: var(--color-accent);
-  font-weight: var(--fw-bold);
-}
-
-.cal-day--active {
-  background-color: color-mix(in srgb, var(--color-accent) 20%, transparent);
-  color: var(--color-accent);
-  font-weight: var(--fw-semibold);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.cal-day--active:active {
-  background-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
-}
-
-.cal-day--today.cal-day--active {
-  background-color: var(--color-accent);
-  color: var(--color-bg);
-}
-
-.cal-day--today.cal-day--active:active {
-  background-color: color-mix(in srgb, var(--color-accent) 80%, var(--color-bg));
-}
-
-.cal-day--outside {
-  opacity: 0.2;
-}
-
-/* ── Calendar day detail modal ──────────────── */
-
-.cal-detail-modal {
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-.cal-detail-session {
-  margin-bottom: var(--space-md);
-}
-
-.cal-detail-session:last-child {
-  margin-bottom: 0;
-}
-
-.cal-detail-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-sm);
-}
-
-.cal-detail-name {
-  font-weight: var(--fw-semibold);
-  color: var(--color-text);
-  font-size: var(--text-base);
-}
-
-.cal-detail-dur {
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-  background-color: color-mix(in srgb, var(--color-text) 8%, transparent);
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-}
-
-.cal-detail-circuit {
-  margin-bottom: var(--space-sm);
-}
-
-.cal-detail-circuit:last-child {
-  margin-bottom: 0;
-}
-
-.cal-detail-circuit-head {
-  font-size: var(--text-xs);
-  font-weight: var(--fw-semibold);
-  color: var(--color-accent);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: var(--space-xs);
-}
-
-.cal-detail-ej {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-text) 5%, transparent);
-}
-
-.cal-detail-ej:last-child {
-  border-bottom: none;
-}
-
-.cal-detail-ej-name {
-  font-size: var(--text-sm);
-  color: var(--color-text);
-}
-
-.cal-detail-ej-val {
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-  font-variant-numeric: tabular-nums;
 }
 
 /* ── Icon action buttons ─────────────────── */

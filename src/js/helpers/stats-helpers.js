@@ -1,4 +1,4 @@
-import { getSesiones, calcVolumenSesion, getEjBestRound } from '@/store.js';
+import { getSesiones, calcVolumenSesion, getEjBestRound, getPlanSemanal, getRutinas } from '@/store.js';
 
 /**
  * Weekly streak: consecutive weeks (Mon-Sun) with at least 1 session.
@@ -205,6 +205,44 @@ export function getMonthActivity(usuario, year, month) {
   }
 
   return activeDays;
+}
+
+/**
+ * Get planned routine for a specific date based on weekday plan.
+ * @param {string} usuario
+ * @param {Date} date
+ * @returns {{ tipo: string, routine: object|null } | null}
+ */
+export function getPlannedRoutineForDate(usuario, date) {
+  const dayOfWeek = date.getDay(); // 0=Sun ... 6=Sat
+  const plan = getPlanSemanal(usuario);
+  const tipo = plan[dayOfWeek];
+  if (!tipo) return null;
+
+  const rutinas = getRutinas().filter((r) => r.usuario === usuario);
+  const routine =
+    rutinas.find((r) => r.diaSemana === dayOfWeek) ||
+    rutinas.find((r) => r.tipo === tipo && r.diaSemana == null);
+
+  return { tipo, routine: routine || null };
+}
+
+/**
+ * Get day numbers in a month that have a weekly plan assigned.
+ * @param {string} usuario
+ * @param {number} year
+ * @param {number} month 0-indexed
+ * @returns {Map<number, string>} dayNumber -> tipo
+ */
+export function getMonthPlannedDays(usuario, year, month) {
+  const plan = getPlanSemanal(usuario);
+  const totalDays = new Date(year, month + 1, 0).getDate();
+  const result = new Map();
+  for (let d = 1; d <= totalDays; d++) {
+    const dow = new Date(year, month, d).getDay();
+    if (plan[dow]) result.set(d, plan[dow]);
+  }
+  return result;
 }
 
 /**

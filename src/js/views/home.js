@@ -6,84 +6,70 @@ import {
   getProximoEntrenamiento,
   getPlanSemanal,
   setPlanDia,
-  getEjBestRound,
+  clearRutinaDelDia,
 } from '@/store.js';
 import { navigate } from '@/router.js';
 import { icon, iconLg } from '@js/icons.js';
 import {
-  DIAS_LABEL,
-  DIAS_ABREV,
-  DIAS_ORDEN,
   renderTags,
   renderLastDone,
   showPreview,
   showDayAssignmentModal,
-  getDisplayName,
 } from '@js/helpers/rutina-helpers.js';
-import { getWeeklyStreak, getSessionsThisWeek, getPlannedDaysThisWeek, getDaysSinceLastSession, getMonthActivity, getSessionsForDate } from '@js/helpers/stats-helpers.js';
+import {
+  getWeeklyStreak,
+  getSessionsThisWeek,
+  getPlannedDaysThisWeek,
+  getDaysSinceLastSession,
+  getMonthActivity,
+  getSessionsForDate,
+  getPlannedRoutineForDate,
+  getMonthPlannedDays,
+} from '@js/helpers/stats-helpers.js';
 import { getCurrentUser } from '@js/services/firebase.js';
-import { showToast } from '@js/components/toast.js';
+import { calcVolumenSesion } from '@/store.js';
 
-// ── Month calendar state ────────────────────
+// ── Calendar state ──────────────────────────
 let calYear = new Date().getFullYear();
-let calMonth = new Date().getMonth(); // 0-indexed
+let calMonth = new Date().getMonth();
+let calExpanded = false;
+let selectedDate = new Date();
 
 const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-const CAL_WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const CAL_WEEKDAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+const DAY_NAMES_LONG = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
 
-function renderMonthCalendar(usuario) {
-  const activeDays = getMonthActivity(usuario, calYear, calMonth);
-  const today = new Date();
-  const isCurrentMonth = calYear === today.getFullYear() && calMonth === today.getMonth();
+function isSameDay(a, b) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
 
-  // First day of month (0=Sun, convert to Mon-based: 0=Mon)
-  const firstDay = new Date(calYear, calMonth, 1).getDay();
-  const startOffset = firstDay === 0 ? 6 : firstDay - 1; // Mon-based offset
-  const totalDays = new Date(calYear, calMonth + 1, 0).getDate();
-  const prevMonthDays = new Date(calYear, calMonth, 0).getDate();
+function startOfDay(d) {
+  const r = new Date(d);
+  r.setHours(0, 0, 0, 0);
+  return r;
+}
 
-  // Weekday headers
-  const weekHeaders = CAL_WEEKDAYS.map((d) => `<div class="cal-weekday">${d}</div>`).join('');
+function getMonday(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  d.setDate(d.getDate() - day + (day === 0 ? -6 : 1));
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
 
-  // Calendar cells
-  let cells = '';
-
-  // Previous month filler days
-  for (let i = startOffset - 1; i >= 0; i--) {
-    cells += `<div class="cal-day cal-day--outside">${prevMonthDays - i}</div>`;
+function formatDateRange(monday) {
+  const sunday = new Date(monday);
+  sunday.setDate(sunday.getDate() + 6);
+  const m1 = MONTH_NAMES[monday.getMonth()].substring(0, 3);
+  const m2 = MONTH_NAMES[sunday.getMonth()].substring(0, 3);
+  if (monday.getMonth() === sunday.getMonth()) {
+    return `${m1} ${monday.getDate()} - ${sunday.getDate()}, ${monday.getFullYear()}`;
   }
+  return `${m1} ${monday.getDate()} - ${m2} ${sunday.getDate()}, ${sunday.getFullYear()}`;
+}
 
-  // Current month days
-  for (let d = 1; d <= totalDays; d++) {
-    const isToday = isCurrentMonth && d === today.getDate();
-    const isActive = activeDays.has(d);
-    let cls = 'cal-day';
-    if (isToday) cls += ' cal-day--today';
-    if (isActive) cls += ' cal-day--active';
-    const tapAttr = isActive ? ` data-action="cal-day-tap" data-cal-year="${calYear}" data-cal-month="${calMonth}" data-cal-day="${d}"` : '';
-    cells += `<div class="${cls}"${tapAttr}>${d}</div>`;
-  }
-
-  // Next month filler to complete grid
-  const totalCells = startOffset + totalDays;
-  const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
-  for (let d = 1; d <= remaining; d++) {
-    cells += `<div class="cal-day cal-day--outside">${d}</div>`;
-  }
-
-  return `
-    <div class="month-calendar animate-in" id="month-calendar">
-      <div class="cal-header">
-        <button class="cal-nav-btn" data-action="cal-prev">${icon.chevronLeft || '‹'}</button>
-        <span class="cal-header-title">${MONTH_NAMES[calMonth]} ${calYear}</span>
-        <button class="cal-nav-btn" data-action="cal-next">${icon.chevronRight || '›'}</button>
-      </div>
-      <div class="cal-grid">
-        ${weekHeaders}
-        ${cells}
-      </div>
-    </div>
-  `;
+function dateToStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 // ── Greeting ────────────────────────────────
@@ -122,41 +108,270 @@ function renderQuickStatsStrip(usuario) {
   `;
 }
 
-// ── Week planner ─────────────────────────────
+// ── Week strip ──────────────────────────────
 
-function renderWeekPlanner(usuario) {
-  const hoy = new Date().getDay();
+function renderWeekStrip(usuario) {
+  const today = new Date();
+  const monday = getMonday(selectedDate);
   const plan = getPlanSemanal(usuario);
-  const rutinas = getRutinas().filter((r) => r.usuario === usuario);
 
-  const circles = DIAS_ORDEN.map((d) => {
-    const tipo = plan[d] || '';
-    const isToday = d === hoy;
-    const iconInner = tipo === 'gimnasio' ? '🏋️' : tipo === 'cross' ? '🏃' : '';
-    const pulseClass = isToday && tipo ? 'pulse-today' : '';
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(d.getDate() + i);
+    const dow = d.getDay();
+    const isToday = isSameDay(d, today);
+    const isSelected = isSameDay(d, selectedDate);
 
-    // Show assigned routine name
-    const assigned = tipo ? rutinas.find((r) => r.diaSemana === d) : null;
-    const rutLabel = assigned ? `<span class="day-circle-rutina">${assigned.nombre}</span>` : '';
+    // Check completed sessions
+    const sessions = getSessionsForDate(usuario, d.getFullYear(), d.getMonth(), d.getDate());
+    const hasCompleted = sessions.length > 0;
 
-    return `
-      <div class="day-circle">
-        <button class="day-circle-btn ${tipo} ${pulseClass}" data-action="toggle-day" data-day="${d}">
-          ${iconInner}
-        </button>
-        <span class="day-circle-label ${isToday ? 'today' : ''}">${DIAS_ABREV[d]}</span>
-        ${rutLabel}
+    // Check planned
+    const isPast = d < startOfDay(today) && !isToday;
+    const tipo = plan[dow] || '';
+    const hasPlanned = !!tipo && !isPast;
+
+    // Dot state
+    let dotClass = '';
+    if (hasCompleted) {
+      dotClass = 'cal-strip-dot cal-strip-dot--completed';
+    } else if (hasPlanned) {
+      dotClass = `cal-strip-dot cal-strip-dot--planned${tipo === 'cross' ? ' cal-strip-dot--planned-cross' : ''}`;
+    }
+
+    let cls = 'cal-strip-day';
+    if (isToday) cls += ' cal-strip-day--today';
+    if (isSelected) cls += ' cal-strip-day--selected';
+
+    days.push(`
+      <div class="${cls}" data-action="cal-select-day" data-cal-date="${dateToStr(d)}">
+        <span class="cal-strip-weekday">${CAL_WEEKDAYS[i]}</span>
+        <span class="cal-strip-number">${d.getDate()}</span>
+        <span class="${dotClass || 'cal-strip-dot'}"></span>
       </div>
-    `;
-  }).join('');
+    `);
+  }
+
+  return `<div class="cal-strip">${days.join('')}</div>`;
+}
+
+// ── Month grid ──────────────────────────────
+
+function renderMonthGrid(usuario) {
+  const today = new Date();
+  const activeDays = getMonthActivity(usuario, calYear, calMonth);
+  const plannedDays = getMonthPlannedDays(usuario, calYear, calMonth);
+  const isCurrentMonth = calYear === today.getFullYear() && calMonth === today.getMonth();
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const startOffset = firstDay === 0 ? 6 : firstDay - 1;
+  const totalDays = new Date(calYear, calMonth + 1, 0).getDate();
+  const prevMonthDays = new Date(calYear, calMonth, 0).getDate();
+
+  const weekHeaders = CAL_WEEKDAYS.map((d) => `<div class="cal-month-weekday">${d}</div>`).join('');
+
+  let cells = '';
+
+  // Previous month filler
+  for (let i = startOffset - 1; i >= 0; i--) {
+    cells += `<div class="cal-month-day cal-month-day--outside">${prevMonthDays - i}</div>`;
+  }
+
+  // Current month days
+  for (let d = 1; d <= totalDays; d++) {
+    const isToday = isCurrentMonth && d === today.getDate();
+    const isSelected = selectedDate.getFullYear() === calYear && selectedDate.getMonth() === calMonth && selectedDate.getDate() === d;
+    const hasSession = activeDays.has(d);
+    const plannedTipo = plannedDays.get(d);
+    const dateObj = new Date(calYear, calMonth, d);
+    const isPast = dateObj < startOfDay(today) && !isToday;
+
+    let cls = 'cal-month-day';
+    if (isToday) cls += ' cal-month-day--today';
+    if (isSelected) cls += ' cal-month-day--selected';
+
+    // Dot
+    let dotHtml = '';
+    if (hasSession) {
+      dotHtml = '<span class="cal-month-dot cal-month-dot--completed"></span>';
+    } else if (plannedTipo && !isPast) {
+      dotHtml = '<span class="cal-month-dot cal-month-dot--planned"></span>';
+    }
+
+    cells += `<div class="${cls}" data-action="cal-select-day" data-cal-date="${dateToStr(dateObj)}">${d}${dotHtml}</div>`;
+  }
+
+  // Next month filler
+  const totalCells = startOffset + totalDays;
+  const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for (let d = 1; d <= remaining; d++) {
+    cells += `<div class="cal-month-day cal-month-day--outside">${d}</div>`;
+  }
 
   return `
-    <div id="week-section">
-      <div class="week-planner">${circles}</div>
-      <div class="week-planner-legend">
-        <span><span class="legend-dot gimnasio"></span>Gimnasio</span>
-        <span><span class="legend-dot cross"></span>Cross</span>
+    <div class="cal-month-grid">
+      ${weekHeaders}
+      ${cells}
+    </div>
+  `;
+}
+
+// ── Unified calendar ────────────────────────
+
+function renderUnifiedCalendar(usuario) {
+  const today = new Date();
+  const isOnCurrentPeriod = calExpanded
+    ? (calYear === today.getFullYear() && calMonth === today.getMonth())
+    : isSameDay(getMonday(selectedDate), getMonday(today)) || isSameDay(selectedDate, today);
+
+  // Title: week range or month name
+  const monday = getMonday(selectedDate);
+  const title = calExpanded
+    ? `${MONTH_NAMES[calMonth]} ${calYear}`
+    : formatDateRange(monday);
+
+  const todayBtn = !isOnCurrentPeriod
+    ? `<button class="cal-today-btn" data-action="cal-today">Hoy</button>`
+    : '';
+
+  const body = calExpanded
+    ? renderMonthGrid(usuario)
+    : renderWeekStrip(usuario);
+
+  return `
+    <div class="cal-unified animate-in" id="cal-unified">
+      <div class="cal-unified-header">
+        <button class="cal-nav-btn" data-action="cal-prev-period">${icon.chevronLeft || '‹'}</button>
+        <button class="cal-unified-title" data-action="cal-toggle-expand">
+          <span>${title}</span>
+          <span class="cal-expand-chevron ${calExpanded ? 'expanded' : ''}">${icon.chevronDown || '▾'}</span>
+        </button>
+        ${todayBtn}
+        <button class="cal-nav-btn" data-action="cal-next-period">${icon.chevronRight || '›'}</button>
       </div>
+      ${body}
+    </div>
+  `;
+}
+
+// ── Day detail panel ────────────────────────
+
+function renderDayDetailPanel(usuario) {
+  const today = new Date();
+  const isToday = isSameDay(selectedDate, today);
+  const isPast = selectedDate < startOfDay(today) && !isToday;
+  const dow = selectedDate.getDay();
+
+  // Session data
+  const sessions = getSessionsForDate(usuario, selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+  const planned = getPlannedRoutineForDate(usuario, selectedDate);
+
+  // Date label
+  const dayName = DAY_NAMES_LONG[dow];
+  const dateLabel = isToday
+    ? `Hoy &middot; ${dayName}`
+    : `${dayName} ${selectedDate.getDate()} de ${MONTH_NAMES[selectedDate.getMonth()]}`;
+
+  // Badge
+  let badge = '';
+  if (sessions.length > 0) {
+    const dur = sessions.reduce((sum, s) => sum + (s.duracionMin || 0), 0);
+    badge = `<span class="cal-day-detail-badge cal-day-detail-badge--completed">&#10003; ${dur > 0 ? dur + ' min' : 'Completada'}</span>`;
+  } else if (planned) {
+    const badgeClass = planned.tipo === 'cross' ? 'cal-day-detail-badge--cross' : 'cal-day-detail-badge--gym';
+    badge = `<span class="cal-day-detail-badge ${badgeClass}">${planned.tipo === 'cross' ? 'Cross' : 'Gimnasio'}</span>`;
+  }
+
+  // Routine info
+  let routineHtml = '';
+  if (sessions.length > 0) {
+    // Show completed session info
+    const s = sessions[0];
+    const vol = Math.round(calcVolumenSesion(s));
+    routineHtml = `
+      <div class="cal-day-detail-routine">
+        <div class="cal-day-detail-routine-name">${s.rutinaNombre}</div>
+        <div class="cal-day-detail-routine-meta">
+          ${s.circuitos.length} circuitos &middot; ${vol > 0 ? vol.toLocaleString() + ' kg' : ''}${s.duracionMin ? ' &middot; ' + s.duracionMin + ' min' : ''}
+        </div>
+      </div>
+    `;
+  } else if (planned && planned.routine) {
+    const rut = planned.routine;
+    const numCircuitos = rut.circuitos.length;
+    const numEjercicios = rut.circuitos.reduce((sum, c) => sum + c.ejercicios.length, 0);
+    routineHtml = `
+      <div class="cal-day-detail-routine">
+        <div class="cal-day-detail-routine-name">${rut.nombre}</div>
+        <div class="cal-day-detail-routine-tags">${renderTags(rut)}</div>
+        <div class="cal-day-detail-routine-meta">
+          ${numCircuitos} circuitos &middot; ${numEjercicios} ejercicios &middot; ${renderLastDone(rut)}
+        </div>
+      </div>
+    `;
+  } else if (planned && !planned.routine) {
+    routineHtml = `
+      <div class="cal-day-detail-routine">
+        <div class="cal-day-detail-routine-name">${planned.tipo === 'cross' ? 'Cross Training' : 'Gimnasio'}</div>
+        <div class="cal-day-detail-routine-meta">Sin rutina asignada</div>
+      </div>
+    `;
+  }
+
+  // Actions
+  let actionsHtml = '';
+  if (sessions.length > 0) {
+    // Past/today completed: view session + repeat
+    const s = sessions[0];
+    actionsHtml = `
+      <div class="cal-day-detail-actions">
+        <button class="btn btn-primary btn-sm" data-action="cal-view-session" data-id="${s.id}">Ver sesion</button>
+        ${planned?.routine ? `<button class="btn btn-ghost btn-sm" data-action="start" data-id="${planned.routine.id}">Repetir</button>` : ''}
+      </div>
+    `;
+  } else if (planned && planned.routine && (isToday || !isPast)) {
+    // Today or future with routine: start + change + remove
+    actionsHtml = `
+      <div class="cal-day-detail-actions">
+        ${isToday ? `<button class="btn btn-primary btn-sm" data-action="start" data-id="${planned.routine.id}">${icon.play} Iniciar</button>` : ''}
+        <button class="btn btn-ghost btn-sm" data-action="cal-change-routine" data-day="${dow}">Cambiar</button>
+        <button class="btn btn-ghost btn-sm" data-action="cal-remove-routine" data-day="${dow}">Quitar</button>
+      </div>
+    `;
+  } else if (planned && !planned.routine && !isPast) {
+    // Planned type but no routine assigned
+    actionsHtml = `
+      <div class="cal-day-detail-actions">
+        <button class="btn btn-primary btn-sm" data-action="cal-change-routine" data-day="${dow}">Asignar rutina</button>
+        <button class="btn btn-ghost btn-sm" data-action="cal-remove-routine" data-day="${dow}">Quitar</button>
+      </div>
+    `;
+  } else if (!planned && !isPast) {
+    // No plan: option to assign
+    actionsHtml = `
+      <div class="cal-day-detail-empty">
+        <div class="cal-day-detail-empty-title">Descanso</div>
+        <button class="btn btn-ghost btn-sm" data-action="cal-assign-training" data-day="${dow}">+ Asignar entrenamiento</button>
+      </div>
+    `;
+  } else {
+    // Past with no session
+    actionsHtml = `
+      <div class="cal-day-detail-empty">
+        <div class="cal-day-detail-empty-title">Sin actividad</div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="cal-day-detail" id="cal-day-detail">
+      <div class="cal-day-detail-header">
+        <span class="cal-day-detail-date">${dateLabel}</span>
+        ${badge}
+      </div>
+      ${routineHtml}
+      ${actionsHtml}
     </div>
   `;
 }
@@ -169,12 +384,6 @@ function renderEntrenoHero(rutinaHoy) {
 
   return `
     <div class="entreno-hero">
-      <div class="entreno-label">Hoy</div>
-      <div class="entreno-routine-name">${rutinaHoy.nombre}</div>
-      <div class="entreno-tags">${renderTags(rutinaHoy)}</div>
-      <div class="entreno-meta">
-        ${numCircuitos} circuitos &middot; ${numEjercicios} ejercicios &middot; ${renderLastDone(rutinaHoy)}
-      </div>
       <button class="entreno-cta" data-action="start" data-id="${rutinaHoy.id}">
         <span class="entreno-cta-icon">${iconLg('kettlebell', 48)}</span>
       </button>
@@ -201,61 +410,6 @@ function renderRestDay(proximo) {
   `;
 }
 
-// ── Weekly routines mini-cards ────────────────
-
-function renderWeeklyRoutines(usuario) {
-  const hoy = new Date().getDay();
-  const plan = getPlanSemanal(usuario);
-  const rutinas = getRutinas().filter((r) => r.usuario === usuario);
-
-  // Build cards for each planned day (in order Lun→Dom)
-  const cards = DIAS_ORDEN
-    .filter((d) => plan[d])
-    .map((d) => {
-      const tipo = plan[d];
-      const isToday = d === hoy;
-
-      // Find routine: programmed for this day, or first library match
-      const rut =
-        rutinas.find((r) => r.diaSemana === d) ||
-        rutinas.find((r) => r.tipo === tipo && r.diaSemana == null);
-
-      const nombre = rut ? getDisplayName(rut) : (tipo === 'gimnasio' ? 'Gimnasio' : 'Cross Training');
-      const meta = rut ? renderLastDone(rut) : '';
-      const tipoLabel = tipo === 'gimnasio' ? 'Gym' : 'Cross';
-      const startBtn = rut
-        ? `<button class="btn-icon-action" data-action="start" data-id="${rut.id}">${icon.play}</button>`
-        : '';
-
-      const cardIdx = DIAS_ORDEN.filter((dd) => plan[dd]).indexOf(d);
-
-      return `
-        <div class="mini-card animate-in ${isToday ? 'today' : ''}" style="animation-delay:${cardIdx * 60}ms" ${rut ? `data-action="preview-routine" data-id="${rut.id}"` : ''}>
-          <div class="mini-card-left">
-            <div class="mini-card-day">${DIAS_LABEL[d]} · ${tipoLabel}</div>
-            <div class="mini-card-name">${nombre}</div>
-            ${meta ? `<div class="mini-card-meta">${meta}</div>` : ''}
-          </div>
-          <div class="mini-card-actions">
-            ${startBtn}
-          </div>
-        </div>
-      `;
-    })
-    .join('');
-
-  if (!cards) return '<div id="weekly-section"></div>';
-
-  return `
-    <div id="weekly-section">
-      <div class="section-header">
-        <span class="section-title">Esta semana</span>
-      </div>
-      ${cards}
-    </div>
-  `;
-}
-
 // ── Render ────────────────────────────────────
 
 export function render() {
@@ -265,7 +419,7 @@ export function render() {
   const proximo = getProximoEntrenamiento(usuario);
   const firebaseUser = getCurrentUser();
 
-  // Active workout banner (only show for current user)
+  // Active workout banner
   const isMyWorkout = workoutActivo && (!workoutActivo.usuario || workoutActivo.usuario === usuario);
   const banner = isMyWorkout
     ? `<div class="workout-banner" data-action="resume-workout">
@@ -278,120 +432,54 @@ export function render() {
       </div>`
     : '';
 
-  // Greeting (user name from Firebase or local)
+  // Greeting
   const displayName = firebaseUser?.displayName?.split(' ')[0] || usuario;
   const greeting = `<div class="home-greeting animate-in">${getGreeting(displayName)}</div>`;
 
-  // Quick stats strip
+  // Quick stats
   const quickStats = renderQuickStatsStrip(usuario);
 
-  // Week planner
-  const planner = renderWeekPlanner(usuario);
+  // Unified calendar
+  const calendar = renderUnifiedCalendar(usuario);
+  const dayDetail = renderDayDetailPanel(usuario);
 
-  // Hero section: training day or rest day
-  const hero = rutinaHoy && !isMyWorkout ? renderEntrenoHero(rutinaHoy) : '';
-  const rest = !rutinaHoy && !isMyWorkout ? renderRestDay(proximo) : '';
-
-  // Weekly routines
-  const weekly = renderWeeklyRoutines(usuario);
-
-  // Month calendar
-  const calendar = renderMonthCalendar(usuario);
+  // Hero: only show CTA when selected day is today and there's a routine
+  const isSelectedToday = isSameDay(selectedDate, new Date());
+  const hero = isSelectedToday && rutinaHoy && !isMyWorkout ? renderEntrenoHero(rutinaHoy) : '';
+  const rest = isSelectedToday && !rutinaHoy && !isMyWorkout ? renderRestDay(proximo) : '';
 
   return `
     ${greeting}
-    ${planner}
+    ${calendar}
+    ${dayDetail}
     ${quickStats}
     ${banner}
     <div id="hero-section">${hero}${rest}</div>
-    ${weekly}
-    ${calendar}
   `;
 }
 
-// ── Inline refresh (no full page reload) ─────
+// ── Inline refresh ───────────────────────────
 
-function refreshPlanSection() {
+function refreshCalendarSection() {
   const usuario = getUsuarioActivo();
 
-  // Update week planner
-  const weekSection = document.getElementById('week-section');
-  if (weekSection) {
-    weekSection.outerHTML = renderWeekPlanner(usuario);
-  }
+  const calEl = document.getElementById('cal-unified');
+  if (calEl) calEl.outerHTML = renderUnifiedCalendar(usuario);
 
-  // Update weekly routines
-  const weeklySection = document.getElementById('weekly-section');
-  if (weeklySection) {
-    weeklySection.outerHTML = renderWeeklyRoutines(usuario);
-  }
+  const detailEl = document.getElementById('cal-day-detail');
+  if (detailEl) detailEl.outerHTML = renderDayDetailPanel(usuario);
 
-  // Update hero section (today could change between training/rest)
+  // Update hero
   const heroSection = document.getElementById('hero-section');
   if (heroSection) {
+    const isSelectedToday = isSameDay(selectedDate, new Date());
     const rutinaHoy = getRutinaHoy(usuario);
     const workoutActivo = getWorkoutActivo();
     const isMyWorkout = workoutActivo && (!workoutActivo.usuario || workoutActivo.usuario === usuario);
-    const hero = rutinaHoy && !isMyWorkout ? renderEntrenoHero(rutinaHoy) : '';
-    const rest = !rutinaHoy && !isMyWorkout ? renderRestDay(getProximoEntrenamiento(usuario)) : '';
+    const hero = isSelectedToday && rutinaHoy && !isMyWorkout ? renderEntrenoHero(rutinaHoy) : '';
+    const rest = isSelectedToday && !rutinaHoy && !isMyWorkout ? renderRestDay(getProximoEntrenamiento(usuario)) : '';
     heroSection.innerHTML = hero + rest;
   }
-}
-
-// ── Calendar day detail modal ────────────────
-
-function showCalendarDayDetail(sessions, day, month) {
-  const dateStr = `${day} de ${MONTH_NAMES[month]}`;
-
-  const sessionsHtml = sessions.map((s) => {
-    const dur = s.duracionMin ? `<span class="cal-detail-dur">${s.duracionMin} min</span>` : '';
-
-    const circuitsHtml = s.circuitos.map((c) => {
-      const ejsHtml = c.ejercicios.map((ej) => {
-        const best = getEjBestRound(ej);
-        return `<div class="cal-detail-ej">
-          <span class="cal-detail-ej-name">${ej.nombre}</span>
-          <span class="cal-detail-ej-val">${best.repsReal}r × ${best.pesoRealKg}kg</span>
-        </div>`;
-      }).join('');
-
-      return `
-        <div class="cal-detail-circuit">
-          <div class="cal-detail-circuit-head">${c.grupoMuscular}</div>
-          ${ejsHtml}
-        </div>
-      `;
-    }).join('');
-
-    return `
-      <div class="cal-detail-session">
-        <div class="cal-detail-header">
-          <span class="cal-detail-name">${s.rutinaNombre}</span>
-          ${dur}
-        </div>
-        ${circuitsHtml}
-      </div>
-    `;
-  }).join('');
-
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.innerHTML = `
-    <div class="modal-box cal-detail-modal">
-      <div class="modal-title">${dateStr}</div>
-      <div class="modal-body">${sessionsHtml}</div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-
-  const close = () => {
-    overlay.classList.add('modal-closing');
-    overlay.addEventListener('animationend', () => overlay.remove(), { once: true });
-  };
-
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) close();
-  });
 }
 
 // ── Mount ─────────────────────────────────────
@@ -411,54 +499,92 @@ export function mount() {
       case 'preview-routine':
         showPreview(id);
         break;
+
       case 'resume-workout': {
         const workout = getWorkoutActivo();
         if (workout) navigate(`/workout/${workout.rutinaId}`);
         break;
       }
-      case 'toggle-day': {
+
+      case 'cal-select-day': {
+        const dateStr = btn.dataset.calDate;
+        if (!dateStr) break;
+        const [y, m, d] = dateStr.split('-').map(Number);
+        selectedDate = new Date(y, m - 1, d);
+        calYear = selectedDate.getFullYear();
+        calMonth = selectedDate.getMonth();
+        refreshCalendarSection();
+        break;
+      }
+
+      case 'cal-toggle-expand': {
+        calExpanded = !calExpanded;
+        if (calExpanded) {
+          calYear = selectedDate.getFullYear();
+          calMonth = selectedDate.getMonth();
+        }
+        const calEl = document.getElementById('cal-unified');
+        if (calEl) {
+          const usuario = getUsuarioActivo();
+          calEl.outerHTML = renderUnifiedCalendar(usuario);
+        }
+        break;
+      }
+
+      case 'cal-prev-period':
+      case 'cal-next-period': {
+        const dir = action === 'cal-prev-period' ? -1 : 1;
+        if (calExpanded) {
+          calMonth += dir;
+          if (calMonth < 0) { calMonth = 11; calYear--; }
+          if (calMonth > 11) { calMonth = 0; calYear++; }
+        } else {
+          selectedDate = new Date(selectedDate);
+          selectedDate.setDate(selectedDate.getDate() + dir * 7);
+          calYear = selectedDate.getFullYear();
+          calMonth = selectedDate.getMonth();
+        }
+        refreshCalendarSection();
+        break;
+      }
+
+      case 'cal-today': {
+        selectedDate = new Date();
+        calYear = selectedDate.getFullYear();
+        calMonth = selectedDate.getMonth();
+        refreshCalendarSection();
+        break;
+      }
+
+      case 'cal-change-routine': {
         const usuario = getUsuarioActivo();
         const dia = Number(btn.dataset.day);
         const plan = getPlanSemanal(usuario);
-        const current = plan[dia] || '';
+        const current = plan[dia] || 'gimnasio';
+        showDayAssignmentModal(usuario, dia, current, () => refreshCalendarSection());
+        break;
+      }
 
-        if (current === '') {
-          // Empty day → set to gimnasio
-          setPlanDia(usuario, dia, 'gimnasio');
-          refreshPlanSection();
-        } else {
-          // Day has type → show assignment modal
-          showDayAssignmentModal(usuario, dia, current, () => refreshPlanSection());
-        }
-        break;
-      }
-      case 'cal-prev':
-      case 'cal-next': {
-        if (action === 'cal-prev') {
-          calMonth--;
-          if (calMonth < 0) { calMonth = 11; calYear--; }
-        } else {
-          calMonth++;
-          if (calMonth > 11) { calMonth = 0; calYear++; }
-        }
-        const calEl = document.getElementById('month-calendar');
-        if (calEl) {
-          const usuario = getUsuarioActivo();
-          calEl.outerHTML = renderMonthCalendar(usuario);
-        }
-        break;
-      }
-      case 'cal-day-tap': {
-        const year = Number(btn.dataset.calYear);
-        const month = Number(btn.dataset.calMonth);
-        const day = Number(btn.dataset.calDay);
+      case 'cal-remove-routine': {
         const usuario = getUsuarioActivo();
-        const sessions = getSessionsForDate(usuario, year, month, day);
-        if (sessions.length > 0) {
-          showCalendarDayDetail(sessions, day, month);
-        }
+        const dia = Number(btn.dataset.day);
+        clearRutinaDelDia(dia, usuario);
+        setPlanDia(usuario, dia, null);
+        refreshCalendarSection();
         break;
       }
+
+      case 'cal-assign-training': {
+        const usuario = getUsuarioActivo();
+        const dia = Number(btn.dataset.day);
+        setPlanDia(usuario, dia, 'gimnasio');
+        showDayAssignmentModal(usuario, dia, 'gimnasio', () => refreshCalendarSection());
+        break;
+      }
+
+      case 'cal-view-session':
+        if (id) navigate(`/sesion/${id}`);
+        break;
     }
   };
 
