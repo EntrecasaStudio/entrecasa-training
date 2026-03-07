@@ -1771,19 +1771,14 @@
 }
 
 /* ── Muscle silhouette SVG global styles ── */
-.muscle-silhouette .silhouette-outline path {
+.muscle-silhouette .muscle-part polygon {
   fill: var(--color-text-muted);
-  opacity: 0.15;
+  opacity: 0.18;
 }
 
-.muscle-silhouette .muscle-part path {
-  fill: var(--color-text-muted);
-  opacity: 0.12;
-}
-
-.muscle-silhouette .muscle-active path {
+.muscle-silhouette .muscle-active polygon {
   fill: #FFD600;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 .ej-category-name {

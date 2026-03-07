@@ -453,12 +453,20 @@ function showCaloriesPrompt(onDone) {
     if (input) input.focus();
   });
 
+  let calClosed = false;
   const close = (cb) => {
+    if (calClosed) return;
+    calClosed = true;
     overlay.classList.add('modal-closing');
-    overlay.addEventListener('animationend', () => {
-      overlay.remove();
+    let doneCalled = false;
+    const done = () => {
+      if (doneCalled) return;
+      doneCalled = true;
+      if (overlay.parentNode) overlay.remove();
       if (cb) cb();
-    }, { once: true });
+    };
+    overlay.addEventListener('animationend', done, { once: true });
+    setTimeout(done, 250);
   };
 
   overlay.addEventListener('click', (e) => {
@@ -540,7 +548,10 @@ function finishWorkout() {
 
     const action = btn.dataset.saveAction;
     overlay.classList.add('modal-closing');
+    let doneCalled = false;
     const done = () => {
+      if (doneCalled) return;
+      doneCalled = true;
       if (overlay.parentNode) overlay.remove();
       switch (action) {
         case 'update':
@@ -548,7 +559,6 @@ function finishWorkout() {
           doFinishWorkout();
           break;
         case 'duplicate': {
-          // Duplicate the routine then apply modifications to the copy
           const copia = duplicateRutina(state.rutinaId);
           if (copia) {
             copia.circuitos = state.resultados.map((circ) => ({
@@ -570,7 +580,7 @@ function finishWorkout() {
       }
     };
     overlay.addEventListener('animationend', done, { once: true });
-    setTimeout(done, 200);
+    setTimeout(done, 250);
   });
 }
 
@@ -719,20 +729,32 @@ function showMuscleGroupChooser(onSelect) {
   `;
   document.body.appendChild(overlay);
 
+  let grupoClosed = false;
   overlay.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-grupo]');
     if (btn) {
+      if (grupoClosed) return;
+      grupoClosed = true;
       const grupo = btn.dataset.grupo;
       overlay.classList.add('modal-closing');
-      overlay.addEventListener('animationend', () => {
-        overlay.remove();
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        if (overlay.parentNode) overlay.remove();
         onSelect(grupo);
-      }, { once: true });
+      };
+      overlay.addEventListener('animationend', finish, { once: true });
+      setTimeout(finish, 250);
       return;
     }
     if (e.target === overlay) {
+      if (grupoClosed) return;
+      grupoClosed = true;
       overlay.classList.add('modal-closing');
-      overlay.addEventListener('animationend', () => overlay.remove(), { once: true });
+      const rm = () => { if (overlay.parentNode) overlay.remove(); };
+      overlay.addEventListener('animationend', rm, { once: true });
+      setTimeout(rm, 250);
     }
   });
 }
@@ -763,13 +785,15 @@ function showExitWorkoutModal() {
     if (closed) return;
     closed = true;
     overlay.classList.add('modal-closing');
+    let doneCalled = false;
     const done = () => {
+      if (doneCalled) return;
+      doneCalled = true;
       if (overlay.parentNode) overlay.remove();
       if (cb) cb();
     };
     overlay.addEventListener('animationend', done, { once: true });
-    // Fallback if animation doesn't fire
-    setTimeout(done, 200);
+    setTimeout(done, 250);
   };
 
   overlay.addEventListener('click', (e) => {
@@ -1206,5 +1230,10 @@ export function mount(params) {
     window.__workoutActive = false;
     clearLongPress();
     stopTimer();
+    // Remove any workout-specific modals
+    ['workout-exit-modal', 'workout-save-modal', 'muscle-group-modal'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    });
   };
 }

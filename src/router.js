@@ -225,6 +225,9 @@ function cleanupCurrentView(container) {
   }
   currentCleanup = null;
   currentViewEl = null;
+
+  // Remove any lingering modals from document.body
+  document.querySelectorAll('.modal-overlay').forEach((m) => m.remove());
 }
 
 // ── Main router ─────────────────────────────────
