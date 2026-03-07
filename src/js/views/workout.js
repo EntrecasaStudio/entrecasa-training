@@ -109,7 +109,7 @@ function getElapsedStr() {
 
 function renderCircuitSelector() {
   const total = state.resultados.length;
-  const pct = (state.circuitoActual / total) * 100;
+  const pct = ((state.circuitoActual + 1) / total) * 100;
 
   const segments = state.resultados
     .map((circ, i) => {
@@ -237,10 +237,11 @@ function renderEjercicio(ej, ejIdx) {
       <div class="workout-ejercicio-target">
         Objetivo: ${ej.repsObjetivo} reps${isBodyweight ? '' : ` &middot; ${ej.pesoObjetivoKg} kg`}
       </div>
-      ${overload ? '<div class="workout-overload-hint">&#9650; Subir peso?</div>' : ''}
+      ${overload ? `<div class="workout-overload-hint">${icon.arrowUp} Subir peso</div>` : ''}
       ${renderExerciseHistory(ej.nombre)}
       ${addPesoBtn}
       ${vestHtml}
+      <div class="workout-ej-divider"></div>
       ${columnHeaders}
       <div class="workout-vueltas">
         ${vueltasHtml}
@@ -286,18 +287,18 @@ export function render(params) {
   const ejercicios = circ.ejercicios.map((ej, i) => renderEjercicio(ej, i)).join('');
 
   const lastBanner = isLast
-    ? '<div class="workout-last-banner">🏆 Último circuito</div>'
+    ? `<div class="workout-last-banner">${icon.trophy} Último circuito</div>`
     : '';
 
   const finishBtn = isLast
     ? `<button class="btn btn-finish btn-full" data-action="finish">${icon.check} Finalizar</button>`
-    : `<button class="btn btn-primary btn-full" data-action="next-circuit">Siguiente →</button>`;
+    : `<button class="btn btn-primary btn-full" data-action="next-circuit">Siguiente ${icon.arrowRight}</button>`;
 
   return `
     <div class="workout-header">
-      <div>
-        <div style="font-weight:var(--fw-semibold);font-size:var(--text-base)">${state.rutinaNombre}</div>
-        <div class="workout-timer" id="workout-timer">${getElapsedStr()}</div>
+      <div class="workout-header-left">
+        <div class="workout-rutina-name">${state.rutinaNombre}</div>
+        <div class="workout-timer" id="workout-timer">${icon.clock}${getElapsedStr()}</div>
       </div>
       <button class="workout-end-btn" data-action="end-workout">Salir</button>
     </div>
@@ -309,12 +310,14 @@ export function render(params) {
     ${ejercicios}
 
     <div class="peso-step-toggle">
-      <span class="peso-step-label">Incremento peso:</span>
-      ${PESO_STEPS.map((s, i) => `<button class="peso-step-btn ${i === pesoStepIdx ? 'active' : ''}" data-action="set-peso-step" data-idx="${i}">${s} kg</button>`).join('')}
+      <span class="peso-step-label">Incremento:</span>
+      ${PESO_STEPS.map((s, i) => `<button class="peso-step-btn ${i === pesoStepIdx ? 'active' : ''}" data-action="set-peso-step" data-idx="${i}">${s}kg</button>`).join('')}
     </div>
 
+    <div class="workout-bottom-spacer"></div>
+
     <div class="workout-nav-btns">
-      ${state.circuitoActual > 0 ? `<button class="btn btn-ghost workout-prev-btn" data-action="prev-circuit">← Anterior</button>` : ''}
+      ${state.circuitoActual > 0 ? `<button class="btn btn-ghost workout-prev-btn" data-action="prev-circuit">${icon.chevronLeft} Ant</button>` : ''}
       ${finishBtn}
     </div>
   `;
