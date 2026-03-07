@@ -592,20 +592,21 @@
 
 .rutinas-filter-toggle {
   flex: 1;
+  margin-bottom: 0; /* override .ej-type-toggle default */
 }
 
 .rutinas-view-modes {
   display: flex;
   gap: 2px;
-  background: var(--color-surface);
-  border-radius: var(--radius-sm);
-  padding: 2px;
+  background: var(--color-surface-alt);
+  border-radius: var(--radius-md);
+  padding: 3px;
   flex-shrink: 0;
 }
 
 .rutinas-view-btn {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -616,13 +617,13 @@
 }
 
 .rutinas-view-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
 }
 
 .rutinas-view-btn.active {
   color: var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
 }
 
 .rutinas-view-btn:active {
@@ -630,7 +631,7 @@
 }
 
 .rutina-filter-count {
-  font-size: 10px;
+  font-size: var(--text-xs);
   opacity: 0.6;
   margin-left: 2px;
 }
@@ -1506,6 +1507,36 @@
 .ej-category-icon {
   font-size: var(--text-lg);
   line-height: 1;
+}
+
+/* Muscle illustration in category header */
+.ej-category-muscle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--muscle-color, var(--color-accent)) 10%, transparent);
+  flex-shrink: 0;
+}
+
+.ej-category-muscle .muscle-illustration {
+  width: 32px;
+  height: 32px;
+}
+
+.ej-category-muscle .body-outline {
+  stroke: var(--color-text-muted);
+  fill: none;
+}
+
+.ej-category-muscle .muscle-zone {
+  fill: var(--muscle-color, var(--color-accent));
+}
+
+.ej-category-muscle .muscle-highlight {
+  opacity: 0.85;
 }
 
 .ej-category-name {

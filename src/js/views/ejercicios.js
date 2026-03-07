@@ -1,6 +1,7 @@
 import { CATEGORIAS, getEjerciciosPorCategoria } from '@js/ejercicios-catalogo.js';
 import { getSesiones, getUsuarioActivo, getNotaEjercicio, getEjBestRound } from '@/store.js';
 import { showExerciseDetail } from '@js/helpers/ejercicio-detail.js';
+import { MUSCLE_GROUP_SVG } from '@js/helpers/muscle-illustrations.js';
 
 /**
  * Build a map of exercise name → { reps, peso, fecha } from the user's most recent sessions.
@@ -37,23 +38,30 @@ const TAG_CLASS = {
   Hombros: 'tag-hombros',
 };
 
-const CAT_ICON = {
-  Core: '🎯',
-  Piernas: '🦵',
-  'Glúteos': '🍑',
-  Pecho: '💪',
-  Espalda: '🔙',
-  Hombros: '🏋️',
-  Brazos: '💪',
+// Map category → CSS color variable (matches ejercicio-detail)
+const CATEGORY_COLORS = {
+  Core: 'var(--color-tag-core)',
+  Piernas: 'var(--color-tag-piernas)',
+  Pecho: 'var(--color-tag-pecho)',
+  Espalda: 'var(--color-tag-espalda)',
+  Brazos: 'var(--color-tag-brazos)',
+  'Glúteos': 'var(--color-tag-gluteos)',
+  Hombros: 'var(--color-tag-hombros)',
 };
 
 function renderCategorySection(cat, ejercicios, collapsed, lastUsedMap = {}) {
   const tagClass = TAG_CLASS[cat] || '';
+  const muscleSvg = MUSCLE_GROUP_SVG[cat] || '';
+  const muscleColor = CATEGORY_COLORS[cat] || 'var(--color-accent)';
+  const illustration = muscleSvg
+    ? `<span class="ej-category-muscle" style="--muscle-color: ${muscleColor}">${muscleSvg}</span>`
+    : '';
+
   return `
     <div class="ej-category" data-cat="${cat}">
       <button class="ej-category-header" data-action="toggle-cat" data-cat="${cat}">
         <span class="ej-category-left">
-          <span class="ej-category-icon">${CAT_ICON[cat] || ''}</span>
+          ${illustration}
           <span class="ej-category-name">${cat}</span>
         </span>
         <span class="ej-category-right">

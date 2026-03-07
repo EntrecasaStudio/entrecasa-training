@@ -158,10 +158,10 @@ export function render() {
     <div class="rutinas-filter-row">
       <div class="ej-type-toggle rutinas-filter-toggle">
         <button class="ej-type-btn ${activeFilter === 'gimnasio' ? 'active' : ''}" data-action="filter-rutina-type" data-type="gimnasio">
-          Gimnasio <span class="rutina-filter-count">${gimCount}</span>
+          Gimnasio <span class="rutina-filter-count">(${gimCount})</span>
         </button>
         <button class="ej-type-btn ${activeFilter === 'cross' ? 'active' : ''}" data-action="filter-rutina-type" data-type="cross">
-          Cross <span class="rutina-filter-count">${crossCount}</span>
+          Cross <span class="rutina-filter-count">(${crossCount})</span>
         </button>
       </div>
       <div class="rutinas-view-modes">
