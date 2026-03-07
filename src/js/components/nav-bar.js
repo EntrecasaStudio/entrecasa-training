@@ -12,21 +12,21 @@ const TAB_MAP = {
 function navHTML() {
   return `
     <nav class="nav-bottom" role="navigation" aria-label="Menu principal">
-      <a href="#/" class="nav-bottom-item" data-tab="entrenamiento" aria-label="Entreno">
-        <span class="nav-bottom-icon" aria-hidden="true">${icon.kettlebell}</span>
-        <span>Entreno</span>
-      </a>
       <a href="#/rutinas" class="nav-bottom-item" data-tab="rutinas" aria-label="Rutinas">
         <span class="nav-bottom-icon" aria-hidden="true">${icon.clipboard}</span>
         <span>Rutinas</span>
       </a>
-      <a href="#/progreso" class="nav-bottom-item" data-tab="progreso" aria-label="Progreso">
-        <span class="nav-bottom-icon" aria-hidden="true">${icon.trophy}</span>
-        <span>Progreso</span>
-      </a>
       <a href="#/ejercicios" class="nav-bottom-item" data-tab="ejercicios" aria-label="Ejercicios">
         <span class="nav-bottom-icon" aria-hidden="true">${icon.list}</span>
         <span>Ejercicios</span>
+      </a>
+      <a href="#/" class="nav-bottom-item nav-bottom-main" data-tab="entrenamiento" aria-label="Entreno">
+        <span class="nav-bottom-main-btn" aria-hidden="true">${icon.kettlebell}</span>
+        <span>Entreno</span>
+      </a>
+      <a href="#/progreso" class="nav-bottom-item" data-tab="progreso" aria-label="Progreso">
+        <span class="nav-bottom-icon" aria-hidden="true">${icon.trophy}</span>
+        <span>Progreso</span>
       </a>
       <a href="#/historial" class="nav-bottom-item" data-tab="historial" aria-label="Historial">
         <span class="nav-bottom-icon" aria-hidden="true">${icon.barChart}</span>

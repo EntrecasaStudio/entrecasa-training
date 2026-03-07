@@ -548,44 +548,113 @@
   transform: scale(0.92);
 }
 
-/* ── Collapsible section ────────────────── */
+/* ── Rutinas header actions ────────────── */
 
-.rutinas-section {
-  margin-bottom: var(--space-md);
-}
-
-.rutinas-section-header {
+.rutinas-header-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: var(--space-sm) 0;
+  gap: var(--space-xs);
+}
+
+.btn-icon-header-sm {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  color: var(--color-text-muted);
+  transition: background-color var(--transition-fast);
+}
+
+.btn-icon-header-sm.active {
+  color: var(--color-accent);
+  background-color: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
+.btn-icon-header-sm svg {
+  width: 18px;
+  height: 18px;
+}
+
+.btn-icon-header-sm:active {
+  transform: scale(0.92);
+}
+
+/* ── Rutinas type filter toggle ──────── */
+
+.rutina-filter-count {
+  font-size: 10px;
+  opacity: 0.6;
+  margin-left: 2px;
+}
+
+/* ── Rutinas compact card ────────────── */
+
+.rutina-compact {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  background: none;
-  border: none;
+  transition: transform var(--transition-fast);
 }
 
-.rutinas-section-chevron {
-  color: var(--color-text-muted);
-  transition: transform 200ms ease;
+.rutina-compact:active {
+  transform: scale(0.98);
 }
 
-.rutinas-section-chevron.open {
-  transform: rotate(90deg);
+.rutina-compact-main {
+  flex: 1;
+  min-width: 0;
 }
 
-.rutinas-section-chevron svg {
-  width: 16px;
-  height: 16px;
-}
-
-.rutinas-section-list {
+.rutina-compact-name {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.rutinas-section-list.collapsed {
-  display: none;
+.rutina-compact-meta {
+  font-size: 10px;
+  color: var(--color-text-dim);
+  margin-top: 1px;
+}
+
+.rutina-compact-tags {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.rutinas-list--compact {
+  gap: var(--space-xs) !important;
+}
+
+.rutinas-list--compact .tag-sm {
+  font-size: 8px;
+  padding: 0px 5px;
+}
+
+.rutina-compact-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.rutina-compact-actions .btn-icon-action {
+  width: 30px;
+  height: 30px;
+}
+
+.rutina-compact-actions .btn-icon-action svg {
+  width: 14px;
+  height: 14px;
 }
 
 .rutinas-list {
@@ -1339,6 +1408,16 @@
   font-weight: var(--fw-semibold);
 }
 
+.ej-type-btn[data-type="funcional"].active {
+  background-color: var(--color-tag-espalda);
+  color: var(--color-bg);
+}
+
+.ej-type-btn[data-type="maquina"].active {
+  background-color: var(--color-tag-piernas);
+  color: var(--color-bg);
+}
+
 /* Search */
 
 .ej-search-wrap {
@@ -1560,6 +1639,93 @@
 .ej-detail-textarea:focus {
   outline: none;
   border-color: var(--color-accent);
+}
+
+/* ── Muscle illustration in detail ───── */
+
+.ej-detail-illustration {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-md);
+}
+
+.muscle-illustration {
+  width: 64px;
+  height: 64px;
+}
+
+.muscle-illustration .body-outline {
+  fill: none;
+}
+
+.muscle-illustration .muscle-zone {
+  fill: var(--muscle-color, var(--color-accent));
+}
+
+/* ── Exercise params section ─────────── */
+
+.ej-detail-params {
+  margin-bottom: var(--space-lg);
+}
+
+.ej-detail-params-label {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-sm);
+}
+
+.ej-param-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ej-param-cb {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.ej-param-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-border);
+  color: var(--color-text-muted);
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.ej-param-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ej-param-cb:checked + .ej-param-icon {
+  border-color: var(--color-accent);
+  background-color: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  color: var(--color-accent);
+}
+
+.ej-param-text {
+  font-size: var(--text-sm);
+  color: var(--color-text);
+}
+
+.ej-param-text-muted {
+  font-size: var(--text-xs);
+  color: var(--color-text-dim);
 }
 
 /* ── Workout Summary view ────────────────── */
@@ -2008,8 +2174,8 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: var(--space-sm) var(--space-md);
-  margin-bottom: var(--space-lg);
+  padding: var(--space-md);
+  margin-bottom: var(--space-xl);
 }
 
 .home-quick-stat {

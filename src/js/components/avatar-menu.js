@@ -21,16 +21,8 @@ function getInitial(name) {
 
 function renderButton() {
   const usuario = getUsuarioActivo();
-  const firebaseUser = getCurrentUser();
 
-  if (firebaseUser?.photoURL) {
-    return `
-      <button class="avatar-btn" id="avatar-btn" title="${usuario}">
-        <img src="${firebaseUser.photoURL}" alt="" referrerpolicy="no-referrer" class="avatar-btn-img" />
-      </button>
-    `;
-  }
-
+  // Always show the profile initial (L/N) — not the Google photo
   return `
     <button class="avatar-btn" id="avatar-btn" title="${usuario}">
       <span class="avatar-btn-initial">${getInitial(usuario)}</span>

@@ -325,6 +325,7 @@ select.input {
   background-color: var(--color-surface);
   border-top: 1px solid var(--color-border);
   display: flex;
+  align-items: flex-end;
   z-index: 90;
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -343,6 +344,7 @@ select.input {
   font-weight: var(--fw-medium);
   transition: color var(--transition-fast);
   position: relative;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .nav-bottom-item.active {
@@ -359,6 +361,53 @@ select.input {
   background: var(--color-accent);
   border-radius: 0 0 2px 2px;
   animation: nav-indicator 250ms ease-out;
+}
+
+/* ── Center "Entreno" raised button ──────── */
+
+.nav-bottom-main {
+  flex: none;
+  width: 72px;
+  padding-top: 0;
+  padding-bottom: var(--space-sm);
+  gap: 4px;
+}
+
+.nav-bottom-main::before {
+  display: none !important;
+}
+
+.nav-bottom-main-btn {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-accent);
+  color: var(--color-bg);
+  border-radius: var(--radius-full);
+  margin-top: -20px;
+  box-shadow: 0 2px 12px color-mix(in srgb, var(--color-accent) 30%, transparent);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.nav-bottom-main-btn svg {
+  width: 26px;
+  height: 26px;
+}
+
+.nav-bottom-main:active .nav-bottom-main-btn {
+  transform: scale(0.92);
+}
+
+.nav-bottom-main.active .nav-bottom-main-btn {
+  box-shadow:
+    0 2px 12px color-mix(in srgb, var(--color-accent) 30%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--color-accent) 15%, transparent);
+}
+
+.nav-bottom-main span:last-child {
+  font-weight: var(--fw-semibold);
 }
 
 @keyframes nav-indicator {
