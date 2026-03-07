@@ -159,11 +159,11 @@ export function saveEjercicioMeta(nombre, meta) {
 
 // ── Routine-day assignment ──────────────────
 
-export function assignRutinaADia(rutinaId, dia, usuario) {
+export function assignRutinaADia(rutinaId, dia, _usuario) {
   const rutinas = getRutinas();
-  // Clear any routine currently assigned to this day for this user
+  // Clear any routine currently assigned to this day (shared routines)
   for (const r of rutinas) {
-    if (r.usuario === usuario && Number(r.diaSemana) === Number(dia)) {
+    if (Number(r.diaSemana) === Number(dia)) {
       r.diaSemana = null;
     }
   }
@@ -174,10 +174,10 @@ export function assignRutinaADia(rutinaId, dia, usuario) {
   bumpVersion();
 }
 
-export function clearRutinaDelDia(dia, usuario) {
+export function clearRutinaDelDia(dia, _usuario) {
   const rutinas = getRutinas();
   for (const r of rutinas) {
-    if (r.usuario === usuario && Number(r.diaSemana) === Number(dia)) {
+    if (Number(r.diaSemana) === Number(dia)) {
       r.diaSemana = null;
     }
   }

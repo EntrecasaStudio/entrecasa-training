@@ -126,7 +126,7 @@ export function render() {
     .filter((r) => r.tipo === 'gimnasio' || !r.tipo)
     .sort((a, b) => (b.numero || 0) - (a.numero || 0));
 
-  const cross = rutinasUsuario
+  const cross = allRutinas
     .filter((r) => r.tipo === 'cross')
     .sort((a, b) => (b.numero || 0) - (a.numero || 0));
 
@@ -200,7 +200,7 @@ export function mount() {
       .filter((r) => r.tipo === 'gimnasio' || !r.tipo)
       .sort((a, b) => (b.numero || 0) - (a.numero || 0));
 
-    const cross = rutinasUsuario
+    const cross = allRutinas
       .filter((r) => r.tipo === 'cross')
       .sort((a, b) => (b.numero || 0) - (a.numero || 0));
 

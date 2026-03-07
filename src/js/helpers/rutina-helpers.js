@@ -183,6 +183,7 @@ export function showDayAssignmentModal(usuario, dia, tipoActual, onDone) {
 
     if (e.target.closest('[data-assign-clear]')) {
       clearRutinaDelDia(dia, usuario);
+      setPlanDia(usuario, dia, null); // also clear the day plan type
       close();
       onDone();
       return;
