@@ -19,6 +19,9 @@ function onTouchStart(e) {
   // Only start from the left edge
   if (touch.clientX > EDGE_ZONE) return;
 
+  // Block swipe-back during active workout
+  if (window.__workoutActive) return;
+
   startX = touch.clientX;
   startY = touch.clientY;
   swiping = true;

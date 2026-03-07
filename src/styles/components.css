@@ -191,6 +191,90 @@ select.input {
   flex: 1;
 }
 
+/* Vertical actions (e.g. workout exit) */
+.modal-actions-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.modal-actions-vertical .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+}
+
+.modal-actions-vertical .btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.workout-exit-discard {
+  color: var(--color-danger) !important;
+  opacity: 0.7;
+}
+
+/* ── Exercise picker modal ─────────────── */
+
+.exercise-picker-box {
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.exercise-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+}
+
+.exercise-picker-header .modal-title {
+  margin-bottom: 0;
+}
+
+.exercise-picker-close-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  border-radius: var(--radius-full);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.exercise-picker-close-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.exercise-picker-close-btn:active {
+  background-color: var(--color-surface-alt);
+}
+
+.exercise-picker-box .ej-picker-search {
+  margin-bottom: var(--space-sm);
+}
+
+.exercise-picker-box .ej-picker-list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 50vh;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.exercise-picker-empty {
+  padding: var(--space-lg);
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
 /* ── Day assignment modal ────────────────── */
 
 .day-assign-body {

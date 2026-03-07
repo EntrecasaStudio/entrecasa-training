@@ -1,6 +1,5 @@
 import {
   getRutinas,
-  getUsuarioActivo,
   deleteRutina,
   duplicateRutina,
   getUltimaSesionDeRutina,
@@ -121,10 +120,9 @@ function renderRutinaCard(rutina) {
 
 export function render() {
   cardCounter = 0;
-  const usuario = getUsuarioActivo();
-  const rutinasUsuario = getRutinas().filter((r) => r.usuario === usuario);
+  const allRutinas = getRutinas();
 
-  const gimnasio = rutinasUsuario
+  const gimnasio = allRutinas
     .filter((r) => r.tipo === 'gimnasio' || !r.tipo)
     .sort((a, b) => (b.numero || 0) - (a.numero || 0));
 
@@ -144,7 +142,7 @@ export function render() {
     </div>
   `;
 
-  if (rutinasUsuario.length === 0) {
+  if (allRutinas.length === 0) {
     return `
       ${header}
       <div class="empty-state">
@@ -196,10 +194,9 @@ export function mount() {
 
   function rerender() {
     cardCounter = 0;
-    const usuario = getUsuarioActivo();
-    const rutinasUsuario = getRutinas().filter((r) => r.usuario === usuario);
+    const allRutinas = getRutinas();
 
-    const gimnasio = rutinasUsuario
+    const gimnasio = allRutinas
       .filter((r) => r.tipo === 'gimnasio' || !r.tipo)
       .sort((a, b) => (b.numero || 0) - (a.numero || 0));
 

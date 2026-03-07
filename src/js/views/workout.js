@@ -1,4 +1,4 @@
-import { getRutinaById, getWorkoutActivo, saveWorkoutActivo, clearWorkoutActivo, saveSesion, getUltimaSesionDeRutina, getUsuarioActivo } from '@/store.js';
+import { getRutinaById, getWorkoutActivo, saveWorkoutActivo, clearWorkoutActivo, saveSesion, getUltimaSesionDeRutina, getUsuarioActivo, saveRutina, duplicateRutina } from '@/store.js';
 import { generateId } from '@/id.js';
 import { navigate } from '@/router.js';
 import { showModal } from '@js/components/modal.js';
@@ -7,6 +7,8 @@ import { getExerciseProgressData } from '@js/helpers/stats-helpers.js';
 import { haptic } from '@js/helpers/haptics.js';
 import { showExerciseDetail } from '@js/helpers/ejercicio-detail.js';
 import { icon } from '@js/icons.js';
+import { formatNumero } from '@js/helpers/rutina-helpers.js';
+import { showExercisePickerModal } from '@js/components/exercise-picker-modal.js';
 
 let state = null;
 let timerInterval = null;
@@ -14,7 +16,6 @@ let restInterval = null;
 let restRemaining = 0;
 const PESO_STEPS = [1, 2.5, 5];
 const REST_STEPS = [60, 90, 120];
-const NUM_VUELTAS = 3;
 let pesoStepIdx = 1; // default 2.5
 let restStepIdx = 1; // default 90s
 let longPressTimer = null;
@@ -23,6 +24,14 @@ let longPressInterval = null;
 function initState(rutinaId) {
   const activo = getWorkoutActivo();
   if (activo && activo.rutinaId === rutinaId) {
+    // Backward-compat: ensure all vueltas have `done` field
+    for (const circ of activo.resultados) {
+      for (const ej of circ.ejercicios) {
+        if (ej.vueltas) {
+          ej.vueltas.forEach((v) => { if (v.done === undefined) v.done = false; });
+        }
+      }
+    }
     state = activo;
     return;
   }
@@ -45,12 +54,9 @@ function initState(rutinaId) {
             pesoChalecoKg: e.pesoChalecoKg || 0,
           };
         } else {
-          // Old format: replicate single value into all rounds
+          // Old format: single value as one round
           lastMap[e.nombre] = {
-            vueltas: Array.from({ length: NUM_VUELTAS }, () => ({
-              repsReal: e.repsReal,
-              pesoRealKg: e.pesoRealKg,
-            })),
+            vueltas: [{ repsReal: e.repsReal, pesoRealKg: e.pesoRealKg }],
             chaleco: false,
             pesoChalecoKg: 0,
           };
@@ -62,6 +68,7 @@ function initState(rutinaId) {
   state = {
     rutinaId: rutina.id,
     rutinaNombre: rutina.nombre,
+    rutinaNumero: rutina.numero || null,
     usuario: rutina.usuario || getUsuarioActivo(),
     inicioISO: new Date().toISOString(),
     circuitoActual: 0,
@@ -69,18 +76,14 @@ function initState(rutinaId) {
       grupoMuscular: circ.grupoMuscular,
       ejercicios: circ.ejercicios.map((ej) => {
         const prev = lastMap[ej.nombre];
-        const defaultVueltas = Array.from({ length: NUM_VUELTAS }, () => ({
-          repsReal: ej.repsObjetivo,
-          pesoRealKg: ej.pesoKg,
-        }));
 
-        // If prev has fewer rounds than NUM_VUELTAS, pad with last round values
-        let vueltas = defaultVueltas;
+        // Start with 1 vuelta, seeded from previous session or defaults
+        let vueltas;
         if (prev) {
-          vueltas = Array.from({ length: NUM_VUELTAS }, (_, i) => {
-            const src = prev.vueltas[i] || prev.vueltas[prev.vueltas.length - 1];
-            return { repsReal: src.repsReal, pesoRealKg: src.pesoRealKg };
-          });
+          const src = prev.vueltas[0];
+          vueltas = [{ repsReal: src.repsReal, pesoRealKg: src.pesoRealKg, done: false }];
+        } else {
+          vueltas = [{ repsReal: ej.repsObjetivo, pesoRealKg: ej.pesoKg, done: false }];
         }
 
         return {
@@ -129,9 +132,11 @@ function renderCircuitSelector() {
     })
     .join('');
 
+  const addCircuitBtn = `<button class="circuit-seg circuit-add-seg" data-action="add-circuit" aria-label="Agregar circuito">${icon.plus}</button>`;
+
   return `
     <div class="circuit-selector-wrap">
-      <div class="circuit-selector" id="circuit-selector">${segments}</div>
+      <div class="circuit-selector" id="circuit-selector">${segments}${addCircuitBtn}</div>
       <div class="workout-progress-bar">
         <div class="workout-progress-fill" style="width:${pct}%"></div>
       </div>
@@ -186,17 +191,22 @@ function renderEjercicio(ej, ejIdx) {
     </div>
   `;
 
-  // Column headers
+  // Column headers (with spacer for check circle)
   const columnHeaders = `
     <div class="workout-vuelta-headers">
+      <span class="workout-vuelta-header-check-spacer"></span>
       <span class="workout-vuelta-header-spacer"></span>
       <span class="workout-vuelta-header">Reps</span>
       ${showPeso ? '<span class="workout-vuelta-header">Peso (kg)</span>' : ''}
     </div>
   `;
 
-  // Round rows
+  // Round rows with check circle
   const vueltasHtml = ej.vueltas.map((v, vIdx) => {
+    const isDone = v.done;
+    const doneClass = isDone ? ' workout-vuelta-done' : '';
+    const checkIcon = isDone ? icon.checkCircle : icon.circle;
+
     const weightStepper = showPeso ? `
       <div class="workout-vuelta-group">
         <div class="stepper workout-stepper-sm" role="group">
@@ -210,7 +220,10 @@ function renderEjercicio(ej, ejIdx) {
     ` : '';
 
     return `
-      <div class="workout-vuelta-row">
+      <div class="workout-vuelta-row${doneClass}">
+        <button class="workout-vuelta-check" data-action="toggle-vuelta-done" data-ej="${ejIdx}" data-vuelta="${vIdx}">
+          ${checkIcon}
+        </button>
         <span class="workout-vuelta-label">V${vIdx + 1}</span>
         <div class="workout-vuelta-group">
           <div class="stepper workout-stepper-sm" role="group">
@@ -226,10 +239,20 @@ function renderEjercicio(ej, ejIdx) {
     `;
   }).join('');
 
+  // Add vuelta button
+  const addVueltaBtn = `
+    <button class="workout-add-vuelta-btn" data-action="add-vuelta" data-ej="${ejIdx}">
+      ${icon.plus} Vuelta
+    </button>
+  `;
+
   return `
     <div class="workout-ejercicio animate-in" style="animation-delay:${ejIdx * 60}ms">
       <div class="workout-ejercicio-header">
         <div class="workout-ejercicio-name">${ej.nombre}</div>
+        <button class="workout-info-btn" data-action="replace-exercise" data-ej="${ejIdx}" aria-label="Cambiar ${ej.nombre}">
+          ${icon.swap}
+        </button>
         <button class="workout-info-btn" data-action="show-detail" data-nombre="${ej.nombre}" aria-label="Info de ${ej.nombre}">
           ${icon.info}
         </button>
@@ -245,6 +268,7 @@ function renderEjercicio(ej, ejIdx) {
       ${columnHeaders}
       <div class="workout-vueltas">
         ${vueltasHtml}
+        ${addVueltaBtn}
       </div>
     </div>
   `;
@@ -294,10 +318,14 @@ export function render(params) {
     ? `<button class="btn btn-finish btn-full" data-action="finish">${icon.check} Finalizar</button>`
     : `<button class="btn btn-primary btn-full" data-action="next-circuit">Siguiente ${icon.arrowRight}</button>`;
 
+  const initial = (state.usuario || 'L').charAt(0).toUpperCase();
+  const numeroStr = state.rutinaNumero ? formatNumero(state.rutinaNumero) : '';
+
   return `
     <div class="workout-header">
+      <span class="workout-avatar-mini">${initial}</span>
       <div class="workout-header-left">
-        <div class="workout-rutina-name">${state.rutinaNombre}</div>
+        <div class="workout-rutina-name">${state.rutinaNombre}${numeroStr ? `<span class="workout-rutina-numero">${numeroStr}</span>` : ''}</div>
         <div class="workout-timer" id="workout-timer">${icon.clock}${getElapsedStr()}</div>
       </div>
       <button class="workout-end-btn" data-action="end-workout">Salir</button>
@@ -308,6 +336,12 @@ export function render(params) {
     ${lastBanner}
 
     ${ejercicios}
+
+    ${state.resultados.length > 1
+      ? `<button class="workout-remove-circuit-btn" data-action="remove-circuit">
+           ${icon.trash} Quitar circuito
+         </button>`
+      : ''}
 
     <div class="peso-step-toggle">
       <span class="peso-step-label">Incremento:</span>
@@ -359,7 +393,7 @@ function syncInputs() {
   saveWorkoutActivo(state);
 }
 
-function finishWorkout() {
+function doFinishWorkout() {
   syncInputs();
 
   const start = new Date(state.inicioISO);
@@ -378,8 +412,91 @@ function finishWorkout() {
   saveSesion(sesion);
   clearWorkoutActivo();
   stopTimer();
+  const sesionId = sesion.id;
   state = null;
-  navigate(`/summary/${sesion.id}`);
+  navigate(`/summary/${sesionId}`);
+}
+
+function applyModificationsToRutina() {
+  const rutina = getRutinaById(state.rutinaId);
+  if (!rutina) return;
+  // Update circuits/exercises from workout state
+  rutina.circuitos = state.resultados.map((circ) => ({
+    grupoMuscular: circ.grupoMuscular,
+    ejercicios: circ.ejercicios.map((ej) => ({
+      nombre: ej.nombre,
+      repsObjetivo: ej.repsObjetivo,
+      pesoKg: ej.pesoObjetivoKg,
+    })),
+  }));
+  saveRutina(rutina);
+}
+
+function finishWorkout() {
+  syncInputs();
+  if (!state.modified) {
+    doFinishWorkout();
+    return;
+  }
+
+  // Show save options modal
+  const existing = document.getElementById('workout-save-modal');
+  if (existing) existing.remove();
+
+  const numero = state.rutinaNumero ? formatNumero(state.rutinaNumero) : '';
+  const overlay = document.createElement('div');
+  overlay.id = 'workout-save-modal';
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box" role="dialog" aria-modal="true">
+      <div class="modal-title">Rutina modificada</div>
+      <div class="modal-body">Hiciste cambios en los ejercicios. ¿Querés actualizar la rutina?</div>
+      <div class="modal-actions-vertical">
+        <button class="btn btn-primary btn-full" data-save-action="update">Guardar en rutina ${numero}</button>
+        <button class="btn btn-ghost btn-full" data-save-action="duplicate">Guardar como nueva rutina</button>
+        <button class="btn btn-ghost btn-full" data-save-action="skip">No guardar cambios</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  overlay.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-save-action]');
+    if (e.target === overlay) return; // don't dismiss by backdrop
+    if (!btn) return;
+
+    const action = btn.dataset.saveAction;
+    overlay.classList.add('modal-closing');
+    overlay.addEventListener('animationend', () => {
+      overlay.remove();
+      switch (action) {
+        case 'update':
+          applyModificationsToRutina();
+          doFinishWorkout();
+          break;
+        case 'duplicate': {
+          // Duplicate the routine then apply modifications to the copy
+          const copia = duplicateRutina(state.rutinaId);
+          if (copia) {
+            copia.circuitos = state.resultados.map((circ) => ({
+              grupoMuscular: circ.grupoMuscular,
+              ejercicios: circ.ejercicios.map((ej) => ({
+                nombre: ej.nombre,
+                repsObjetivo: ej.repsObjetivo,
+                pesoKg: ej.pesoObjetivoKg,
+              })),
+            }));
+            saveRutina(copia);
+          }
+          doFinishWorkout();
+          break;
+        }
+        case 'skip':
+          doFinishWorkout();
+          break;
+      }
+    }, { once: true });
+  });
 }
 
 // ── Rest timer ─────────────────────────────
@@ -506,6 +623,100 @@ function transitionCircuit(container, params, direction) {
   }, { once: true });
 }
 
+// ── Muscle group chooser modal ────────────
+
+const GRUPOS_MUSCULARES = ['Pecho', 'Espalda', 'Piernas', 'Core', 'Brazos', 'Hombros', 'Glúteos'];
+
+function showMuscleGroupChooser(onSelect) {
+  const existing = document.getElementById('muscle-group-modal');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'muscle-group-modal';
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box" role="dialog" aria-modal="true">
+      <div class="modal-title">Grupo muscular</div>
+      <div class="modal-actions-vertical">
+        ${GRUPOS_MUSCULARES.map((g) => `<button class="btn btn-ghost btn-full" data-grupo="${g}">${g}</button>`).join('')}
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  overlay.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-grupo]');
+    if (btn) {
+      const grupo = btn.dataset.grupo;
+      overlay.classList.add('modal-closing');
+      overlay.addEventListener('animationend', () => {
+        overlay.remove();
+        onSelect(grupo);
+      }, { once: true });
+      return;
+    }
+    if (e.target === overlay) {
+      overlay.classList.add('modal-closing');
+      overlay.addEventListener('animationend', () => overlay.remove(), { once: true });
+    }
+  });
+}
+
+// ── Exit workout modal (3-option) ─────────
+
+function showExitWorkoutModal() {
+  const existing = document.getElementById('workout-exit-modal');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'workout-exit-modal';
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box" role="dialog" aria-modal="true">
+      <div class="modal-title">¿Qué querés hacer?</div>
+      <div class="modal-actions-vertical">
+        <button class="btn btn-primary btn-full" data-exit-action="resume">Volver al entrenamiento</button>
+        <button class="btn btn-ghost btn-full" data-exit-action="finish">${icon.check} Finalizar y guardar</button>
+        <button class="btn btn-ghost btn-full workout-exit-discard" data-exit-action="discard">Descartar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = (cb) => {
+    overlay.classList.add('modal-closing');
+    overlay.addEventListener('animationend', () => {
+      overlay.remove();
+      if (cb) cb();
+    }, { once: true });
+  };
+
+  overlay.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-exit-action]');
+    if (e.target === overlay) {
+      close(); // backdrop click → resume
+      return;
+    }
+    if (!btn) return;
+    switch (btn.dataset.exitAction) {
+      case 'resume':
+        close();
+        break;
+      case 'finish':
+        close(() => finishWorkout());
+        break;
+      case 'discard':
+        close(() => {
+          clearWorkoutActivo();
+          stopTimer();
+          state = null;
+          navigate('/');
+        });
+        break;
+    }
+  });
+}
+
 // ── Auto-scroll circuit selector ──────────
 function scrollToActiveSegment() {
   const selector = document.getElementById('circuit-selector');
@@ -519,6 +730,18 @@ function scrollToActiveSegment() {
 export function mount(params) {
   startTimer();
   const app = document.getElementById('app');
+
+  // ── Workout exit guard (popstate for Android back btn) ──
+  const guardHash = location.hash;
+  history.pushState({ workoutGuard: true }, '', guardHash);
+  window.__workoutActive = true;
+
+  const handlePopState = () => {
+    // Re-push guard to prevent actual back navigation
+    history.pushState({ workoutGuard: true }, '', guardHash);
+    showExitWorkoutModal();
+  };
+  window.addEventListener('popstate', handlePopState);
 
   // Auto-scroll selector on mount
   requestAnimationFrame(() => scrollToActiveSegment());
@@ -602,6 +825,30 @@ export function mount(params) {
         break;
       }
 
+      case 'replace-exercise': {
+        syncInputs();
+        const ejIdx = parseInt(btn.dataset.ej);
+        const circ = state.resultados[state.circuitoActual];
+        const grupoMuscular = circ.grupoMuscular;
+        showExercisePickerModal({
+          grupoMuscular,
+          onSelect: (nombre) => {
+            const ej = circ.ejercicios[ejIdx];
+            if (ej) {
+              ej.nombre = nombre;
+              ej.vueltas = [{ repsReal: ej.repsObjetivo, pesoRealKg: ej.pesoObjetivoKg, done: false }];
+              state.modified = true;
+              saveWorkoutActivo(state);
+              haptic.medium();
+              const container = getWorkoutContainer();
+              container.innerHTML = render(params);
+              scrollToActiveSegment();
+            }
+          },
+        });
+        break;
+      }
+
       case 'goto-circuit': {
         const idx = parseInt(btn.dataset.idx);
         if (idx >= 0 && idx < state.resultados.length && idx !== state.circuitoActual) {
@@ -612,6 +859,43 @@ export function mount(params) {
           haptic.light();
           transitionCircuit(getWorkoutContainer(), params, direction);
           setTimeout(scrollToActiveSegment, 300);
+        }
+        break;
+      }
+
+      case 'toggle-vuelta-done': {
+        const ejIdx = parseInt(btn.dataset.ej);
+        const vIdx = parseInt(btn.dataset.vuelta);
+        const circ = state.resultados[state.circuitoActual];
+        const ej = circ?.ejercicios[ejIdx];
+        if (ej?.vueltas[vIdx]) {
+          ej.vueltas[vIdx].done = !ej.vueltas[vIdx].done;
+          haptic.medium();
+          saveWorkoutActivo(state);
+          // Update visual in place
+          const row = btn.closest('.workout-vuelta-row');
+          if (row) {
+            row.classList.toggle('workout-vuelta-done');
+            btn.innerHTML = ej.vueltas[vIdx].done ? icon.checkCircle : icon.circle;
+          }
+        }
+        break;
+      }
+
+      case 'add-vuelta': {
+        syncInputs();
+        const ejIdx = parseInt(btn.dataset.ej);
+        const circ = state.resultados[state.circuitoActual];
+        const ej = circ?.ejercicios[ejIdx];
+        if (ej) {
+          const last = ej.vueltas[ej.vueltas.length - 1];
+          ej.vueltas.push({ repsReal: last.repsReal, pesoRealKg: last.pesoRealKg, done: false });
+          saveWorkoutActivo(state);
+          haptic.light();
+          // Re-render current circuit
+          const container = getWorkoutContainer();
+          container.innerHTML = render(params);
+          scrollToActiveSegment();
         }
         break;
       }
@@ -718,20 +1002,63 @@ export function mount(params) {
       }
 
       case 'end-workout':
+        showExitWorkoutModal();
+        break;
+
+      case 'add-circuit': {
+        syncInputs();
+        showMuscleGroupChooser((grupo) => {
+          showExercisePickerModal({
+            grupoMuscular: grupo,
+            onSelect: (nombre) => {
+              state.resultados.push({
+                grupoMuscular: grupo,
+                ejercicios: [{
+                  nombre,
+                  repsObjetivo: 10,
+                  pesoObjetivoKg: 0,
+                  chaleco: false,
+                  pesoChalecoKg: 0,
+                  vueltas: [{ repsReal: 10, pesoRealKg: 0, done: false }],
+                }],
+              });
+              state.modified = true;
+              // Navigate to the new circuit
+              state.circuitoActual = state.resultados.length - 1;
+              saveWorkoutActivo(state);
+              haptic.medium();
+              const container = getWorkoutContainer();
+              container.innerHTML = render(params);
+              scrollToActiveSegment();
+            },
+          });
+        });
+        break;
+      }
+
+      case 'remove-circuit': {
+        if (state.resultados.length <= 1) break;
         showModal({
-          title: 'Salir del entrenamiento',
-          body: 'Tu progreso queda guardado. Podés retomarlo cuando quieras.',
-          confirmText: 'Salir',
-          cancelText: 'Continuar',
+          title: 'Quitar circuito',
+          body: `¿Eliminar el circuito ${state.circuitoActual + 1} (${state.resultados[state.circuitoActual].grupoMuscular})?`,
+          confirmText: 'Eliminar',
           danger: true,
           onConfirm: () => {
             syncInputs();
-            stopTimer();
-            state = null;
-            navigate('/');
+            state.resultados.splice(state.circuitoActual, 1);
+            if (state.circuitoActual >= state.resultados.length) {
+              state.circuitoActual = state.resultados.length - 1;
+            }
+            state.modified = true;
+            saveWorkoutActivo(state);
+            haptic.medium();
+            const container = getWorkoutContainer();
+            container.innerHTML = render(params);
+            scrollToActiveSegment();
           },
         });
         break;
+      }
     }
   };
 
@@ -777,6 +1104,8 @@ export function mount(params) {
     app.removeEventListener('touchstart', handleTouchStart);
     app.removeEventListener('touchmove', handleTouchMove);
     app.removeEventListener('touchend', handleTouchEnd);
+    window.removeEventListener('popstate', handlePopState);
+    window.__workoutActive = false;
     clearLongPress();
     stopTimer();
   };

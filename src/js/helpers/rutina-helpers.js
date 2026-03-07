@@ -112,8 +112,8 @@ export function showDayAssignmentModal(usuario, dia, tipoActual, onDone) {
   const otroLabel = otroTipo === 'gimnasio' ? 'Gimnasio' : 'Cross';
   const tipoIcon = tipoActual === 'gimnasio' ? '🏋️' : '🏃';
 
-  // Get routines matching current type
-  const rutinas = getRutinas().filter((r) => r.usuario === usuario && r.tipo === tipoActual);
+  // Get routines matching current type (shared between users)
+  const rutinas = getRutinas().filter((r) => r.tipo === tipoActual);
   const assigned = rutinas.find((r) => r.diaSemana === dia);
 
   const rutinasHtml = rutinas.map((r) => {

@@ -141,19 +141,35 @@ export function saveNotaEjercicio(nombre, nota) {
   bumpVersion();
 }
 
+// ── Ejercicio metadata (parámetros) ────────
+
+const EJERCICIO_META_KEY = 'gym_ejercicio_meta';
+
+export function getEjercicioMeta(nombre) {
+  const all = read(EJERCICIO_META_KEY) || {};
+  return all[nombre] || { usaPeso: false, usaChaleco: false };
+}
+
+export function saveEjercicioMeta(nombre, meta) {
+  const all = read(EJERCICIO_META_KEY) || {};
+  all[nombre] = meta;
+  write(EJERCICIO_META_KEY, all);
+  bumpVersion();
+}
+
 // ── Routine-day assignment ──────────────────
 
 export function assignRutinaADia(rutinaId, dia, usuario) {
   const rutinas = getRutinas();
   // Clear any routine currently assigned to this day for this user
   for (const r of rutinas) {
-    if (r.usuario === usuario && r.diaSemana === dia) {
+    if (r.usuario === usuario && Number(r.diaSemana) === Number(dia)) {
       r.diaSemana = null;
     }
   }
   // Assign the new one
   const target = rutinas.find((r) => r.id === rutinaId);
-  if (target) target.diaSemana = dia;
+  if (target) target.diaSemana = Number(dia);
   write(KEYS.rutinas, rutinas);
   bumpVersion();
 }
@@ -161,7 +177,7 @@ export function assignRutinaADia(rutinaId, dia, usuario) {
 export function clearRutinaDelDia(dia, usuario) {
   const rutinas = getRutinas();
   for (const r of rutinas) {
-    if (r.usuario === usuario && r.diaSemana === dia) {
+    if (r.usuario === usuario && Number(r.diaSemana) === Number(dia)) {
       r.diaSemana = null;
     }
   }
@@ -188,10 +204,10 @@ export function getRutinaHoy(usuario) {
 
   if (!tipoHoy) return null; // rest day
 
-  const rutinas = getRutinas().filter((r) => r.usuario === usuario);
+  const rutinas = getRutinas();
 
   // First try: programmed routine for this day
-  const programada = rutinas.find((r) => r.diaSemana === hoy);
+  const programada = rutinas.find((r) => Number(r.diaSemana) === hoy);
   if (programada) return programada;
 
   // Fallback: first library routine of matching type
@@ -201,7 +217,7 @@ export function getRutinaHoy(usuario) {
 export function getProximoEntrenamiento(usuario) {
   const hoy = new Date().getDay();
   const plan = getPlanSemanal(usuario);
-  const rutinas = getRutinas().filter((r) => r.usuario === usuario);
+  const rutinas = getRutinas();
 
   // Check next 7 days (starting tomorrow)
   for (let i = 1; i <= 7; i++) {
@@ -211,7 +227,7 @@ export function getProximoEntrenamiento(usuario) {
 
     // Find a routine for that day
     const rut =
-      rutinas.find((r) => r.diaSemana === d) ||
+      rutinas.find((r) => Number(r.diaSemana) === d) ||
       rutinas.find((r) => r.tipo === tipo && r.diaSemana == null);
     if (rut) return { rutina: rut, diaNombre: DIAS_NOMBRES[d], tipo };
   }
