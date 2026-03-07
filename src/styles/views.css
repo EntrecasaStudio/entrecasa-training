@@ -581,7 +581,53 @@
   transform: scale(0.92);
 }
 
-/* ── Rutinas type filter toggle ──────── */
+/* ── Rutinas filter row (toggle + view modes) ── */
+
+.rutinas-filter-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.rutinas-filter-toggle {
+  flex: 1;
+}
+
+.rutinas-view-modes {
+  display: flex;
+  gap: 2px;
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+.rutinas-view-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  transition: all var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rutinas-view-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.rutinas-view-btn.active {
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
+.rutinas-view-btn:active {
+  transform: scale(0.9);
+}
 
 .rutina-filter-count {
   font-size: 10px;
@@ -1599,14 +1645,37 @@
   color: var(--color-tag-piernas);
 }
 
-.ej-detail-desc {
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
-  line-height: 1.6;
+.ej-detail-desc-section {
   margin-bottom: var(--space-md);
-  padding: var(--space-sm) var(--space-md);
-  background-color: color-mix(in srgb, var(--color-surface) 50%, var(--color-bg));
+}
+
+.ej-detail-section-label {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-xs);
+}
+
+.ej-detail-desc-textarea {
+  width: 100%;
+  padding: var(--space-sm);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-family: var(--font-main);
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 48px;
+}
+
+.ej-detail-desc-textarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
 }
 
 .ej-detail-notes-section {

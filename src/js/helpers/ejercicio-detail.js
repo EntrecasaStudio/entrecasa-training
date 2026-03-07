@@ -1,7 +1,20 @@
-import { getNotaEjercicio, saveNotaEjercicio } from '@/store.js';
+import { getNotaEjercicio, saveNotaEjercicio, getEjercicioMeta, saveEjercicioMeta } from '@/store.js';
 import { DESCRIPCIONES } from '@js/ejercicios-descripciones.js';
 import { ejerciciosCatalogo } from '@js/ejercicios-catalogo.js';
 import { getEjerciciosCustom } from '@js/ejercicios-catalogo.js';
+import { icon } from '@js/icons.js';
+import { MUSCLE_GROUP_SVG } from '@js/helpers/muscle-illustrations.js';
+
+// Map category → CSS color variable
+const CATEGORY_COLORS = {
+  Core: 'var(--color-tag-core)',
+  Piernas: 'var(--color-tag-piernas)',
+  Pecho: 'var(--color-tag-pecho)',
+  Espalda: 'var(--color-tag-espalda)',
+  Brazos: 'var(--color-tag-brazos)',
+  'Glúteos': 'var(--color-tag-gluteos)',
+  Hombros: 'var(--color-tag-hombros)',
+};
 
 function findEjercicio(nombre) {
   return [...ejerciciosCatalogo, ...getEjerciciosCustom()].find((e) => e.nombre === nombre);
@@ -11,14 +24,25 @@ export function showExerciseDetail(nombre) {
   const ej = findEjercicio(nombre);
   if (!ej) return;
 
-  const desc = DESCRIPCIONES[nombre] || '';
+  const defaultDesc = DESCRIPCIONES[nombre] || '';
+  const meta = getEjercicioMeta(nombre);
+  const desc = meta.descripcion != null ? meta.descripcion : defaultDesc;
   const nota = getNotaEjercicio(nombre);
   const tipoLabel = ej.tipo === 'maquina' ? 'Máquina' : 'Funcional';
+
+  // Muscle illustration for this category
+  const muscleSvg = MUSCLE_GROUP_SVG[ej.categoria] || '';
+  const muscleColor = CATEGORY_COLORS[ej.categoria] || 'var(--color-accent)';
+
+  const illustrationHtml = muscleSvg
+    ? `<div class="ej-detail-illustration" style="--muscle-color: ${muscleColor}">${muscleSvg}</div>`
+    : '';
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
     <div class="modal-box ej-detail-modal">
+      ${illustrationHtml}
       <div class="ej-detail-header">
         <div class="ej-detail-name">${nombre}</div>
         <div class="ej-detail-badges">
@@ -26,7 +50,23 @@ export function showExerciseDetail(nombre) {
           <span class="ej-detail-tipo ${ej.tipo}">${tipoLabel}</span>
         </div>
       </div>
-      ${desc ? `<div class="ej-detail-desc">${desc}</div>` : ''}
+      <div class="ej-detail-desc-section">
+        <label class="ej-detail-section-label">Descripción</label>
+        <textarea class="ej-detail-desc-textarea" placeholder="Descripción del ejercicio..." rows="2">${desc}</textarea>
+      </div>
+      <div class="ej-detail-params">
+        <span class="ej-detail-params-label">Parámetros</span>
+        <label class="ej-param-toggle">
+          <input type="checkbox" class="ej-param-cb" data-param="usaPeso" ${meta.usaPeso ? 'checked' : ''}>
+          <span class="ej-param-icon">${icon.kettlebell}</span>
+          <span class="ej-param-text">Usa peso</span>
+        </label>
+        <label class="ej-param-toggle">
+          <input type="checkbox" class="ej-param-cb" data-param="usaChaleco" ${meta.usaChaleco ? 'checked' : ''}>
+          <span class="ej-param-icon">${icon.vest}</span>
+          <span class="ej-param-text">Puede usar chaleco</span>
+        </label>
+      </div>
       <div class="ej-detail-notes-section">
         <label class="ej-detail-notes-label">Mis notas</label>
         <textarea class="ej-detail-textarea" placeholder="Agrega tus notas personales..." rows="3">${nota}</textarea>
@@ -52,8 +92,20 @@ export function showExerciseDetail(nombre) {
     }
 
     if (e.target.closest('[data-detail-save]')) {
-      const textarea = overlay.querySelector('.ej-detail-textarea');
-      saveNotaEjercicio(nombre, textarea.value);
+      // Save notes
+      const notaTextarea = overlay.querySelector('.ej-detail-textarea');
+      saveNotaEjercicio(nombre, notaTextarea.value);
+
+      // Save description + params
+      const descTextarea = overlay.querySelector('.ej-detail-desc-textarea');
+      const usaPeso = overlay.querySelector('[data-param="usaPeso"]').checked;
+      const usaChaleco = overlay.querySelector('[data-param="usaChaleco"]').checked;
+      saveEjercicioMeta(nombre, {
+        usaPeso,
+        usaChaleco,
+        descripcion: descTextarea.value,
+      });
+
       close();
     }
   });
