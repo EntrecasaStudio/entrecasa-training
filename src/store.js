@@ -91,6 +91,16 @@ export function saveSesion(sesion) {
   bumpVersion();
 }
 
+export function updateSesion(sesion) {
+  const sesiones = read(KEYS.sesiones) || [];
+  const idx = sesiones.findIndex((s) => s.id === sesion.id);
+  if (idx >= 0) {
+    sesiones[idx] = sesion;
+    write(KEYS.sesiones, sesiones);
+    bumpVersion();
+  }
+}
+
 // ── Usuario activo ──────────────────────────
 
 export function getUsuarioActivo() {

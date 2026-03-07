@@ -1,4 +1,4 @@
-import { getSesionById, getPersonalRecords, calcVolumenSesion, getPreviousSesion, getUsuarioActivo, getEjVueltas, getEjBestRound } from '@/store.js';
+import { getSesionById, getPersonalRecords, calcVolumenSesion, getPreviousSesion, getUsuarioActivo, getEjVueltas, getEjBestRound, updateSesion } from '@/store.js';
 import { navigate } from '@/router.js';
 import { icon } from '@js/icons.js';
 import { showToast } from '@js/components/toast.js';
@@ -177,6 +177,17 @@ export function render(params) {
         ${renderStatCard('Circuitos', sesion.circuitos.length)}
       </div>
 
+      <div class="summary-calories animate-in" style="animation-delay:250ms">
+        <div class="summary-cal-row">
+          <span class="summary-cal-label">🔥 Calorías</span>
+          <div class="summary-cal-input-wrap">
+            <input type="number" class="summary-cal-input" inputmode="numeric" placeholder="---"
+                   value="${sesion.calorias || ''}" data-sesion-id="${sesion.id}" min="0">
+            <span class="summary-cal-unit">kcal</span>
+          </div>
+        </div>
+      </div>
+
       ${renderDonutChart(sesion)}
       ${renderComparison(sesion, previous)}
       ${renderPRs(sesion, records)}
@@ -222,9 +233,24 @@ export function mount(params) {
     }
   };
 
+  const handleChange = (e) => {
+    if (e.target.matches('.summary-cal-input')) {
+      const sesionId = e.target.dataset.sesionId;
+      const val = parseInt(e.target.value) || 0;
+      const sesion = getSesionById(sesionId);
+      if (sesion) {
+        sesion.calorias = val > 0 ? val : undefined;
+        updateSesion(sesion);
+        showToast('Calorías guardadas');
+      }
+    }
+  };
+
   app.addEventListener('click', handleClick);
+  app.addEventListener('change', handleChange);
 
   return () => {
     app.removeEventListener('click', handleClick);
+    app.removeEventListener('change', handleChange);
   };
 }

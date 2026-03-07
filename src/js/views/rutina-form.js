@@ -1,4 +1,4 @@
-import { getRutinaById, saveRutina, getUsuarioActivo } from '@/store.js';
+import { getRutinaById, getRutinas, saveRutina, getUsuarioActivo } from '@/store.js';
 import { generateId } from '@/id.js';
 import { navigate } from '@/router.js';
 import { icon } from '@js/icons.js';
@@ -6,6 +6,7 @@ import { buscarEjerciciosPorCategorias, addEjercicioCustom } from '@js/ejercicio
 import { showModal } from '@js/components/modal.js';
 import { showToast } from '@js/components/toast.js';
 import { showExerciseDetail } from '@js/helpers/ejercicio-detail.js';
+import { formatNumero } from '@js/helpers/rutina-helpers.js';
 
 const GRUPOS_MUSCULARES = ['Pecho', 'Espalda', 'Piernas', 'Core', 'Brazos', 'Glúteos', 'Hombros'];
 const GRUPO_COLOR_SLUG = {
@@ -224,9 +225,9 @@ function renderForm(isEdit) {
 
     <div class="form-section">
       <label class="input-label">Tipo</label>
-      <div class="user-toggle" data-active="${rutina.tipo === 'cross' ? '1' : '0'}">
-        <button class="user-toggle-btn ${rutina.tipo !== 'cross' ? 'active' : ''}" data-action="set-tipo" data-tipo="gimnasio">🏋️ Gimnasio</button>
-        <button class="user-toggle-btn ${rutina.tipo === 'cross' ? 'active' : ''}" data-action="set-tipo" data-tipo="cross">🏃 Cross</button>
+      <div class="ej-type-toggle">
+        <button class="ej-type-btn ${rutina.tipo !== 'cross' ? 'active' : ''}" data-action="set-tipo" data-tipo="gimnasio">🏋️ Gimnasio</button>
+        <button class="ej-type-btn ${rutina.tipo === 'cross' ? 'active' : ''}" data-action="set-tipo" data-tipo="cross">🏃 Cross</button>
       </div>
     </div>
 
@@ -240,7 +241,7 @@ function renderForm(isEdit) {
 
     <div class="form-footer">
       <button class="btn btn-primary btn-full" data-action="save">Guardar Rutina</button>
-      ${isEdit ? '<button class="btn btn-ghost btn-full" data-action="back">Cancelar</button>' : ''}
+      <button class="btn btn-ghost btn-full" data-action="${isEdit ? 'back' : 'back'}">${isEdit ? 'Cerrar' : 'Cancelar'}</button>
     </div>
   `;
 }
@@ -311,6 +312,128 @@ function selectEjercicio(circIdx, ejIdx, nombre) {
   reRender();
 }
 
+function getNextNumero(tipo) {
+  const all = getRutinas().filter((r) => r.tipo === (tipo || 'gimnasio'));
+  const max = all.reduce((m, r) => Math.max(m, r.numero || 0), 0);
+  return max + 1;
+}
+
+function showSaveOptionsModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  const num = formatNumero(rutina.numero);
+  const nextNum = formatNumero(getNextNumero(rutina.tipo));
+  overlay.innerHTML = `
+    <div class="modal-box" role="dialog" aria-modal="true">
+      <div class="modal-title">Guardar cambios</div>
+      <div class="modal-body">¿Cómo querés guardar los cambios?</div>
+      <div class="modal-actions-vertical">
+        <button class="btn btn-primary btn-full" data-save-opt="update">Guardar en rutina ${num}</button>
+        <button class="btn btn-ghost btn-full" data-save-opt="new">Guardar como nueva ${nextNum}</button>
+        <button class="btn btn-ghost btn-full" data-save-opt="cancel">Cancelar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = (cb) => {
+    overlay.classList.add('modal-closing');
+    overlay.addEventListener('animationend', () => {
+      overlay.remove();
+      if (cb) cb();
+    }, { once: true });
+  };
+
+  overlay.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-save-opt]');
+    if (e.target === overlay) { close(); return; }
+    if (!btn) return;
+
+    switch (btn.dataset.saveOpt) {
+      case 'update':
+        close(() => {
+          saveRutina(rutina);
+          showToast('Rutina actualizada');
+          navigate('/rutinas');
+        });
+        break;
+      case 'new':
+        close(() => {
+          const copia = JSON.parse(JSON.stringify(rutina));
+          copia.id = generateId();
+          copia.numero = getNextNumero(rutina.tipo);
+          copia.diaSemana = null;
+          saveRutina(copia);
+          showToast(`Rutina ${formatNumero(copia.numero)} creada`);
+          navigate('/rutinas');
+        });
+        break;
+      case 'cancel':
+        close();
+        break;
+    }
+  });
+}
+
+function showExitEditModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box" role="dialog" aria-modal="true">
+      <div class="modal-title">Cambios sin guardar</div>
+      <div class="modal-body">Tenés cambios sin guardar. ¿Qué querés hacer?</div>
+      <div class="modal-actions-vertical">
+        <button class="btn btn-primary btn-full" data-exit-opt="save">Guardar cambios</button>
+        <button class="btn btn-ghost btn-full" data-exit-opt="continue">Seguir editando</button>
+        <button class="btn btn-ghost btn-full workout-exit-discard" data-exit-opt="discard">Descartar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = (cb) => {
+    overlay.classList.add('modal-closing');
+    overlay.addEventListener('animationend', () => {
+      overlay.remove();
+      if (cb) cb();
+    }, { once: true });
+  };
+
+  overlay.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-exit-opt]');
+    if (e.target === overlay) { close(); return; }
+    if (!btn) return;
+
+    switch (btn.dataset.exitOpt) {
+      case 'save':
+        close(() => {
+          syncFromInputs();
+          const error = validate();
+          if (error) {
+            showToast(error, 'error');
+            return;
+          }
+          const isEditing = !!getRutinaById(rutina.id);
+          if (isEditing) {
+            showSaveOptionsModal();
+          } else {
+            if (!rutina.numero) rutina.numero = getNextNumero(rutina.tipo);
+            saveRutina(rutina);
+            showToast('Rutina guardada');
+            navigate('/rutinas');
+          }
+        });
+        break;
+      case 'continue':
+        close();
+        break;
+      case 'discard':
+        close(() => navigate('/rutinas'));
+        break;
+    }
+  });
+}
+
 export function mount(params) {
   const app = document.getElementById('app');
 
@@ -324,14 +447,7 @@ export function mount(params) {
     switch (action) {
       case 'back':
         if (isDirty) {
-          showModal({
-            title: 'Descartar cambios',
-            body: 'Tienes cambios sin guardar. ¿Deseas descartarlos?',
-            confirmText: 'Descartar',
-            cancelText: 'Seguir editando',
-            danger: true,
-            onConfirm: () => navigate('/rutinas'),
-          });
+          showExitEditModal();
         } else {
           navigate('/rutinas');
         }
@@ -490,9 +606,18 @@ export function mount(params) {
             showToast(error, 'error');
             return;
           }
-          saveRutina(rutina);
-          showToast('Rutina guardada');
-          navigate('/rutinas');
+          const isEditing = !!getRutinaById(rutina.id);
+          if (isEditing && isDirty) {
+            showSaveOptionsModal();
+          } else {
+            // New rutina — assign next numero
+            if (!rutina.numero) {
+              rutina.numero = getNextNumero(rutina.tipo);
+            }
+            saveRutina(rutina);
+            showToast('Rutina guardada');
+            navigate('/rutinas');
+          }
         }
         break;
     }

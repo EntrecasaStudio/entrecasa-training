@@ -608,6 +608,33 @@
   pointer-events: none;
 }
 
+/* ── Remove vuelta button ─────────────────── */
+
+.workout-vuelta-remove {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  opacity: 0.5;
+  border-radius: var(--radius-full);
+  -webkit-tap-highlight-color: transparent;
+  transition: all var(--transition-fast);
+}
+
+.workout-vuelta-remove svg {
+  width: 14px;
+  height: 14px;
+}
+
+.workout-vuelta-remove:active {
+  opacity: 1;
+  color: var(--color-danger, #ef4444);
+  background: color-mix(in srgb, var(--color-danger, #ef4444) 10%, transparent);
+}
+
 /* ── Add vuelta button ────────────────────── */
 
 .workout-add-vuelta-btn {

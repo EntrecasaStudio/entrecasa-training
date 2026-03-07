@@ -1,4 +1,4 @@
-import { getSesionById, getSesionesByRutina, getPersonalRecords, calcVolumenSesion, getUsuarioActivo, getEjVueltas, getEjBestRound } from '@/store.js';
+import { getSesionById, getSesionesByRutina, getPersonalRecords, calcVolumenSesion, getUsuarioActivo, getEjVueltas, getEjBestRound, updateSesion } from '@/store.js';
 import { navigate } from '@/router.js';
 import { icon } from '@js/icons.js';
 
@@ -34,6 +34,14 @@ function renderStatsStrip(sesion) {
   const volumen = Math.round(calcVolumenSesion(sesion));
   const totalEj = sesion.circuitos.reduce((sum, c) => sum + c.ejercicios.length, 0);
 
+  const calHtml = sesion.calorias
+    ? `<div class="detalle-stat-divider"></div>
+       <div class="detalle-stat">
+         <div class="detalle-stat-value">${sesion.calorias}</div>
+         <div class="detalle-stat-label">kcal</div>
+       </div>`
+    : '';
+
   return `
     <div class="detalle-stats-strip animate-in">
       <div class="detalle-stat">
@@ -55,6 +63,7 @@ function renderStatsStrip(sesion) {
         <div class="detalle-stat-value">${sesion.circuitos.length}</div>
         <div class="detalle-stat-label">circuitos</div>
       </div>
+      ${calHtml}
     </div>
   `;
 }

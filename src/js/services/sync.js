@@ -13,6 +13,7 @@ const SYNC_KEYS = {
   gym_plan_semanal: 'planSemanal',
   gym_notas_ejercicios: 'notasEjercicios',
   gym_theme: 'theme',
+  gym_ejercicio_meta: 'ejercicioMeta',
 };
 
 // Debounce timers per key
@@ -24,6 +25,9 @@ let _unsubscribe = null;
 
 // Flag to prevent sync loops (remote update → localStorage write → sync trigger)
 let _suppressSync = false;
+
+// Keys with pending local changes not yet uploaded — skip in onSnapshot
+const _dirtyKeys = new Set();
 
 // ── Upload ──────────────────────────────
 
@@ -49,6 +53,8 @@ async function uploadKey(key) {
     await setDoc(ref, { [field]: data, lastUpdated: Date.now() }, { merge: true });
   } catch (err) {
     console.warn('[sync] upload error:', key, err.message);
+  } finally {
+    _dirtyKeys.delete(key);
   }
 }
 
@@ -142,6 +148,9 @@ export function startRealtimeSync(onUpdate) {
     for (const [key, field] of Object.entries(SYNC_KEYS)) {
       if (data[field] === undefined || data[field] === null) continue;
 
+      // Skip keys with pending local changes to avoid overwriting with stale data
+      if (_dirtyKeys.has(key)) continue;
+
       const remoteJSON = JSON.stringify(data[field]);
       const localJSON = localStorage.getItem(key);
 
@@ -179,6 +188,7 @@ export function queueSync(key) {
   if (!SYNC_KEYS[key]) return;
   if (!getCurrentUser()) return;
 
+  _dirtyKeys.add(key);
   clearTimeout(_timers[key]);
   _timers[key] = setTimeout(() => uploadKey(key), DEBOUNCE_MS);
 }

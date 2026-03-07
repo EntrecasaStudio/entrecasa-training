@@ -3,7 +3,7 @@ import { DESCRIPCIONES } from '@js/ejercicios-descripciones.js';
 import { ejerciciosCatalogo } from '@js/ejercicios-catalogo.js';
 import { getEjerciciosCustom } from '@js/ejercicios-catalogo.js';
 import { icon } from '@js/icons.js';
-import { MUSCLE_GROUP_SVG } from '@js/helpers/muscle-illustrations.js';
+import { getMuscleSvg } from '@js/helpers/muscle-illustrations.js';
 
 // Map category → CSS color variable
 const CATEGORY_COLORS = {
@@ -30,8 +30,8 @@ export function showExerciseDetail(nombre) {
   const nota = getNotaEjercicio(nombre);
   const tipoLabel = ej.tipo === 'maquina' ? 'Máquina' : 'Funcional';
 
-  // Muscle illustration for this category
-  const muscleSvg = MUSCLE_GROUP_SVG[ej.categoria] || '';
+  // Muscle illustration for this category — full body with all muscles visible
+  const muscleSvg = ej.categoria ? getMuscleSvg(ej.categoria, 80, { allMuscles: true }) : '';
   const muscleColor = CATEGORY_COLORS[ej.categoria] || 'var(--color-accent)';
 
   const illustrationHtml = muscleSvg

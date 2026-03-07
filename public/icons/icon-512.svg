@@ -1,30 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <defs>
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="40"/>
-    </filter>
-    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000" flood-opacity="0.5"/>
-    </filter>
-  </defs>
-
   <!-- Background -->
   <rect width="512" height="512" rx="96" fill="#1A1A1A"/>
 
-  <!-- Ambient glow -->
-  <ellipse cx="256" cy="272" rx="106" ry="93" fill="#FFCD00" fill-opacity="0.12" filter="url(#glow)"/>
-
-  <!-- Kettlebell -->
-  <g transform="translate(256,245) scale(13.3) translate(-12,-10)" filter="url(#shadow)">
-    <!-- Handle (stroke) -->
-    <path d="M9 6a3.5 3.5 0 0 1 6 0" fill="none" stroke="#FFCD00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    <line x1="9" y1="6" x2="9" y2="9.5" stroke="#FFCD00" stroke-width="2" stroke-linecap="round"/>
-    <line x1="15" y1="6" x2="15" y2="9.5" stroke="#FFCD00" stroke-width="2" stroke-linecap="round"/>
-
-    <!-- Body (filled) -->
-    <circle cx="12" cy="14" r="5.5" fill="#FFCD00"/>
-
-    <!-- Shine highlight -->
-    <ellipse cx="10.5" cy="12.5" rx="2" ry="1.5" fill="#FFF" fill-opacity="0.15" transform="rotate(-15,10.5,12.5)"/>
+  <!-- Entrecasa iso (exact vector) -->
+  <g transform="translate(90,118.4) scale(10.983)" fill="#FFCD00">
+    <path d="M0.001,25.054 v0 l15.031,-8.535Z"/>
+    <path d="M0.001,24.569 v0.484 l15.031,-8.531 v-0.485Z"/>
+    <path d="M0.001,21.895 v0.486 l15.031,-8.533 v-0.485Z"/>
+    <path d="M0.001,19.222 v0.484 L15.032,11.174 v-0.486Z"/>
+    <path d="M0.001,16.548 v0.484 l15.031,-8.531 v-0.486Z"/>
+    <path d="M0.001,13.873 v0.485 l15.031,-8.532 v-0.486Z"/>
+    <path d="M0.001,11.197 v0.485 l15.031,-8.532 V2.665Z"/>
+    <path d="M15.031,0 L0,8.534 v0.474 l15.031,-8.533Z"/>
+    <path d="M15.03,0 V16.522 l15.2,8.534 V8.534Z"/>
   </g>
 </svg>

@@ -190,7 +190,7 @@ function rutinasNat() {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '5'; // Bump when seed data changes
+  const CURRENT_SEED_V = '6'; // Bump when seed data changes (6 = shared routines dedup)
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -204,7 +204,7 @@ export function seedIfEmpty() {
 
     if (existing && seedV === CURRENT_SEED_V) {
       const parsed = JSON.parse(existing);
-      if (parsed.length > 0 && parsed[0].usuario) {
+      if (parsed.length > 0) {
         seedPlan(); // ensure plan exists even on existing data
         return; // Already seeded with current version
       }
@@ -213,20 +213,31 @@ export function seedIfEmpty() {
     // Merge strategy: keep user-edited routines, add new seed routines
     if (existing) {
       try {
-        const parsed = JSON.parse(existing);
+        let parsed = JSON.parse(existing);
         if (parsed.length > 0) {
-          // Find seed routine names per user that already exist
-          const existingNames = new Set(
-            parsed.map((r) => `${r.usuario}::${r.nombre}`),
+          // ── Dedup: remove duplicate numeros (keep first occurrence) ──
+          const seenNumeros = new Set();
+          parsed = parsed.filter((r) => {
+            if (r.numero) {
+              const key = `${r.tipo || 'gimnasio'}::${r.numero}`;
+              if (seenNumeros.has(key)) return false;
+              seenNumeros.add(key);
+            }
+            return true;
+          });
+
+          // Find routines that already exist by numero
+          const existingNumeros = new Set(
+            parsed.filter((r) => r.numero).map((r) => `${r.tipo || 'gimnasio'}::${r.numero}`),
           );
-          // Only add routines that don't exist yet (by name+user)
-          const newOnes = seedRutinas.filter(
-            (r) => !existingNames.has(`${r.usuario}::${r.nombre}`),
-          );
-          if (newOnes.length > 0) {
-            const merged = [...parsed, ...newOnes];
-            localStorage.setItem(KEY, JSON.stringify(merged));
-          }
+          const existingNames = new Set(parsed.map((r) => r.nombre));
+          // Only add routines that don't exist yet
+          const newOnes = seedRutinas.filter((r) => {
+            if (r.numero) return !existingNumeros.has(`${r.tipo || 'gimnasio'}::${r.numero}`);
+            return !existingNames.has(r.nombre);
+          });
+          const merged = [...parsed, ...newOnes];
+          localStorage.setItem(KEY, JSON.stringify(merged));
           localStorage.setItem(SEED_VERSION, CURRENT_SEED_V);
           seedPlan(); // ensure plan exists
           return;

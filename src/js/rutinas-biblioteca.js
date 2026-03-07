@@ -211,16 +211,13 @@ for (const e of ejerciciosCatalogo) {
   _pool[e.categoria].push(e);
 }
 
-// ── Average weights per user per grupo ──────────
+// ── Average weights per grupo (shared routines) ──
 
-const PESO_BASE = {
-  Lean: { Core: 8, Piernas: 55, Pecho: 55, Espalda: 60, Hombros: 30, Brazos: 28, 'Glúteos': 35 },
-  Nat: { Core: 3, Piernas: 30, Pecho: 20, Espalda: 25, Hombros: 10, Brazos: 14, 'Glúteos': 20 },
-};
+const PESO_BASE = { Core: 5, Piernas: 40, Pecho: 35, Espalda: 40, Hombros: 20, Brazos: 20, 'Glúteos': 25 };
 
 // ── Build one rutina ────────────────────────────
 
-function buildRutina(numero, titulo, tipo, usuario, seed) {
+function buildRutina(numero, titulo, tipo, seed) {
   const grupos = parseGrupos(titulo);
 
   const circuitos = grupos.map((grupo, i) => {
@@ -233,7 +230,7 @@ function buildRutina(numero, titulo, tipo, usuario, seed) {
       const idx = (offset + j) % pool.length;
       const cat = pool[idx];
       const isFuncionalCore = grupo === 'Core' && cat.tipo === 'funcional';
-      const base = PESO_BASE[usuario][grupo] || 0;
+      const base = PESO_BASE[grupo] || 0;
       // Vary weight ±20% based on seed
       const variance = 1 + ((seed + j) % 5 - 2) * 0.1;
       const peso = isFuncionalCore ? 0 : Math.round(base * variance);
@@ -252,7 +249,6 @@ function buildRutina(numero, titulo, tipo, usuario, seed) {
   return {
     id: generateId(),
     nombre: `Día ${numero} - ${titulo}`,
-    usuario,
     diaSemana: null,
     tipo,
     numero,
@@ -271,13 +267,11 @@ export function getBibliotecaRutinas() {
   const result = [];
 
   for (const [n, t] of GYM) {
-    result.push(buildRutina(n, t, 'gimnasio', 'Lean', n));
-    result.push(buildRutina(n, t, 'gimnasio', 'Nat', n));
+    result.push(buildRutina(n, t, 'gimnasio', n));
   }
 
   for (const [n, t] of CROSS) {
-    result.push(buildRutina(n, t, 'cross', 'Lean', n + 200));
-    result.push(buildRutina(n, t, 'cross', 'Nat', n + 200));
+    result.push(buildRutina(n, t, 'cross', n + 200));
   }
 
   _cache = result;

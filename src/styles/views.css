@@ -1,10 +1,40 @@
-/* ── Unified Calendar ────────────────────── */
+/* ── Unified Calendar (Liquid Glass) ──────── */
 
 .cal-unified {
-  background-color: var(--color-surface);
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.02) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
   border-radius: var(--radius-lg);
   padding: var(--space-md);
   margin-bottom: var(--space-md);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.15),
+    0 1px 0 rgba(255, 255, 255, 0.05) inset;
+  overflow: hidden;
+}
+
+/* Glass specular highlight */
+.cal-unified::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    transparent 100%
+  );
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  pointer-events: none;
 }
 
 .cal-unified-header {
@@ -239,11 +269,34 @@
 /* ── Day detail panel ──────────────────── */
 
 .cal-day-detail {
+  position: relative;
   margin-top: var(--space-md);
   padding: var(--space-md);
-  background-color: var(--color-surface);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.02) 50%,
+    rgba(255, 255, 255, 0.035) 100%
+  );
+  backdrop-filter: blur(20px) saturate(1.15);
+  -webkit-backdrop-filter: blur(20px) saturate(1.15);
   border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 2px 16px rgba(0, 0, 0, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.04) inset;
   animation: cal-detail-enter 250ms ease-out;
+  overflow: hidden;
+}
+
+.cal-day-detail::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 40%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  pointer-events: none;
 }
 
 .cal-day-detail-header {
@@ -341,6 +394,197 @@
 @keyframes cal-detail-enter {
   from { opacity: 0; transform: translateY(-6px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Shared calendar (dual-user dots & rows) ── */
+
+/* Week strip: dual dots container */
+.cal-strip-dots {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  height: 8px;
+}
+
+.cal-strip-dot-user {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-full);
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.cal-strip-dot-user--done {
+  background-color: var(--color-accent);
+}
+
+.cal-strip-dot-user--plan {
+  border: 1.5px solid var(--color-accent);
+  background: transparent;
+  width: 4px;
+  height: 4px;
+}
+
+/* Per-user dot colors */
+.cal-strip-dot-user--lean.cal-strip-dot-user--done {
+  background-color: var(--color-accent);
+}
+
+.cal-strip-dot-user--nat.cal-strip-dot-user--done {
+  background-color: #9b87f5;
+}
+
+.cal-strip-dot-user--lean.cal-strip-dot-user--plan {
+  border-color: var(--color-accent);
+}
+
+.cal-strip-dot-user--nat.cal-strip-dot-user--plan {
+  border-color: #9b87f5;
+}
+
+/* Day detail: shared rows */
+.cal-shared-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.cal-shared-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.025);
+  transition: background 150ms ease;
+}
+
+.cal-shared-row--active {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* User avatar (small circle with initial) */
+.cal-shared-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  color: var(--color-bg);
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.cal-shared-avatar--lean {
+  background-color: var(--color-accent);
+}
+
+.cal-shared-avatar--nat {
+  background-color: #9b87f5;
+}
+
+/* Row info (status + tipo) */
+.cal-shared-row-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.cal-shared-status {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cal-shared-status--done {
+  color: var(--color-success, #22c55e);
+}
+
+.cal-shared-status--muted {
+  color: var(--color-text-muted);
+  font-weight: var(--fw-regular);
+  font-size: var(--text-xs);
+}
+
+/* Tipo badge in shared row */
+.cal-shared-tipo {
+  font-size: 10px;
+  font-weight: var(--fw-semibold);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.cal-shared-tipo.gym {
+  background-color: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  color: var(--color-accent);
+}
+
+.cal-shared-tipo.cross {
+  background-color: color-mix(in srgb, var(--color-tag-espalda) 15%, transparent);
+  color: var(--color-tag-espalda);
+}
+
+/* Extra-small button variant */
+.btn-xs {
+  min-height: 28px;
+  padding: 2px var(--space-sm);
+  font-size: var(--text-xs);
+  border-radius: var(--radius-sm);
+}
+
+/* Month grid: dual dots */
+.cal-month-dots {
+  display: flex;
+  gap: 2px;
+  position: absolute;
+  bottom: 2px;
+}
+
+.cal-month-dot-user {
+  width: 4px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: transparent;
+}
+
+.cal-month-dot-user--done.cal-month-dot-user--lean {
+  background-color: var(--color-accent);
+}
+
+.cal-month-dot-user--done.cal-month-dot-user--nat {
+  background-color: #9b87f5;
+}
+
+.cal-month-dot-user--plan.cal-month-dot-user--lean {
+  border: 1px solid var(--color-accent);
+  width: 3px;
+  height: 3px;
+}
+
+.cal-month-dot-user--plan.cal-month-dot-user--nat {
+  border: 1px solid #9b87f5;
+  width: 3px;
+  height: 3px;
+}
+
+/* Selected day overrides for month dots */
+.cal-month-day--selected .cal-month-dot-user--done {
+  background-color: var(--color-bg);
+}
+
+.cal-month-day--selected .cal-month-dot-user--plan {
+  border-color: var(--color-bg);
 }
 
 /* ── Entrenamiento hero (centered CTA) ────── */
@@ -1521,21 +1765,24 @@
   flex-shrink: 0;
 }
 
-.ej-category-muscle .muscle-illustration {
-  width: 32px;
-  height: 32px;
+.ej-category-muscle .muscle-silhouette {
+  height: 36px;
+  width: auto;
 }
 
-.ej-category-muscle .body-outline {
-  stroke: var(--color-text-muted);
-  fill: none;
+/* ── Muscle silhouette SVG global styles ── */
+.muscle-silhouette .silhouette-outline path {
+  fill: var(--color-text-muted);
+  opacity: 0.15;
 }
 
-.ej-category-muscle .muscle-zone {
-  fill: var(--muscle-color, var(--color-accent));
+.muscle-silhouette .muscle-part path {
+  fill: var(--color-text-muted);
+  opacity: 0.12;
 }
 
-.ej-category-muscle .muscle-highlight {
+.muscle-silhouette .muscle-active path {
+  fill: #FFD600;
   opacity: 0.85;
 }
 
@@ -1749,17 +1996,9 @@
   margin-bottom: var(--space-md);
 }
 
-.muscle-illustration {
-  width: 64px;
-  height: 64px;
-}
-
-.muscle-illustration .body-outline {
-  fill: none;
-}
-
-.muscle-illustration .muscle-zone {
-  fill: var(--muscle-color, var(--color-accent));
+.ej-detail-illustration .muscle-silhouette {
+  height: 80px;
+  width: auto;
 }
 
 /* ── Exercise params section ─────────── */
@@ -1908,6 +2147,49 @@
   margin-top: var(--space-xs);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+/* Calories row in summary */
+.summary-calories {
+  margin-bottom: var(--space-md);
+}
+
+.summary-cal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.summary-cal-label {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+}
+
+.summary-cal-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.summary-cal-input {
+  width: 80px;
+  text-align: right;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--text-base);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+}
+
+.summary-cal-unit {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
 }
 
 .summary-section-title {

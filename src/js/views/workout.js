@@ -219,6 +219,10 @@ function renderEjercicio(ej, ejIdx) {
       </div>
     ` : '';
 
+    const removeBtn = ej.vueltas.length > 1
+      ? `<button class="workout-vuelta-remove" data-action="remove-vuelta" data-ej="${ejIdx}" data-vuelta="${vIdx}" aria-label="Quitar vuelta ${vIdx + 1}">${icon.close}</button>`
+      : '';
+
     return `
       <div class="workout-vuelta-row${doneClass}">
         <button class="workout-vuelta-check" data-action="toggle-vuelta-done" data-ej="${ejIdx}" data-vuelta="${vIdx}">
@@ -235,6 +239,7 @@ function renderEjercicio(ej, ejIdx) {
           </div>
         </div>
         ${weightStepper}
+        ${removeBtn}
       </div>
     `;
   }).join('');
@@ -409,12 +414,77 @@ function doFinishWorkout() {
     circuitos: state.resultados,
   };
 
-  saveSesion(sesion);
-  clearWorkoutActivo();
-  stopTimer();
-  const sesionId = sesion.id;
-  state = null;
-  navigate(`/summary/${sesionId}`);
+  // Show calories prompt before saving
+  showCaloriesPrompt((calorias) => {
+    if (calorias > 0) sesion.calorias = calorias;
+    saveSesion(sesion);
+    clearWorkoutActivo();
+    stopTimer();
+    const sesionId = sesion.id;
+    state = null;
+    navigate(`/summary/${sesionId}`);
+  });
+}
+
+function showCaloriesPrompt(onDone) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box" role="dialog" aria-modal="true">
+      <div class="modal-title">Calorías quemadas</div>
+      <div class="modal-body">
+        <div class="field" style="margin-bottom:0">
+          <input type="number" class="input" id="cal-input" inputmode="numeric"
+                 placeholder="Ej: 350" min="0" style="font-size:var(--text-xl);text-align:center">
+          <span style="font-size:var(--text-xs);color:var(--color-text-muted);text-align:center;display:block;margin-top:var(--space-xs)">kcal (opcional)</span>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" data-cal-action="skip">Omitir</button>
+        <button class="btn btn-primary" data-cal-action="save">Guardar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  // Focus input
+  requestAnimationFrame(() => {
+    const input = overlay.querySelector('#cal-input');
+    if (input) input.focus();
+  });
+
+  const close = (cb) => {
+    overlay.classList.add('modal-closing');
+    overlay.addEventListener('animationend', () => {
+      overlay.remove();
+      if (cb) cb();
+    }, { once: true });
+  };
+
+  overlay.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-cal-action]');
+    if (e.target === overlay) {
+      close(() => onDone(0));
+      return;
+    }
+    if (!btn) return;
+    const input = overlay.querySelector('#cal-input');
+    const val = parseInt(input?.value) || 0;
+    if (btn.dataset.calAction === 'save') {
+      close(() => onDone(val));
+    } else {
+      close(() => onDone(0));
+    }
+  });
+
+  // Enter key submits
+  overlay.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const input = overlay.querySelector('#cal-input');
+      const val = parseInt(input?.value) || 0;
+      close(() => onDone(val));
+    }
+  });
 }
 
 function applyModificationsToRutina() {
@@ -460,15 +530,18 @@ function finishWorkout() {
   `;
   document.body.appendChild(overlay);
 
+  let closed = false;
   overlay.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-save-action]');
     if (e.target === overlay) return; // don't dismiss by backdrop
     if (!btn) return;
+    if (closed) return;
+    closed = true;
 
     const action = btn.dataset.saveAction;
     overlay.classList.add('modal-closing');
-    overlay.addEventListener('animationend', () => {
-      overlay.remove();
+    const done = () => {
+      if (overlay.parentNode) overlay.remove();
       switch (action) {
         case 'update':
           applyModificationsToRutina();
@@ -495,7 +568,9 @@ function finishWorkout() {
           doFinishWorkout();
           break;
       }
-    }, { once: true });
+    };
+    overlay.addEventListener('animationend', done, { once: true });
+    setTimeout(done, 200);
   });
 }
 
@@ -683,12 +758,18 @@ function showExitWorkoutModal() {
   `;
   document.body.appendChild(overlay);
 
+  let closed = false;
   const close = (cb) => {
+    if (closed) return;
+    closed = true;
     overlay.classList.add('modal-closing');
-    overlay.addEventListener('animationend', () => {
-      overlay.remove();
+    const done = () => {
+      if (overlay.parentNode) overlay.remove();
       if (cb) cb();
-    }, { once: true });
+    };
+    overlay.addEventListener('animationend', done, { once: true });
+    // Fallback if animation doesn't fire
+    setTimeout(done, 200);
   };
 
   overlay.addEventListener('click', (e) => {
@@ -893,6 +974,23 @@ export function mount(params) {
           saveWorkoutActivo(state);
           haptic.light();
           // Re-render current circuit
+          const container = getWorkoutContainer();
+          container.innerHTML = render(params);
+          scrollToActiveSegment();
+        }
+        break;
+      }
+
+      case 'remove-vuelta': {
+        syncInputs();
+        const ejIdx = parseInt(btn.dataset.ej);
+        const vIdx = parseInt(btn.dataset.vuelta);
+        const circ = state.resultados[state.circuitoActual];
+        const ej = circ?.ejercicios[ejIdx];
+        if (ej && ej.vueltas.length > 1) {
+          ej.vueltas.splice(vIdx, 1);
+          saveWorkoutActivo(state);
+          haptic.medium();
           const container = getWorkoutContainer();
           container.innerHTML = render(params);
           scrollToActiveSegment();
