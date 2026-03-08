@@ -1,7 +1,8 @@
-import { CATEGORIAS, getEjerciciosPorCategoria } from '@js/ejercicios-catalogo.js';
+import { CATEGORIAS, getEjerciciosPorCategoria, addEjercicioCustom } from '@js/ejercicios-catalogo.js';
 import { getSesiones, getUsuarioActivo, getNotaEjercicio, getEjBestRound } from '@/store.js';
 import { showExerciseDetail } from '@js/helpers/ejercicio-detail.js';
 import { getMuscleSvgCropped } from '@js/helpers/muscle-illustrations.js';
+import { icon } from '@js/icons.js';
 
 /**
  * Build a map of exercise name → { reps, peso, fecha } from the user's most recent sessions.
@@ -90,6 +91,67 @@ function renderCategorySection(cat, ejercicios, collapsed, lastUsedMap = {}) {
   `;
 }
 
+function showNewExerciseModal(onDone) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box" role="dialog" aria-modal="true">
+      <div class="modal-title">Nuevo ejercicio</div>
+      <div class="modal-body">
+        <div class="field">
+          <label class="field-label">Nombre</label>
+          <input type="text" class="input" id="new-ej-nombre" placeholder="Nombre del ejercicio">
+        </div>
+        <div class="field">
+          <label class="field-label">Categoría</label>
+          <select class="input" id="new-ej-cat">
+            ${CATEGORIAS.map((c) => `<option value="${c}">${c}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Tipo</label>
+          <select class="input" id="new-ej-tipo">
+            <option value="funcional">Funcional</option>
+            <option value="maquina">Máquina</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" data-new-ej="cancel">Cancelar</button>
+        <button class="btn btn-primary" data-new-ej="save">Crear</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  requestAnimationFrame(() => {
+    const input = overlay.querySelector('#new-ej-nombre');
+    if (input) input.focus();
+  });
+
+  const close = () => {
+    overlay.classList.add('modal-closing');
+    overlay.addEventListener('animationend', () => overlay.remove(), { once: true });
+    setTimeout(() => overlay.remove(), 250);
+  };
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay || e.target.closest('[data-new-ej="cancel"]')) {
+      close();
+      return;
+    }
+    if (e.target.closest('[data-new-ej="save"]')) {
+      const nombre = overlay.querySelector('#new-ej-nombre').value.trim();
+      const cat = overlay.querySelector('#new-ej-cat').value;
+      const tipo = overlay.querySelector('#new-ej-tipo').value;
+      if (!nombre) return;
+      addEjercicioCustom(nombre, cat, tipo);
+      close();
+      if (onDone) onDone();
+    }
+  });
+}
+
 export function render() {
   const grouped = getEjerciciosPorCategoria(null);
   const total = Object.values(grouped).reduce((sum, arr) => sum + arr.length, 0);
@@ -97,8 +159,13 @@ export function render() {
 
   return `
     <div class="view-header">
-      <h1 class="view-title">Ejercicios</h1>
-      <span class="view-subtitle">${total} ejercicios</span>
+      <div class="view-header-row">
+        <div>
+          <h1 class="view-title">Ejercicios</h1>
+          <span class="view-subtitle">${total} ejercicios</span>
+        </div>
+        <button class="btn-icon-header" data-action="new-ejercicio">${icon.plus}</button>
+      </div>
     </div>
 
     <div class="ej-type-toggle">
@@ -180,6 +247,10 @@ export function mount() {
       }
       case 'show-detail': {
         showExerciseDetail(btn.dataset.nombre);
+        break;
+      }
+      case 'new-ejercicio': {
+        showNewExerciseModal(rerender);
         break;
       }
     }

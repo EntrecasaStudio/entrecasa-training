@@ -96,10 +96,31 @@ export async function uploadAllData() {
 // ── Download ────────────────────────────
 
 /**
+ * Immediately flush all pending syncs (cancel debounce timers and upload now).
+ */
+async function flushPendingSyncs() {
+  const keys = [..._dirtyKeys];
+  if (keys.length === 0) return;
+
+  // Cancel all debounce timers
+  for (const key of Object.keys(_timers)) {
+    clearTimeout(_timers[key]);
+    delete _timers[key];
+  }
+
+  // Upload all dirty keys in parallel
+  await Promise.all(keys.map((key) => uploadKey(key)));
+}
+
+/**
  * Download ALL data from Firestore to localStorage.
  * Returns true if data was found, false if empty/new user.
+ * Flushes any pending local uploads first to avoid losing changes.
  */
 export async function downloadAllData() {
+  // Flush any pending local changes to Firestore first
+  await flushPendingSyncs();
+
   const ref = getDocRef();
   if (!ref) return false;
 
@@ -111,6 +132,8 @@ export async function downloadAllData() {
     _suppressSync = true;
 
     for (const [key, field] of Object.entries(SYNC_KEYS)) {
+      // Skip keys with pending local changes to avoid overwriting
+      if (_dirtyKeys.has(key)) continue;
       if (data[field] !== undefined && data[field] !== null) {
         localStorage.setItem(key, JSON.stringify(data[field]));
       }

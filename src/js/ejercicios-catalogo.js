@@ -156,6 +156,21 @@ export function addEjercicioCustom(nombre, categoria, tipo = 'funcional') {
 }
 
 /**
+ * Update the tipo (funcional/maquina) of an exercise.
+ * If it's a custom exercise, updates in localStorage.
+ * For catalog exercises, stores override in custom key.
+ */
+export function updateEjercicioTipo(nombre, tipo) {
+  const custom = getEjerciciosCustom();
+  const idx = custom.findIndex((e) => e.nombre === nombre);
+  if (idx >= 0) {
+    custom[idx].tipo = tipo;
+    localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom));
+  }
+  // For catalog exercises, the tipo override is stored in ejercicio_meta
+}
+
+/**
  * Returns ALL exercises: base catalog + custom.
  */
 export function getTodosLosEjercicios() {

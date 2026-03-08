@@ -1,4 +1,4 @@
-import { getRutinaById, getWorkoutActivo, saveWorkoutActivo, clearWorkoutActivo, saveSesion, getUltimaSesionDeRutina, getUsuarioActivo, saveRutina, duplicateRutina } from '@/store.js';
+import { getRutinaById, getWorkoutActivo, saveWorkoutActivo, clearWorkoutActivo, saveSesion, getUltimaSesionDeRutina, getUsuarioActivo, saveRutina, duplicateRutina, getEjercicioMeta } from '@/store.js';
 import { generateId } from '@/id.js';
 import { navigate } from '@/router.js';
 import { showModal } from '@js/components/modal.js';
@@ -200,18 +200,13 @@ function shouldSuggestOverload(nombre, ej) {
 
 function renderEjercicio(ej, ejIdx) {
   const overload = shouldSuggestOverload(ej.nombre, ej);
+  const meta = getEjercicioMeta(ej.nombre);
   const isBodyweight = ej.pesoObjetivoKg === 0;
-  const showPeso = !isBodyweight || ej.addedPeso;
+  // Show weight column if exercise has weight configured OR meta says usaPeso
+  const showPeso = !isBodyweight || meta.usaPeso;
 
-  // Add-peso toggle for bodyweight exercises
-  const addPesoBtn = isBodyweight
-    ? `<button class="workout-add-peso-btn ${ej.addedPeso ? 'active' : ''}" data-action="toggle-peso" data-ej="${ejIdx}">
-         ${icon.kettlebell} ${ej.addedPeso ? 'Con peso' : 'Agregar peso'}
-       </button>`
-    : '';
-
-  // Vest toggle
-  const vestHtml = `
+  // Vest: only show if meta.usaChaleco is enabled
+  const vestHtml = meta.usaChaleco ? `
     <div class="workout-vest-row">
       <label class="workout-vest-toggle">
         <input type="checkbox" class="workout-vest-checkbox" data-ej="${ejIdx}"
@@ -226,7 +221,7 @@ function renderEjercicio(ej, ejIdx) {
         <span class="workout-vest-unit">kg</span>
       </div>
     </div>
-  `;
+  ` : '';
 
   // Column headers (with spacer for check circle)
   const columnHeaders = `
@@ -304,7 +299,6 @@ function renderEjercicio(ej, ejIdx) {
       </div>
       ${overload ? `<div class="workout-overload-hint">${icon.arrowUp} Subir peso</div>` : ''}
       ${renderExerciseHistory(ej.nombre)}
-      ${addPesoBtn}
       ${vestHtml}
       <div class="workout-ej-divider"></div>
       ${columnHeaders}

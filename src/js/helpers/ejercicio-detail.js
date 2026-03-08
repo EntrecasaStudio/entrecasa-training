@@ -1,6 +1,6 @@
 import { getNotaEjercicio, saveNotaEjercicio, getEjercicioMeta, saveEjercicioMeta } from '@/store.js';
 import { DESCRIPCIONES } from '@js/ejercicios-descripciones.js';
-import { ejerciciosCatalogo } from '@js/ejercicios-catalogo.js';
+import { ejerciciosCatalogo, updateEjercicioTipo } from '@js/ejercicios-catalogo.js';
 import { getEjerciciosCustom } from '@js/ejercicios-catalogo.js';
 import { icon } from '@js/icons.js';
 import { getMuscleSvg } from '@js/helpers/muscle-illustrations.js';
@@ -44,6 +44,10 @@ export function showExerciseDetail(nombre) {
   // Notes dot indicator
   const notaDot = nota ? '<span class="ej-detail-notes-dot"></span>' : '';
 
+  // Current tipo (check meta override first, then catalog)
+  const currentTipo = meta.tipo || ej.tipo;
+  const currentTipoLabel = currentTipo === 'maquina' ? 'Máquina' : 'Funcional';
+
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
@@ -53,10 +57,13 @@ export function showExerciseDetail(nombre) {
         <div class="ej-detail-name">${nombre}</div>
         <div class="ej-detail-badges">
           <span class="tag tag-sm">${ej.categoria}</span>
-          <span class="ej-detail-tipo ${ej.tipo}">${tipoLabel}</span>
         </div>
       </div>
       <div class="ej-detail-separator"></div>
+      <div class="ej-detail-tipo-toggle">
+        <button class="ej-detail-tipo-btn ${currentTipo === 'funcional' ? 'active' : ''}" data-set-tipo="funcional">Funcional</button>
+        <button class="ej-detail-tipo-btn ${currentTipo === 'maquina' ? 'active' : ''}" data-set-tipo="maquina">Máquina</button>
+      </div>
       <div class="ej-detail-params">
         <span class="ej-detail-params-label">Parámetros</span>
         <label class="ej-param-toggle">
@@ -77,7 +84,9 @@ export function showExerciseDetail(nombre) {
           <span class="ej-detail-chevron" data-chevron="desc">${icon.chevronDown}</span>
         </button>
         <div class="ej-detail-collapsible collapsed" data-body="desc">
-          <textarea class="ej-detail-desc-textarea" placeholder="Descripción del ejercicio..." rows="2">${desc}</textarea>
+          <div class="ej-detail-desc-text" data-desc-display>${desc || '<span class="ej-detail-desc-empty">Sin descripción</span>'}</div>
+          <button class="btn btn-ghost btn-xs ej-detail-desc-edit-btn" data-action="edit-desc">${icon.edit} Editar</button>
+          <textarea class="ej-detail-desc-textarea hidden" placeholder="Descripción del ejercicio..." rows="3">${desc}</textarea>
         </div>
       </div>
       <div class="ej-detail-notes-section">
@@ -122,6 +131,28 @@ export function showExerciseDetail(nombre) {
       return;
     }
 
+    // Edit description button — switch from text to textarea
+    if (e.target.closest('[data-action="edit-desc"]')) {
+      const display = overlay.querySelector('[data-desc-display]');
+      const editBtn = overlay.querySelector('[data-action="edit-desc"]');
+      const textarea = overlay.querySelector('.ej-detail-desc-textarea');
+      if (display) display.classList.add('hidden');
+      if (editBtn) editBtn.classList.add('hidden');
+      if (textarea) {
+        textarea.classList.remove('hidden');
+        setTimeout(() => textarea.focus(), 100);
+      }
+      return;
+    }
+
+    // Tipo toggle (funcional / maquina)
+    const tipoBtn = e.target.closest('[data-set-tipo]');
+    if (tipoBtn) {
+      overlay.querySelectorAll('.ej-detail-tipo-btn').forEach((b) => b.classList.remove('active'));
+      tipoBtn.classList.add('active');
+      return;
+    }
+
     // Toggle notes
     if (e.target.closest('[data-toggle="notes"]')) {
       const body = overlay.querySelector('[data-body="notes"]');
@@ -143,15 +174,22 @@ export function showExerciseDetail(nombre) {
       const notaTextarea = overlay.querySelector('.ej-detail-textarea');
       saveNotaEjercicio(nombre, notaTextarea.value);
 
-      // Save description + params
+      // Save description + params + tipo
       const descTextarea = overlay.querySelector('.ej-detail-desc-textarea');
       const usaPeso = overlay.querySelector('[data-param="usaPeso"]').checked;
       const usaChaleco = overlay.querySelector('[data-param="usaChaleco"]').checked;
+      const activeTipoBtn = overlay.querySelector('.ej-detail-tipo-btn.active');
+      const newTipo = activeTipoBtn ? activeTipoBtn.dataset.setTipo : currentTipo;
+
       saveEjercicioMeta(nombre, {
         usaPeso,
         usaChaleco,
         descripcion: descTextarea.value,
+        tipo: newTipo,
       });
+
+      // Also update the catalog entry tipo
+      updateEjercicioTipo(nombre, newTipo);
 
       close();
     }

@@ -103,7 +103,7 @@ function renderRutinaCard(rutina) {
       ${badge}
       <div class="rutina-card-name">${displayName}</div>
       ${volanta}
-      <div class="rutina-card-tags">${getCompositeMuscleSvg([...new Set(rutina.circuitos.map((c) => c.grupoMuscular))], 36)}</div>
+      <div class="rutina-card-tags">${getCompositeMuscleSvg([...new Set(rutina.circuitos.map((c) => c.grupoMuscular))], 52)}</div>
       <div class="rutina-card-footer">
         <span class="rutina-card-meta">${meta}</span>
         <div class="rutina-card-actions">

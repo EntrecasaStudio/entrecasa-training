@@ -358,19 +358,7 @@ function renderDayDetailPanel(usuario) {
 
 // ── Entrenamiento hero (training day) ────────
 
-function renderEntrenoHero(rutinaHoy) {
-  const numCircuitos = rutinaHoy.circuitos.length;
-  const numEjercicios = rutinaHoy.circuitos.reduce((sum, c) => sum + c.ejercicios.length, 0);
-
-  return `
-    <div class="entreno-hero">
-      <button class="entreno-cta" data-action="start" data-id="${rutinaHoy.id}">
-        <span class="entreno-cta-icon">${iconLg('kettlebell', 48)}</span>
-      </button>
-      <div class="entreno-cta-label">Iniciar entrenamiento</div>
-    </div>
-  `;
-}
+// Hero removed — training starts from the calendar day detail panel
 
 // ── Rest day ─────────────────────────────────
 
@@ -416,25 +404,20 @@ export function render() {
   const displayName = firebaseUser?.displayName?.split(' ')[0] || usuario;
   const greeting = `<div class="home-greeting animate-in">${getGreeting(displayName)}</div>`;
 
-  // Quick stats
-  const quickStats = renderQuickStatsStrip(usuario);
-
   // Unified calendar
   const calendar = renderUnifiedCalendar(usuario);
   const dayDetail = renderDayDetailPanel(usuario);
 
-  // Hero: only show CTA when selected day is today and there's a routine
+  // Rest day message (no big CTA)
   const isSelectedToday = isSameDay(selectedDate, new Date());
-  const hero = isSelectedToday && rutinaHoy && !isMyWorkout ? renderEntrenoHero(rutinaHoy) : '';
   const rest = isSelectedToday && !rutinaHoy && !isMyWorkout ? renderRestDay(proximo) : '';
 
   return `
     ${greeting}
     ${calendar}
     ${dayDetail}
-    ${quickStats}
     ${banner}
-    <div id="hero-section">${hero}${rest}</div>
+    <div id="hero-section">${rest}</div>
   `;
 }
 
@@ -449,16 +432,15 @@ function refreshCalendarSection() {
   const detailEl = document.getElementById('cal-day-detail');
   if (detailEl) detailEl.outerHTML = renderDayDetailPanel(usuario);
 
-  // Update hero
+  // Update rest day message
   const heroSection = document.getElementById('hero-section');
   if (heroSection) {
     const isSelectedToday = isSameDay(selectedDate, new Date());
     const rutinaHoy = getRutinaHoy(usuario);
     const workoutActivo = getWorkoutActivo();
     const isMyWorkout = workoutActivo && (!workoutActivo.usuario || workoutActivo.usuario === usuario);
-    const hero = isSelectedToday && rutinaHoy && !isMyWorkout ? renderEntrenoHero(rutinaHoy) : '';
     const rest = isSelectedToday && !rutinaHoy && !isMyWorkout ? renderRestDay(getProximoEntrenamiento(usuario)) : '';
-    heroSection.innerHTML = hero + rest;
+    heroSection.innerHTML = rest;
   }
 }
 
