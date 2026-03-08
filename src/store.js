@@ -267,6 +267,8 @@ export function clearWorkoutActivo() {
 
 /** Normalize exercise to array of rounds (old format has single repsReal/pesoRealKg) */
 export function getEjVueltas(ej) {
+  // Velocidad/HIIT exercises don't have vueltas
+  if (ej.pasadas || ej.roundResults) return [];
   if (ej.vueltas?.length > 0) return ej.vueltas;
   return [{ repsReal: ej.repsReal ?? 0, pesoRealKg: ej.pesoRealKg ?? 0 }];
 }
@@ -274,6 +276,7 @@ export function getEjVueltas(ej) {
 /** Best round by weight (for PRs, charts, history display) */
 export function getEjBestRound(ej) {
   const vueltas = getEjVueltas(ej);
+  if (vueltas.length === 0) return { repsReal: 0, pesoRealKg: 0 };
   return vueltas.reduce((best, v) => v.pesoRealKg > best.pesoRealKg ? v : best, vueltas[0]);
 }
 
@@ -284,6 +287,8 @@ export function getPersonalRecords(usuario) {
   const records = {}; // { nombre: { maxPeso, fecha } }
   for (const s of sesiones) {
     for (const c of s.circuitos) {
+      // Skip non-normal circuits (velocidad/HIIT don't have weight PRs)
+      if ((c.tipo || 'normal') !== 'normal') continue;
       for (const ej of c.ejercicios) {
         const best = getEjBestRound(ej);
         const key = ej.nombre;
@@ -298,10 +303,14 @@ export function getPersonalRecords(usuario) {
 
 export function calcVolumenSesion(sesion) {
   return sesion.circuitos.reduce(
-    (sum, c) => sum + c.ejercicios.reduce((s, ej) => {
-      const vueltas = getEjVueltas(ej);
-      return s + vueltas.reduce((vs, v) => vs + (v.repsReal * v.pesoRealKg), 0);
-    }, 0),
+    (sum, c) => {
+      // Skip non-normal circuits for volume calculation
+      if ((c.tipo || 'normal') !== 'normal') return sum;
+      return sum + c.ejercicios.reduce((s, ej) => {
+        const vueltas = getEjVueltas(ej);
+        return s + vueltas.reduce((vs, v) => vs + (v.repsReal * v.pesoRealKg), 0);
+      }, 0);
+    },
     0,
   );
 }

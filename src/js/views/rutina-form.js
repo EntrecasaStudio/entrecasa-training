@@ -8,7 +8,7 @@ import { showToast } from '@js/components/toast.js';
 import { showExerciseDetail } from '@js/helpers/ejercicio-detail.js';
 import { formatNumero } from '@js/helpers/rutina-helpers.js';
 
-const GRUPOS_MUSCULARES = ['Pecho', 'Espalda', 'Piernas', 'Core', 'Brazos', 'Glúteos', 'Hombros'];
+const GRUPOS_MUSCULARES = ['Pecho', 'Espalda', 'Piernas', 'Core', 'Brazos', 'Glúteos', 'Hombros', 'Cardio'];
 const GRUPO_COLOR_SLUG = {
   Pecho: 'pecho',
   Espalda: 'espalda',
@@ -17,6 +17,7 @@ const GRUPO_COLOR_SLUG = {
   Brazos: 'brazos',
   'Glúteos': 'gluteos',
   Hombros: 'hombros',
+  Cardio: 'cardio',
 };
 const MIN_EJERCICIOS = 2;
 const MAX_EJERCICIOS = 4;
@@ -32,17 +33,33 @@ const GRUPO_A_CATEGORIAS = {
   Brazos: ['Brazos', 'Hombros'],
   'Glúteos': ['Glúteos'],
   Hombros: ['Hombros'],
+  Cardio: ['Piernas', 'Core', 'Pecho', 'Espalda', 'Brazos', 'Hombros', 'Glúteos'],
 };
 
 function crearEjercicioVacio() {
   return { id: generateId(), nombre: '', repsObjetivo: 10, pesoKg: 0 };
 }
 
-function crearCircuitoVacio() {
+function crearEjercicioVelocidad() {
+  return { id: generateId(), nombre: '', velocidad: 12, tiempo: 30, descanso: 60, cantidadPasadas: 6 };
+}
+
+function crearEjercicioHIIT() {
+  return { id: generateId(), nombre: '', workTime: 40, restTime: 20, rounds: 3 };
+}
+
+function crearEjercicioPorTipo(tipo) {
+  if (tipo === 'velocidad') return crearEjercicioVelocidad();
+  if (tipo === 'hiit') return crearEjercicioHIIT();
+  return crearEjercicioVacio();
+}
+
+function crearCircuitoVacio(tipo = 'normal') {
   return {
     id: generateId(),
-    grupoMuscular: 'Pecho',
-    ejercicios: [crearEjercicioVacio(), crearEjercicioVacio()],
+    tipo,
+    grupoMuscular: tipo === 'normal' ? 'Pecho' : 'Cardio',
+    ejercicios: [crearEjercicioPorTipo(tipo), crearEjercicioPorTipo(tipo)],
   };
 }
 
@@ -97,13 +114,75 @@ function renderPicker(circIdx, ejIdx) {
   `;
 }
 
-function renderEjercicio(ej, circIdx, ejIdx, totalEj) {
+function renderEjFields(ej, circIdx, ejIdx, circTipo) {
+  if (circTipo === 'velocidad') {
+    return `
+      <div class="field field-sm">
+        <label class="input-label">Vel</label>
+        <input type="number" class="input" inputmode="numeric" min="1"
+               value="${ej.velocidad}" data-field="velocidad" data-circ="${circIdx}" data-ej="${ejIdx}">
+      </div>
+      <div class="field field-sm">
+        <label class="input-label">Seg</label>
+        <input type="number" class="input" inputmode="numeric" min="1"
+               value="${ej.tiempo}" data-field="tiempo" data-circ="${circIdx}" data-ej="${ejIdx}">
+      </div>
+      <div class="field field-sm">
+        <label class="input-label">Desc</label>
+        <input type="number" class="input" inputmode="numeric" min="0"
+               value="${ej.descanso}" data-field="descanso" data-circ="${circIdx}" data-ej="${ejIdx}">
+      </div>
+      <div class="field field-sm">
+        <label class="input-label">Pas</label>
+        <input type="number" class="input" inputmode="numeric" min="1"
+               value="${ej.cantidadPasadas}" data-field="cantidadPasadas" data-circ="${circIdx}" data-ej="${ejIdx}">
+      </div>
+    `;
+  }
+
+  if (circTipo === 'hiit') {
+    return `
+      <div class="field field-sm">
+        <label class="input-label">Work</label>
+        <input type="number" class="input" inputmode="numeric" min="1"
+               value="${ej.workTime}" data-field="workTime" data-circ="${circIdx}" data-ej="${ejIdx}">
+      </div>
+      <div class="field field-sm">
+        <label class="input-label">Rest</label>
+        <input type="number" class="input" inputmode="numeric" min="0"
+               value="${ej.restTime}" data-field="restTime" data-circ="${circIdx}" data-ej="${ejIdx}">
+      </div>
+      <div class="field field-sm">
+        <label class="input-label">Rondas</label>
+        <input type="number" class="input" inputmode="numeric" min="1"
+               value="${ej.rounds}" data-field="rounds" data-circ="${circIdx}" data-ej="${ejIdx}">
+      </div>
+    `;
+  }
+
+  // Normal
+  return `
+    <div class="field field-sm">
+      <label class="input-label">Reps</label>
+      <input type="number" class="input" inputmode="numeric" min="${MIN_REPS}" max="${MAX_REPS}"
+             value="${ej.repsObjetivo}" data-field="repsObjetivo" data-circ="${circIdx}" data-ej="${ejIdx}">
+    </div>
+    <div class="field field-sm">
+      <label class="input-label">Kg</label>
+      <input type="number" class="input" inputmode="decimal" min="0" step="0.5"
+             value="${ej.pesoKg}" data-field="pesoKg" data-circ="${circIdx}" data-ej="${ejIdx}">
+    </div>
+  `;
+}
+
+function renderEjercicio(ej, circIdx, ejIdx, totalEj, circTipo = 'normal') {
   const isPickerOpen =
     activePicker && activePicker.circIdx === circIdx && activePicker.ejIdx === ejIdx;
 
   const triggerClass = ej.nombre ? 'ej-picker-trigger has-value' : 'ej-picker-trigger';
   const canMoveUp = ejIdx > 0;
   const canMoveDown = ejIdx < totalEj - 1;
+  const fieldsModifier = circTipo !== 'normal' ? ` ejercicio-form-fields--${circTipo}` : '';
 
   return `
     <div class="ejercicio-form-row" data-circ="${circIdx}" data-ej="${ejIdx}">
@@ -114,23 +193,14 @@ function renderEjercicio(ej, circIdx, ejIdx, totalEj) {
         </button>
         ${isPickerOpen ? renderPicker(circIdx, ejIdx) : ''}
       </div>
-      <div class="ejercicio-form-fields">
+      <div class="ejercicio-form-fields${fieldsModifier}">
         <div class="ej-reorder">
           <button class="btn-reorder" data-action="move-ejercicio-up" data-circ="${circIdx}" data-ej="${ejIdx}"
                   ${canMoveUp ? '' : 'disabled'} title="Mover arriba">${icon.chevronUp || '▲'}</button>
           <button class="btn-reorder" data-action="move-ejercicio-down" data-circ="${circIdx}" data-ej="${ejIdx}"
                   ${canMoveDown ? '' : 'disabled'} title="Mover abajo">${icon.chevronDown || '▼'}</button>
         </div>
-        <div class="field field-sm">
-          <label class="input-label">Reps</label>
-          <input type="number" class="input" inputmode="numeric" min="${MIN_REPS}" max="${MAX_REPS}"
-                 value="${ej.repsObjetivo}" data-field="repsObjetivo" data-circ="${circIdx}" data-ej="${ejIdx}">
-        </div>
-        <div class="field field-sm">
-          <label class="input-label">Kg</label>
-          <input type="number" class="input" inputmode="decimal" min="0" step="0.5"
-                 value="${ej.pesoKg}" data-field="pesoKg" data-circ="${circIdx}" data-ej="${ejIdx}">
-        </div>
+        ${renderEjFields(ej, circIdx, ejIdx, circTipo)}
         <button class="btn-remove" data-action="remove-ejercicio" data-circ="${circIdx}" data-ej="${ejIdx}"
                 title="Eliminar ejercicio">${icon.close}</button>
       </div>
@@ -139,17 +209,29 @@ function renderEjercicio(ej, circIdx, ejIdx, totalEj) {
 }
 
 function renderCircuito(circ, idx) {
+  const circTipo = circ.tipo || 'normal';
   const colorSlug = GRUPO_COLOR_SLUG[circ.grupoMuscular] || 'pecho';
   const opciones = GRUPOS_MUSCULARES.map(
     (g) => `<option value="${g}" ${circ.grupoMuscular === g ? 'selected' : ''}>${g}</option>`,
   ).join('');
 
   const totalEj = circ.ejercicios.length;
-  const ejercicios = circ.ejercicios.map((ej, ejIdx) => renderEjercicio(ej, idx, ejIdx, totalEj)).join('');
+  const ejercicios = circ.ejercicios.map((ej, ejIdx) => renderEjercicio(ej, idx, ejIdx, totalEj, circTipo)).join('');
   const canAdd = circ.ejercicios.length < MAX_EJERCICIOS;
 
   const canMoveCircUp = idx > 0;
   const canMoveCircDown = idx < rutina.circuitos.length - 1;
+
+  const circuitTypeToggle = `
+    <div class="ej-type-toggle circuit-tipo-toggle">
+      <button class="ej-type-btn ${circTipo === 'normal' ? 'active' : ''}"
+              data-action="set-circuit-tipo" data-circ="${idx}" data-tipo="normal">Normal</button>
+      <button class="ej-type-btn ${circTipo === 'velocidad' ? 'active' : ''}"
+              data-action="set-circuit-tipo" data-circ="${idx}" data-tipo="velocidad">Velocidad</button>
+      <button class="ej-type-btn ${circTipo === 'hiit' ? 'active' : ''}"
+              data-action="set-circuit-tipo" data-circ="${idx}" data-tipo="hiit">HIIT</button>
+    </div>
+  `;
 
   return `
     <div class="card circuito-form-card circuito-color-${colorSlug}" data-circuito-idx="${idx}">
@@ -167,6 +249,7 @@ function renderCircuito(circ, idx) {
         <button class="btn-remove" data-action="remove-circuito" data-circ="${idx}"
                 title="Eliminar circuito" style="${rutina.circuitos.length <= 1 ? 'visibility:hidden' : ''}">${icon.trash}</button>
       </div>
+      ${circuitTypeToggle}
       <div class="ejercicios-list">
         ${ejercicios}
       </div>
@@ -270,6 +353,9 @@ function syncFromInputs() {
   const nameInput = document.getElementById('rutina-nombre');
   if (nameInput) rutina.nombre = nameInput.value.trim();
 
+  // Integer fields (all types)
+  const INT_FIELDS = ['repsObjetivo', 'velocidad', 'tiempo', 'descanso', 'cantidadPasadas', 'workTime', 'restTime', 'rounds'];
+
   // Sync all exercise numeric fields (nombre is handled by picker)
   document.querySelectorAll('.ejercicio-form-row').forEach((row) => {
     const ci = parseInt(row.dataset.circ);
@@ -279,8 +365,8 @@ function syncFromInputs() {
     row.querySelectorAll('[data-field]').forEach((input) => {
       const field = input.dataset.field;
       const val = input.value;
-      if (field === 'repsObjetivo') {
-        rutina.circuitos[ci].ejercicios[ei].repsObjetivo = parseInt(val) || MIN_REPS;
+      if (INT_FIELDS.includes(field)) {
+        rutina.circuitos[ci].ejercicios[ei][field] = parseInt(val) || 0;
       } else if (field === 'pesoKg') {
         rutina.circuitos[ci].ejercicios[ei].pesoKg = parseFloat(val) || 0;
       }
@@ -292,13 +378,23 @@ function validate() {
   if (!rutina.nombre) return 'Ingresa un nombre para la rutina.';
   for (let i = 0; i < rutina.circuitos.length; i++) {
     const circ = rutina.circuitos[i];
+    const circTipo = circ.tipo || 'normal';
     for (let j = 0; j < circ.ejercicios.length; j++) {
-      if (!circ.ejercicios[j].nombre.trim()) {
+      const ej = circ.ejercicios[j];
+      if (!ej.nombre.trim()) {
         return `Circuito ${i + 1}: el ejercicio ${j + 1} necesita un nombre.`;
       }
-      const reps = circ.ejercicios[j].repsObjetivo;
-      if (reps < MIN_REPS || reps > MAX_REPS) {
-        return `Circuito ${i + 1}, ejercicio ${j + 1}: las repeticiones deben ser entre ${MIN_REPS} y ${MAX_REPS}.`;
+      if (circTipo === 'normal') {
+        const reps = ej.repsObjetivo;
+        if (reps < MIN_REPS || reps > MAX_REPS) {
+          return `Circuito ${i + 1}, ejercicio ${j + 1}: las repeticiones deben ser entre ${MIN_REPS} y ${MAX_REPS}.`;
+        }
+      } else if (circTipo === 'velocidad') {
+        if ((ej.velocidad || 0) <= 0) return `Circuito ${i + 1}, ej ${j + 1}: velocidad debe ser > 0.`;
+        if ((ej.cantidadPasadas || 0) <= 0) return `Circuito ${i + 1}, ej ${j + 1}: cantidad de pasadas debe ser > 0.`;
+      } else if (circTipo === 'hiit') {
+        if ((ej.workTime || 0) <= 0) return `Circuito ${i + 1}, ej ${j + 1}: tiempo de trabajo debe ser > 0.`;
+        if ((ej.rounds || 0) <= 0) return `Circuito ${i + 1}, ej ${j + 1}: rondas debe ser > 0.`;
       }
     }
   }
@@ -461,6 +557,24 @@ export function mount(params) {
         break;
       }
 
+      case 'set-circuit-tipo': {
+        syncFromInputs();
+        const newTipo = btn.dataset.tipo;
+        const oldTipo = rutina.circuitos[circIdx].tipo || 'normal';
+        if (newTipo !== oldTipo) {
+          rutina.circuitos[circIdx].tipo = newTipo;
+          // Reset exercises to match new type
+          rutina.circuitos[circIdx].ejercicios = [crearEjercicioPorTipo(newTipo), crearEjercicioPorTipo(newTipo)];
+          if (newTipo !== 'normal' && rutina.circuitos[circIdx].grupoMuscular === 'Pecho') {
+            rutina.circuitos[circIdx].grupoMuscular = 'Cardio';
+          }
+          isDirty = true;
+          activePicker = null;
+        }
+        reRender();
+        break;
+      }
+
       case 'add-circuito':
         syncFromInputs();
         isDirty = true;
@@ -485,7 +599,8 @@ export function mount(params) {
           syncFromInputs();
           isDirty = true;
           activePicker = null;
-          rutina.circuitos[circIdx].ejercicios.push(crearEjercicioVacio());
+          const circType = rutina.circuitos[circIdx].tipo || 'normal';
+          rutina.circuitos[circIdx].ejercicios.push(crearEjercicioPorTipo(circType));
           reRender();
         }
         break;

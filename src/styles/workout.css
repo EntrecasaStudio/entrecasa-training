@@ -904,3 +904,90 @@
 .circuit-enter-right { animation: circuit-slide-in-right 200ms ease-out forwards; }
 .circuit-exit-right { animation: circuit-slide-out-right 150ms ease-in forwards; }
 .circuit-enter-left  { animation: circuit-slide-in-left 200ms ease-out forwards; }
+
+/* ── Velocidad / HIIT timer display ──────── */
+.workout-timer-display {
+  text-align: center;
+  padding: var(--space-md) var(--space-sm);
+  background: var(--color-card);
+  border-radius: var(--radius-md);
+  margin: var(--space-sm) 0;
+}
+
+.workout-timer-big {
+  font-size: 3rem;
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+  line-height: 1.1;
+  margin: var(--space-xs) 0;
+}
+
+.workout-timer-phase {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+.workout-timer-phase.work { color: var(--color-success, #22c55e); }
+.workout-timer-phase.rest { color: var(--color-accent); }
+.workout-timer-phase.run  { color: #3b82f6; }
+
+.workout-timer-round {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-xs);
+}
+
+/* ── Pasada / round rows ─────────────────── */
+.workout-pasada-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) 0;
+  border-bottom: 1px solid var(--color-border);
+  transition: opacity 150ms;
+}
+.workout-pasada-row:last-child { border-bottom: none; }
+.workout-pasada-row.completed { opacity: 0.45; }
+.workout-pasada-row.current { background: rgba(255, 205, 0, 0.06); border-radius: var(--radius-sm); }
+
+.workout-pasada-info {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  flex: 1;
+}
+
+.workout-pasada-done-label {
+  color: var(--color-success, #22c55e);
+}
+
+.workout-pasada-progress {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  padding: var(--space-xs) 0;
+}
+
+/* ── Circuit type badge in workout ───────── */
+.workout-circuit-type-badge {
+  font-size: 9px;
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  color: #fff;
+  margin-left: auto;
+}
+.workout-circuit-type-badge.velocidad { background: #3b82f6; }
+.workout-circuit-type-badge.hiit { background: #ef4444; }
+
+/* ── Start timer button ──────────────────── */
+.workout-start-timer-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  width: 100%;
+  margin-top: var(--space-sm);
+}

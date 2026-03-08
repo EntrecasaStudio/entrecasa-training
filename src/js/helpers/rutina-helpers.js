@@ -79,17 +79,33 @@ export function showPreview(rutinaId) {
 
   const circuitsHtml = rutina.circuitos
     .map(
-      (c, i) => `
-      <div class="preview-circuit">
-        <div class="preview-circuit-header">
-          <span class="preview-circuit-num">${i + 1}</span>
-          <span class="tag ${TAG_CLASS[c.grupoMuscular] || ''}">${c.grupoMuscular}</span>
-        </div>
-        <div class="preview-exercises">
-          ${c.ejercicios.map((ej) => `<div class="preview-exercise">${ej.nombre} <span class="preview-exercise-meta">${ej.repsObjetivo}r &middot; ${ej.pesoKg}kg</span></div>`).join('')}
-        </div>
-      </div>
-    `,
+      (c, i) => {
+        const circTipo = c.tipo || 'normal';
+        const typeBadge = circTipo !== 'normal' ? `<span class="preview-type-badge ${circTipo}">${circTipo === 'velocidad' ? 'Vel' : 'HIIT'}</span>` : '';
+
+        const exercisesHtml = c.ejercicios.map((ej) => {
+          let meta;
+          if (circTipo === 'velocidad') {
+            meta = `${ej.cantidadPasadas} pasadas &middot; ${ej.velocidad}km/h`;
+          } else if (circTipo === 'hiit') {
+            meta = `${ej.rounds}r &middot; ${ej.workTime}s/${ej.restTime}s`;
+          } else {
+            meta = `${ej.repsObjetivo}r &middot; ${ej.pesoKg}kg`;
+          }
+          return `<div class="preview-exercise">${ej.nombre} <span class="preview-exercise-meta">${meta}</span></div>`;
+        }).join('');
+
+        return `
+          <div class="preview-circuit">
+            <div class="preview-circuit-header">
+              <span class="preview-circuit-num">${i + 1}</span>
+              <span class="tag ${TAG_CLASS[c.grupoMuscular] || ''}">${c.grupoMuscular}</span>
+              ${typeBadge}
+            </div>
+            <div class="preview-exercises">${exercisesHtml}</div>
+          </div>
+        `;
+      },
     )
     .join('');
 

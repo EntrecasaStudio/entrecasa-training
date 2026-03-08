@@ -30,13 +30,19 @@ export function showExerciseDetail(nombre) {
   const nota = getNotaEjercicio(nombre);
   const tipoLabel = ej.tipo === 'maquina' ? 'Máquina' : 'Funcional';
 
-  // Muscle illustration for this category — full body with all muscles visible
-  const muscleSvg = ej.categoria ? getMuscleSvg(ej.categoria, 80, { allMuscles: true }) : '';
+  // Muscle illustration — full body, 120px
+  const muscleSvg = ej.categoria ? getMuscleSvg(ej.categoria, 120, { allMuscles: true }) : '';
   const muscleColor = CATEGORY_COLORS[ej.categoria] || 'var(--color-accent)';
 
   const illustrationHtml = muscleSvg
     ? `<div class="ej-detail-illustration" style="--muscle-color: ${muscleColor}">${muscleSvg}</div>`
     : '';
+
+  // Description preview (truncated)
+  const descPreview = desc ? desc.substring(0, 40) + (desc.length > 40 ? '…' : '') : '';
+
+  // Notes dot indicator
+  const notaDot = nota ? '<span class="ej-detail-notes-dot"></span>' : '';
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
@@ -50,10 +56,7 @@ export function showExerciseDetail(nombre) {
           <span class="ej-detail-tipo ${ej.tipo}">${tipoLabel}</span>
         </div>
       </div>
-      <div class="ej-detail-desc-section">
-        <label class="ej-detail-section-label">Descripción</label>
-        <textarea class="ej-detail-desc-textarea" placeholder="Descripción del ejercicio..." rows="2">${desc}</textarea>
-      </div>
+      <div class="ej-detail-separator"></div>
       <div class="ej-detail-params">
         <span class="ej-detail-params-label">Parámetros</span>
         <label class="ej-param-toggle">
@@ -67,9 +70,28 @@ export function showExerciseDetail(nombre) {
           <span class="ej-param-text">Puede usar chaleco</span>
         </label>
       </div>
+      <div class="ej-detail-desc-section">
+        <button class="ej-detail-section-toggle" data-toggle="desc">
+          <span class="ej-detail-section-label">Descripción</span>
+          <span class="ej-detail-section-preview">${descPreview}</span>
+          <span class="ej-detail-chevron" data-chevron="desc">${icon.chevronDown}</span>
+        </button>
+        <div class="ej-detail-collapsible collapsed" data-body="desc">
+          <textarea class="ej-detail-desc-textarea" placeholder="Descripción del ejercicio..." rows="2">${desc}</textarea>
+        </div>
+      </div>
       <div class="ej-detail-notes-section">
-        <label class="ej-detail-notes-label">Mis notas</label>
-        <textarea class="ej-detail-textarea" placeholder="Agrega tus notas personales..." rows="3">${nota}</textarea>
+        <button class="ej-detail-notes-toggle" data-toggle="notes">
+          <span class="ej-detail-notes-icon-wrap">
+            ${icon.edit}
+            ${notaDot}
+          </span>
+          <span class="ej-detail-notes-label-text">Mis notas</span>
+          <span class="ej-detail-chevron" data-chevron="notes">${icon.chevronDown}</span>
+        </button>
+        <div class="ej-detail-collapsible collapsed" data-body="notes">
+          <textarea class="ej-detail-textarea" placeholder="Agrega tus notas personales..." rows="3">${nota}</textarea>
+        </div>
       </div>
       <div class="modal-actions">
         <button class="btn btn-ghost btn-sm" data-detail-close>Cerrar</button>
@@ -88,6 +110,31 @@ export function showExerciseDetail(nombre) {
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay || e.target.closest('[data-detail-close]')) {
       close();
+      return;
+    }
+
+    // Toggle description
+    if (e.target.closest('[data-toggle="desc"]')) {
+      const body = overlay.querySelector('[data-body="desc"]');
+      const chevron = overlay.querySelector('[data-chevron="desc"]');
+      body.classList.toggle('collapsed');
+      chevron.classList.toggle('open');
+      return;
+    }
+
+    // Toggle notes
+    if (e.target.closest('[data-toggle="notes"]')) {
+      const body = overlay.querySelector('[data-body="notes"]');
+      const chevron = overlay.querySelector('[data-chevron="notes"]');
+      const toggle = overlay.querySelector('[data-toggle="notes"]');
+      body.classList.toggle('collapsed');
+      chevron.classList.toggle('open');
+      toggle.classList.toggle('active');
+      // Auto-focus textarea when expanding
+      if (!body.classList.contains('collapsed')) {
+        const ta = body.querySelector('textarea');
+        setTimeout(() => ta && ta.focus(), 200);
+      }
       return;
     }
 

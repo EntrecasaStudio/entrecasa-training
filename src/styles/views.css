@@ -1772,12 +1772,15 @@
 
 /* ── Muscle silhouette SVG global styles ── */
 .muscle-silhouette .muscle-part polygon {
-  fill: var(--color-text-muted);
-  opacity: 0.18;
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.45);
+  stroke-width: 0.7;
 }
 
 .muscle-silhouette .muscle-active polygon {
-  fill: #FFD600;
+  fill: none;
+  stroke: #FFD600;
+  stroke-width: 0.8;
   opacity: 0.9;
 }
 
@@ -1918,17 +1921,83 @@
   color: var(--color-tag-piernas);
 }
 
-.ej-detail-desc-section {
-  margin-bottom: var(--space-md);
+/* ── Separator ── */
+.ej-detail-separator {
+  height: 1px;
+  background-color: var(--color-border);
+  margin: var(--space-sm) 0 var(--space-md);
+}
+
+/* ── Section toggle (shared by desc + notes) ── */
+.ej-detail-section-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--space-sm) 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 44px;
+}
+
+.ej-detail-section-toggle:active {
+  opacity: 0.7;
 }
 
 .ej-detail-section-label {
-  display: block;
   font-size: var(--text-xs);
   font-weight: var(--fw-semibold);
   color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.ej-detail-section-preview {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+  flex: 1;
+  text-align: left;
+  margin-left: var(--space-sm);
+}
+
+.ej-detail-chevron {
+  color: var(--color-text-muted);
+  transition: transform var(--transition-fast);
+  display: flex;
+  align-items: center;
+}
+
+.ej-detail-chevron svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ej-detail-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* ── Collapsible body (shared) ── */
+.ej-detail-collapsible {
+  overflow: hidden;
+  max-height: 200px;
+  transition: max-height var(--transition-normal), opacity var(--transition-fast);
+  opacity: 1;
+}
+
+.ej-detail-collapsible.collapsed {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Description textarea ── */
+.ej-detail-desc-section {
   margin-bottom: var(--space-xs);
 }
 
@@ -1944,6 +2013,7 @@
   line-height: 1.5;
   resize: vertical;
   min-height: 48px;
+  margin-top: var(--space-xs);
 }
 
 .ej-detail-desc-textarea:focus {
@@ -1951,18 +2021,70 @@
   border-color: var(--color-accent);
 }
 
+/* ── Notes toggle ── */
 .ej-detail-notes-section {
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-md);
 }
 
-.ej-detail-notes-label {
-  display: block;
-  font-size: var(--text-xs);
-  font-weight: var(--fw-semibold);
+.ej-detail-notes-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-sm) 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 44px;
+}
+
+.ej-detail-notes-toggle:active {
+  opacity: 0.7;
+}
+
+.ej-detail-notes-icon-wrap {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-border);
+  color: var(--color-text-muted);
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.ej-detail-notes-icon-wrap svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ej-detail-notes-toggle.active .ej-detail-notes-icon-wrap {
+  border-color: var(--color-accent);
+  background-color: color-mix(in srgb, var(--color-accent) 15%, transparent);
   color: var(--color-accent);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: var(--space-xs);
+}
+
+.ej-detail-notes-dot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-accent);
+  border: 2px solid var(--color-surface);
+  box-sizing: content-box;
+}
+
+.ej-detail-notes-label-text {
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  flex: 1;
+  text-align: left;
 }
 
 .ej-detail-textarea {
@@ -1976,6 +2098,7 @@
   font-family: var(--font-main);
   resize: vertical;
   min-height: 60px;
+  margin-top: var(--space-xs);
 }
 
 .ej-detail-textarea:focus {
@@ -1989,10 +2112,17 @@
   display: flex;
   justify-content: center;
   margin-bottom: var(--space-md);
+  padding: var(--space-md) 0;
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--muscle-color, var(--color-accent)) 8%, transparent) 0%,
+    transparent 70%
+  );
+  border-radius: var(--radius-md);
 }
 
 .ej-detail-illustration .muscle-silhouette {
-  height: 80px;
+  height: 120px;
   width: auto;
 }
 
@@ -2799,3 +2929,69 @@
     0 0 12px color-mix(in srgb, var(--color-accent) 40%, transparent),
     0 1px 3px rgba(0,0,0,0.3);
 }
+
+/* ── Circuit type toggle in form ─────────── */
+.circuit-tipo-toggle {
+  margin: 0 0 var(--space-sm);
+  padding: 0 var(--space-sm);
+}
+.circuit-tipo-toggle .ej-type-btn {
+  font-size: var(--text-xs);
+  padding: 4px 10px;
+}
+
+/* ── Velocidad form fields (4 small inputs) ── */
+.ejercicio-form-fields--velocidad {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr 1fr 1fr auto;
+  gap: var(--space-xs);
+  align-items: end;
+}
+
+/* ── HIIT form fields (3 small inputs) ─────── */
+.ejercicio-form-fields--hiit {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr 1fr auto;
+  gap: var(--space-xs);
+  align-items: end;
+}
+
+/* ── Cardio tag color ──────────────────────── */
+.circuito-color-cardio {
+  border-left-color: var(--color-tag-core, #eab308);
+}
+.circuito-num-cardio {
+  background: var(--color-tag-core, #eab308);
+  color: #000;
+}
+.circuito-select-cardio {
+  color: var(--color-tag-core, #eab308);
+}
+
+/* ── Preview type badge ────────────────────── */
+.preview-type-badge {
+  font-size: 9px;
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  color: #000;
+}
+.preview-type-badge.velocidad { background: #3b82f6; color: #fff; }
+.preview-type-badge.hiit { background: #ef4444; color: #fff; }
+
+/* ── Detalle type badge ────────────────────── */
+.detalle-type-badge {
+  font-size: 9px;
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  color: #fff;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+.detalle-type-badge.velocidad { background: #3b82f6; }
+.detalle-type-badge.hiit { background: #ef4444; }

@@ -57,15 +57,20 @@
         inset 0 1px 0 rgba(255,255,255,0.04);
       display: flex; align-items: center; justify-content: center;
     }
+    @keyframes kb3d-brightness {
+      0%, 50%, 100% { filter: brightness(1); }
+      25%, 75%      { filter: brightness(0.72); }
+    }
     /* 3D kettlebell scene */
     .kb3d-scene {
       width: 80px; height: 80px;
-      perspective: 500px;
+      perspective: 300px;
     }
     .kb3d-rotator {
       width: 100%; height: 100%;
       transform-style: preserve-3d;
-      animation: kb3d-spin 2.8s cubic-bezier(0.4, 0, 0.2, 1) 700ms infinite;
+      animation: kb3d-spin 2.8s cubic-bezier(0.4, 0, 0.2, 1) 700ms infinite,
+                 kb3d-brightness 2.8s ease-in-out 700ms infinite;
     }
     /* Front face */
     .kb3d-face {
@@ -107,10 +112,8 @@
                     <stop offset="100%" stop-color="#AA8800"/>
                   </linearGradient>
                 </defs>
-                <!-- Handle -->
-                <path d="M9 5a3 3 0 0 1 6 0" stroke="url(#kb-handle-f)" stroke-width="1.8" fill="none"/>
-                <path d="M9 5v4" stroke="url(#kb-handle-f)" stroke-width="1.8"/>
-                <path d="M15 5v4" stroke="url(#kb-handle-f)" stroke-width="1.8"/>
+                <!-- Handle (single continuous path — no gaps) -->
+                <path d="M9 9V5a3 3 0 0 1 6 0v4" stroke="url(#kb-handle-f)" stroke-width="1.8" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
                 <!-- Body with 3D gradient -->
                 <circle cx="12" cy="14.5" r="6" fill="url(#kb-body-f)" stroke="#AA8800" stroke-width="0.3"/>
                 <!-- Specular highlight -->
@@ -131,9 +134,7 @@
                     <stop offset="100%" stop-color="#886600"/>
                   </linearGradient>
                 </defs>
-                <path d="M15 5a3 3 0 0 0 -6 0" stroke="url(#kb-handle-b)" stroke-width="1.8" fill="none"/>
-                <path d="M15 5v4" stroke="url(#kb-handle-b)" stroke-width="1.8"/>
-                <path d="M9 5v4" stroke="url(#kb-handle-b)" stroke-width="1.8"/>
+                <path d="M15 9V5a3 3 0 0 0 -6 0v4" stroke="url(#kb-handle-b)" stroke-width="1.8" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
                 <circle cx="12" cy="14.5" r="6" fill="url(#kb-body-b)" stroke="#7A6206" stroke-width="0.3"/>
                 <ellipse cx="13.5" cy="12.5" rx="2" ry="1.5" fill="rgba(255,255,255,0.1)"/>
               </svg>
@@ -153,6 +154,12 @@
     <div style="margin-top:32px;text-align:center;opacity:0;animation:splash-text-enter 400ms ease-out 400ms forwards;">
       <div style="font-family:system-ui,-apple-system,sans-serif;font-size:0.65rem;font-weight:400;color:rgba(245,240,232,0.5);letter-spacing:4px;text-transform:uppercase;">ENTRECASA</div>
       <div style="font-family:system-ui,-apple-system,sans-serif;font-size:1.8rem;font-weight:800;color:#F5F0E8;letter-spacing:5px;text-transform:uppercase;margin-top:2px;">TRAINER</div>
+    </div>
+    <!-- Progress bar -->
+    <div style="margin-top:24px;width:120px;opacity:0;animation:splash-text-enter 400ms ease-out 600ms forwards;">
+      <div style="height:3px;background:rgba(245,240,232,0.08);border-radius:2px;overflow:hidden;">
+        <div id="splash-progress-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#FFCD00,#FFE066);border-radius:2px;transition:width 350ms cubic-bezier(0.4,0,0.2,1);"></div>
+      </div>
     </div>
   </div>
 

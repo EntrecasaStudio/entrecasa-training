@@ -69,26 +69,58 @@ function renderStatsStrip(sesion) {
 }
 
 function renderCircuito(circ, circIdx, prevCirc, records) {
+  const circTipo = circ.tipo || 'normal';
+
   const ejercicios = circ.ejercicios
     .map((ej, ejIdx) => {
+      // Velocidad exercise detail
+      if (circTipo === 'velocidad') {
+        const completadas = (ej.pasadas || []).filter((p) => p.completada).length;
+        const total = ej.cantidadPasadas || ej.pasadas?.length || 0;
+        return `
+          <div class="ejercicio-detalle-row">
+            <div class="ejercicio-detalle-name">${ej.nombre} <span class="detalle-type-badge velocidad">Velocidad</span></div>
+            <div class="ejercicio-detalle-values">
+              <div class="ejercicio-detalle-col">
+                <div class="ejercicio-detalle-col-label">Pasadas</div>
+                <div class="ejercicio-detalle-col-value">${completadas}/${total} &middot; ${ej.velocidad}km/h &middot; ${ej.tiempo}s</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // HIIT exercise detail
+      if (circTipo === 'hiit') {
+        const completadas = (ej.roundResults || []).filter((r) => r.completada).length;
+        const total = ej.rounds || ej.roundResults?.length || 0;
+        return `
+          <div class="ejercicio-detalle-row">
+            <div class="ejercicio-detalle-name">${ej.nombre} <span class="detalle-type-badge hiit">HIIT</span></div>
+            <div class="ejercicio-detalle-values">
+              <div class="ejercicio-detalle-col">
+                <div class="ejercicio-detalle-col-label">Rondas</div>
+                <div class="ejercicio-detalle-col-value">${completadas}/${total} &middot; ${ej.workTime}s work / ${ej.restTime}s rest</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Normal exercise detail
       const vueltas = getEjVueltas(ej);
       const best = getEjBestRound(ej);
 
-      // PR badge
       const rec = records[ej.nombre];
       const isPR = rec && best.pesoRealKg > 0 && best.pesoRealKg >= rec.maxPeso;
       const prBadge = isPR ? '<span class="pr-badge">PR</span>' : '';
-
-      // Vest badge
       const vestBadge = ej.chaleco ? `<span class="vest-badge">Chaleco ${ej.pesoChalecoKg}kg</span>` : '';
 
-      // Comparison with previous session (use best round)
       const prevEj = prevCirc?.ejercicios?.[ejIdx];
       const prevBest = prevEj ? getEjBestRound(prevEj) : null;
       const pesoProgress = prevBest ? getProgressIcon(best.pesoRealKg, prevBest.pesoRealKg) : '';
       const repsProgress = prevBest ? getProgressIcon(best.repsReal, prevBest.repsReal) : '';
 
-      // Per-round rows
       const vueltasHtml = vueltas.length > 1
         ? `<div class="detalle-vueltas">
             ${vueltas.map((v, i) => `
@@ -116,10 +148,12 @@ function renderCircuito(circ, circIdx, prevCirc, records) {
     })
     .join('');
 
+  const typeBadge = circTipo !== 'normal' ? ` <span class="detalle-type-badge ${circTipo}">${circTipo === 'velocidad' ? 'Velocidad' : 'HIIT'}</span>` : '';
+
   return `
     <div class="card circuito-detalle-card animate-in" style="animation-delay:${100 + circIdx * 80}ms">
       <div class="circuito-detalle-header">
-        <span class="tag ${TAG_CLASS[circ.grupoMuscular] || ''}">${circ.grupoMuscular}</span>
+        <span class="tag ${TAG_CLASS[circ.grupoMuscular] || ''}">${circ.grupoMuscular}</span>${typeBadge}
       </div>
       ${ejercicios}
     </div>
