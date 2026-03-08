@@ -1,7 +1,7 @@
 import { CATEGORIAS, getEjerciciosPorCategoria } from '@js/ejercicios-catalogo.js';
 import { getSesiones, getUsuarioActivo, getNotaEjercicio, getEjBestRound } from '@/store.js';
 import { showExerciseDetail } from '@js/helpers/ejercicio-detail.js';
-import { MUSCLE_GROUP_SVG } from '@js/helpers/muscle-illustrations.js';
+import { getMuscleSvgCropped } from '@js/helpers/muscle-illustrations.js';
 
 /**
  * Build a map of exercise name → { reps, peso, fecha } from the user's most recent sessions.
@@ -51,7 +51,7 @@ const CATEGORY_COLORS = {
 
 function renderCategorySection(cat, ejercicios, collapsed, lastUsedMap = {}) {
   const tagClass = TAG_CLASS[cat] || '';
-  const muscleSvg = MUSCLE_GROUP_SVG[cat] || '';
+  const muscleSvg = getMuscleSvgCropped(cat, 36);
   const muscleColor = CATEGORY_COLORS[cat] || 'var(--color-accent)';
   const illustration = muscleSvg
     ? `<span class="ej-category-muscle" style="--muscle-color: ${muscleColor}">${muscleSvg}</span>`

@@ -1773,15 +1773,26 @@
 /* ── Muscle silhouette SVG global styles ── */
 .muscle-silhouette .muscle-part polygon {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.45);
-  stroke-width: 0.7;
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 0.8;
 }
 
 .muscle-silhouette .muscle-active polygon {
-  fill: none;
+  fill: rgba(255, 214, 0, 0.15);
   stroke: #FFD600;
-  stroke-width: 0.8;
-  opacity: 0.9;
+  stroke-width: 1.0;
+  opacity: 1;
+}
+
+.muscle-silhouette-cropped .muscle-active polygon {
+  stroke-width: 1.2;
+}
+
+/* Composite muscle silhouette (front + back side by side) */
+.muscle-composite {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
 }
 
 .ej-category-name {

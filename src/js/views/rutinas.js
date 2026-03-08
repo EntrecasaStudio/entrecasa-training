@@ -9,15 +9,14 @@ import { showModal } from '@js/components/modal.js';
 import { showToastAction } from '@js/components/toast.js';
 import { icon, iconLg } from '@js/icons.js';
 import {
-  TAG_CLASS,
   DIAS_LABEL,
-  renderTags,
   renderLastDone,
   showPreview,
   getDisplayName,
   formatNumero,
   getTipoIcon,
 } from '@js/helpers/rutina-helpers.js';
+import { getCompositeMuscleSvg } from '@js/helpers/muscle-illustrations.js';
 
 // ── Module-level state ───────────────────────
 let activeFilter = 'gimnasio';
@@ -65,7 +64,8 @@ function getMetaText(rutina) {
 function renderCompactCard(rutina) {
   const displayName = getDisplayName(rutina);
   const meta = getMetaText(rutina);
-  const tags = renderTags(rutina, true);
+  const grupos = [...new Set(rutina.circuitos.map((c) => c.grupoMuscular))];
+  const muscleSvg = getCompositeMuscleSvg(grupos, 28);
   const delay = cardCounter++ * 40;
 
   return `
@@ -74,7 +74,7 @@ function renderCompactCard(rutina) {
         <div class="rutina-compact-name">${displayName}</div>
         ${meta ? `<div class="rutina-compact-meta">${meta}</div>` : ''}
       </div>
-      <div class="rutina-compact-tags">${tags}</div>
+      <div class="rutina-compact-tags">${muscleSvg}</div>
       <div class="rutina-compact-actions">
         <button class="btn-icon-action" data-action="start" data-id="${rutina.id}">${icon.play}</button>
         <button class="btn-icon-action" data-action="edit" data-id="${rutina.id}">${icon.edit}</button>
@@ -103,7 +103,7 @@ function renderRutinaCard(rutina) {
       ${badge}
       <div class="rutina-card-name">${displayName}</div>
       ${volanta}
-      <div class="rutina-card-tags">${renderTags(rutina, true)}</div>
+      <div class="rutina-card-tags">${getCompositeMuscleSvg([...new Set(rutina.circuitos.map((c) => c.grupoMuscular))], 36)}</div>
       <div class="rutina-card-footer">
         <span class="rutina-card-meta">${meta}</span>
         <div class="rutina-card-actions">

@@ -146,6 +146,18 @@ const GRUPO_MAP = {
   'Glúteos':  { view: 'back',  parts: ['gluteal', 'abductor', 'hamstring'] },
 };
 
+// ── Cropped viewBox per grupo (zoomed to relevant area) ──
+
+const GRUPO_VIEWBOX = {
+  Pecho:     { vb: '15 25 70 45',   view: 'front' },
+  Hombros:   { vb: '10 25 80 40',   view: 'front' },
+  Brazos:    { vb: '0 35 100 70',   view: 'front' },
+  Core:      { vb: '25 48 50 68',   view: 'front' },
+  Piernas:   { vb: '15 85 70 115',  view: 'front' },
+  Espalda:   { vb: '10 12 80 100',  view: 'back'  },
+  'Glúteos': { vb: '20 88 60 85',   view: 'back'  },
+};
+
 /**
  * Returns an SVG string showing the human silhouette with the
  * specified muscle group highlighted.
@@ -173,6 +185,67 @@ export function getMuscleSvg(grupo, size = 64, opts = {}) {
   }
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w.toFixed(0)}" height="${size}" viewBox="${vb}" class="muscle-silhouette">${polygonsHtml}</svg>`;
+}
+
+/**
+ * Returns a cropped SVG zoomed into the relevant body area for a muscle group.
+ * Shows surrounding muscles as muted context.
+ */
+export function getMuscleSvgCropped(grupo, size = 40) {
+  const mapping = GRUPO_MAP[grupo];
+  const crop = GRUPO_VIEWBOX[grupo];
+  if (!mapping || !crop) return getMuscleSvg(grupo, size);
+
+  const { parts: activeParts } = mapping;
+  const allParts = crop.view === 'front' ? FRONT_PARTS : BACK_PARTS;
+  const [, , vbW, vbH] = crop.vb.split(' ').map(Number);
+  const w = size * (vbW / vbH);
+
+  let polygonsHtml = '';
+  for (const [partName, polygons] of Object.entries(allParts)) {
+    const isActive = activeParts.includes(partName);
+    const cls = isActive ? 'muscle-part muscle-active' : 'muscle-part';
+    const polys = polygons.map((p) => `<polygon points="${p}"/>`).join('');
+    polygonsHtml += `<g class="${cls}" data-muscle="${partName}">${polys}</g>`;
+  }
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w.toFixed(0)}" height="${size}" viewBox="${crop.vb}" class="muscle-silhouette muscle-silhouette-cropped">${polygonsHtml}</svg>`;
+}
+
+/**
+ * Returns a composite illustration with front + back silhouettes side by side,
+ * highlighting all the given muscle groups across both views.
+ * @param {string[]} grupos - Array of muscle group names
+ * @param {number} [size=32] - SVG height
+ * @returns {string} HTML markup with two SVGs inside a .muscle-composite span
+ */
+export function getCompositeMuscleSvg(grupos, size = 32) {
+  const frontActive = new Set();
+  const backActive = new Set();
+
+  for (const grupo of grupos) {
+    const mapping = GRUPO_MAP[grupo];
+    if (!mapping) continue;
+    const target = mapping.view === 'front' ? frontActive : backActive;
+    for (const part of mapping.parts) target.add(part);
+  }
+
+  function renderView(allParts, activeSet, vb, vbH) {
+    const w = size * (100 / vbH);
+    let polysHtml = '';
+    for (const [partName, polygons] of Object.entries(allParts)) {
+      const isActive = activeSet.has(partName);
+      const cls = isActive ? 'muscle-part muscle-active' : 'muscle-part';
+      const polys = polygons.map((p) => `<polygon points="${p}"/>`).join('');
+      polysHtml += `<g class="${cls}" data-muscle="${partName}">${polys}</g>`;
+    }
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${w.toFixed(0)}" height="${size}" viewBox="${vb}" class="muscle-silhouette">${polysHtml}</svg>`;
+  }
+
+  const frontSvg = renderView(FRONT_PARTS, frontActive, '0 0 100 200', 200);
+  const backSvg = renderView(BACK_PARTS, backActive, '0 0 100 220', 220);
+
+  return `<span class="muscle-composite">${frontSvg}${backSvg}</span>`;
 }
 
 // Re-export for backward compat with existing MUSCLE_GROUP_SVG consumers

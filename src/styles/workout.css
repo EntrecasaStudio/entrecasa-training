@@ -589,19 +589,20 @@
   height: 22px;
 }
 
-/* Done state */
-.workout-vuelta-done {
-  opacity: 0.4;
-}
-
+/* Done state — check stays bright, content dims */
 .workout-vuelta-done .workout-vuelta-check {
   color: var(--color-success);
   opacity: 1;
 }
 
+.workout-vuelta-done .workout-vuelta-label,
+.workout-vuelta-done .workout-vuelta-group,
+.workout-vuelta-done .workout-vuelta-remove {
+  opacity: 0.4;
+}
+
 .workout-vuelta-done .stepper-btn {
   pointer-events: none;
-  opacity: 0.3;
 }
 
 .workout-vuelta-done .stepper-value {
