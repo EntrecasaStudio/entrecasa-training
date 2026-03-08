@@ -20,7 +20,7 @@ function findEjercicio(nombre) {
   return [...ejerciciosCatalogo, ...getEjerciciosCustom()].find((e) => e.nombre === nombre);
 }
 
-export function showExerciseDetail(nombre) {
+export function showExerciseDetail(nombre, { onSave } = {}) {
   const ej = findEjercicio(nombre);
   if (!ej) return;
 
@@ -173,6 +173,7 @@ export function showExerciseDetail(nombre) {
       updateEjercicioTipo(nombre, newTipo);
 
       close();
+      if (onSave) onSave();
     }
   });
 }

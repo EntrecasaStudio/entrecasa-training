@@ -362,6 +362,9 @@ function renderEjercicioVelocidad(ej, ejIdx) {
       ${timerHtml}
       <div class="workout-vueltas">
         ${pasadasHtml}
+        <button class="workout-add-vuelta-btn" data-action="add-pasada" data-ej="${ejIdx}">
+          ${icon.plus} Pasada
+        </button>
       </div>
       ${startBtn}
     </div>
@@ -421,6 +424,9 @@ function renderEjercicioHIIT(ej, ejIdx) {
       ${timerHtml}
       <div class="workout-vueltas">
         ${roundsHtml}
+        <button class="workout-add-vuelta-btn" data-action="add-round" data-ej="${ejIdx}">
+          ${icon.plus} Ronda
+        </button>
       </div>
       ${startBtn}
     </div>
@@ -1246,7 +1252,13 @@ export function mount(params) {
 
       case 'show-detail': {
         const nombre = btn.dataset.nombre;
-        if (nombre) showExerciseDetail(nombre);
+        if (nombre) showExerciseDetail(nombre, {
+          onSave: () => {
+            const container = getWorkoutContainer();
+            container.innerHTML = render(params);
+            scrollToActiveSegment();
+          },
+        });
         break;
       }
 
@@ -1513,6 +1525,36 @@ export function mount(params) {
           ej5.roundResults[rIdx].completada = !ej5.roundResults[rIdx].completada;
           haptic.medium();
           saveWorkoutActivo(state);
+          reRenderWorkout(params);
+        }
+        break;
+      }
+
+      case 'add-pasada': {
+        const ejIdx6 = parseInt(btn.dataset.ej);
+        const circ6 = state.resultados[state.circuitoActual];
+        const ej6 = circ6?.ejercicios[ejIdx6];
+        if (ej6?.pasadas) {
+          ej6.pasadas.push({ completada: false, tiempoReal: ej6.tiempo });
+          ej6.cantidadPasadas = ej6.pasadas.length;
+          state.modified = true;
+          saveWorkoutActivo(state);
+          haptic.light();
+          reRenderWorkout(params);
+        }
+        break;
+      }
+
+      case 'add-round': {
+        const ejIdx7 = parseInt(btn.dataset.ej);
+        const circ7 = state.resultados[state.circuitoActual];
+        const ej7 = circ7?.ejercicios[ejIdx7];
+        if (ej7?.roundResults) {
+          ej7.roundResults.push({ completada: false });
+          ej7.rounds = ej7.roundResults.length;
+          state.modified = true;
+          saveWorkoutActivo(state);
+          haptic.light();
           reRenderWorkout(params);
         }
         break;

@@ -68,6 +68,14 @@ const FRONT_PARTS = {
     '72.65 195.1 69.8 159.18 65.31 158.37 64.08 162.45 64.08 165.31 65.71 177.14',
     '35.51 158.37 35.92 162.45 35.92 166.94 35.1 172.24 35.1 176.73 32.24 182.04 30.61 187.35 26.94 194.69 27.35 187.76 28.16 180.41 28.57 175.51 28.98 169.8 29.8 164.08 30.2 158.78',
   ],
+  hands: [
+    '0 100 3 98 6 99 7 102 6 107 3 109 0 106',
+    '93 101 94 99 97 98 100 100 100 106 97 109 94 107',
+  ],
+  feet: [
+    '19 196 23 195 27 195 28 197 27 200 22 200 18 199',
+    '72 197 73 195 77 195 81 196 81 199 78 200 73 200',
+  ],
 };
 
 // ── Back view polygon data ──
@@ -132,6 +140,14 @@ const BACK_PARTS = {
     '28.51 195.74 30.21 195.74 33.62 201.7 30.64 220 28.51 213.62 26.81 198.3',
     '69.79 195.74 71.91 195.74 73.62 198.3 71.91 213.19 70.21 219.57 67.23 202.13',
   ],
+  back_hands: [
+    '0 107 3 105 6 105 7 109 6 114 3 116 0 113',
+    '93 109 95 105 98 105 100 107 100 113 97 116 94 114',
+  ],
+  back_feet: [
+    '27 218 29 214 31 220 33 218 33 225 30 228 27 226',
+    '67 218 70 220 71 214 73 218 73 226 70 228 67 225',
+  ],
 };
 
 // ── Group mapping: grupo → { view, activeParts } ──
@@ -172,8 +188,8 @@ export function getMuscleSvg(grupo, size = 64, opts = {}) {
 
   const { view, parts: activeParts } = mapping;
   const allParts = view === 'front' ? FRONT_PARTS : BACK_PARTS;
-  const vb = view === 'front' ? '0 0 100 200' : '0 0 100 220';
-  const vbH = view === 'front' ? 200 : 220;
+  const vb = view === 'front' ? '0 0 100 200' : '0 0 100 232';
+  const vbH = view === 'front' ? 200 : 232;
   const w = size * (100 / vbH);
 
   let polygonsHtml = '';
@@ -243,7 +259,7 @@ export function getCompositeMuscleSvg(grupos, size = 32) {
   }
 
   const frontSvg = renderView(FRONT_PARTS, frontActive, '0 0 100 200', 200);
-  const backSvg = renderView(BACK_PARTS, backActive, '0 0 100 220', 220);
+  const backSvg = renderView(BACK_PARTS, backActive, '0 0 100 232', 232);
 
   return `<span class="muscle-composite">${frontSvg}${backSvg}</span>`;
 }
