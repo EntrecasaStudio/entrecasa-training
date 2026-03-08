@@ -38,9 +38,6 @@ export function showExerciseDetail(nombre) {
     ? `<div class="ej-detail-illustration" style="--muscle-color: ${muscleColor}">${muscleSvg}</div>`
     : '';
 
-  // Description preview (truncated)
-  const descPreview = desc ? desc.substring(0, 40) + (desc.length > 40 ? '…' : '') : '';
-
   // Notes dot indicator
   const notaDot = nota ? '<span class="ej-detail-notes-dot"></span>' : '';
 
@@ -60,6 +57,11 @@ export function showExerciseDetail(nombre) {
         </div>
       </div>
       <div class="ej-detail-separator"></div>
+      <div class="ej-detail-desc-section">
+        <div class="ej-detail-desc-text" data-desc-display>${desc || '<span class="ej-detail-desc-empty">Sin descripción</span>'}</div>
+        <button class="btn btn-ghost btn-xs ej-detail-desc-edit-btn" data-action="edit-desc">${icon.edit} Editar</button>
+        <textarea class="ej-detail-desc-textarea hidden" placeholder="Descripción del ejercicio..." rows="3">${desc}</textarea>
+      </div>
       <div class="ej-detail-tipo-toggle">
         <button class="ej-detail-tipo-btn ${currentTipo === 'funcional' ? 'active' : ''}" data-set-tipo="funcional">Funcional</button>
         <button class="ej-detail-tipo-btn ${currentTipo === 'maquina' ? 'active' : ''}" data-set-tipo="maquina">Máquina</button>
@@ -76,18 +78,6 @@ export function showExerciseDetail(nombre) {
           <span class="ej-param-icon">${icon.vest}</span>
           <span class="ej-param-text">Puede usar chaleco</span>
         </label>
-      </div>
-      <div class="ej-detail-desc-section">
-        <button class="ej-detail-section-toggle" data-toggle="desc">
-          <span class="ej-detail-section-label">Descripción</span>
-          <span class="ej-detail-section-preview">${descPreview}</span>
-          <span class="ej-detail-chevron" data-chevron="desc">${icon.chevronDown}</span>
-        </button>
-        <div class="ej-detail-collapsible collapsed" data-body="desc">
-          <div class="ej-detail-desc-text" data-desc-display>${desc || '<span class="ej-detail-desc-empty">Sin descripción</span>'}</div>
-          <button class="btn btn-ghost btn-xs ej-detail-desc-edit-btn" data-action="edit-desc">${icon.edit} Editar</button>
-          <textarea class="ej-detail-desc-textarea hidden" placeholder="Descripción del ejercicio..." rows="3">${desc}</textarea>
-        </div>
       </div>
       <div class="ej-detail-notes-section">
         <button class="ej-detail-notes-toggle" data-toggle="notes">
@@ -119,15 +109,6 @@ export function showExerciseDetail(nombre) {
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay || e.target.closest('[data-detail-close]')) {
       close();
-      return;
-    }
-
-    // Toggle description
-    if (e.target.closest('[data-toggle="desc"]')) {
-      const body = overlay.querySelector('[data-body="desc"]');
-      const chevron = overlay.querySelector('[data-chevron="desc"]');
-      body.classList.toggle('collapsed');
-      chevron.classList.toggle('open');
       return;
     }
 

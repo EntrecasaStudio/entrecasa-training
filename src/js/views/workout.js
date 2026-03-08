@@ -294,9 +294,6 @@ function renderEjercicio(ej, ejIdx) {
           ${icon.info}
         </button>
       </div>
-      <div class="workout-ejercicio-target">
-        Objetivo: ${ej.repsObjetivo} reps${isBodyweight ? '' : ` &middot; ${ej.pesoObjetivoKg} kg`}
-      </div>
       ${overload ? `<div class="workout-overload-hint">${icon.arrowUp} Subir peso</div>` : ''}
       ${renderExerciseHistory(ej.nombre)}
       ${vestHtml}
