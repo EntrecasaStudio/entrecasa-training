@@ -81,7 +81,7 @@ function renderCategorySection(cat, ejercicios, collapsed, lastUsedMap = {}) {
             return `
               <div class="ej-item" data-action="show-detail" data-nombre="${e.nombre}">
                 <span class="ej-item-name">${e.nombre}${lastInfo}${hasNota}</span>
-                <span class="ej-item-type ${e.tipo}">${e.tipo === 'maquina' ? 'Máquina' : 'Funcional'}</span>
+                <span class="ej-item-type ${e.tipo}">${e.tipo === 'maquina' ? 'M' : 'F'}</span>
               </div>
             `;
           })
