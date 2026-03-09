@@ -1874,8 +1874,15 @@
 }
 
 .ej-item-note {
-  font-size: 10px;
   margin-left: var(--space-xs);
+  color: var(--color-accent);
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.ej-item-note svg {
+  width: 12px;
+  height: 12px;
 }
 
 .ej-item-type {
@@ -1948,32 +1955,9 @@
   color: var(--color-tag-piernas);
 }
 
-/* ── Tipo toggle (funcional / maquina) ── */
+/* ── Tipo toggle (funcional / maquina) — uses shared .ej-type-toggle ── */
 .ej-detail-tipo-toggle {
-  display: flex;
-  gap: var(--space-xs);
   margin-bottom: var(--space-sm);
-}
-
-.ej-detail-tipo-btn {
-  flex: 1;
-  padding: var(--space-xs) var(--space-sm);
-  min-height: 36px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-full);
-  font-size: var(--text-xs);
-  font-weight: var(--fw-medium);
-  color: var(--color-text-muted);
-  background: transparent;
-  -webkit-tap-highlight-color: transparent;
-  transition: all var(--transition-fast);
-}
-
-.ej-detail-tipo-btn.active {
-  border-color: var(--color-accent);
-  background-color: color-mix(in srgb, var(--color-accent) 12%, transparent);
-  color: var(--color-accent);
-  font-weight: var(--fw-semibold);
 }
 
 /* ── Description text display + edit ── */

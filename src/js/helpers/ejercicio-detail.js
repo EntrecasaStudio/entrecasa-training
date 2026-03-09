@@ -64,9 +64,9 @@ export function showExerciseDetail(nombre, { onSave } = {}) {
       </div>
       <div class="ej-detail-params">
         <span class="ej-detail-params-label">Parámetros</span>
-        <div class="ej-detail-tipo-toggle">
-          <button class="ej-detail-tipo-btn ${currentTipo === 'funcional' ? 'active' : ''}" data-set-tipo="funcional">Funcional</button>
-          <button class="ej-detail-tipo-btn ${currentTipo === 'maquina' ? 'active' : ''}" data-set-tipo="maquina">Máquina</button>
+        <div class="ej-type-toggle ej-detail-tipo-toggle">
+          <button class="ej-type-btn ${currentTipo === 'funcional' ? 'active' : ''}" data-set-tipo="funcional">Funcional</button>
+          <button class="ej-type-btn ${currentTipo === 'maquina' ? 'active' : ''}" data-set-tipo="maquina">Máquina</button>
         </div>
         <label class="ej-param-toggle">
           <input type="checkbox" class="ej-param-cb" data-param="usaPeso" ${meta.usaPeso ? 'checked' : ''}>
@@ -129,7 +129,7 @@ export function showExerciseDetail(nombre, { onSave } = {}) {
     // Tipo toggle (funcional / maquina)
     const tipoBtn = e.target.closest('[data-set-tipo]');
     if (tipoBtn) {
-      overlay.querySelectorAll('.ej-detail-tipo-btn').forEach((b) => b.classList.remove('active'));
+      overlay.querySelectorAll('.ej-detail-tipo-toggle .ej-type-btn').forEach((b) => b.classList.remove('active'));
       tipoBtn.classList.add('active');
       return;
     }
@@ -159,7 +159,7 @@ export function showExerciseDetail(nombre, { onSave } = {}) {
       const descTextarea = overlay.querySelector('.ej-detail-desc-textarea');
       const usaPeso = overlay.querySelector('[data-param="usaPeso"]').checked;
       const usaChaleco = overlay.querySelector('[data-param="usaChaleco"]').checked;
-      const activeTipoBtn = overlay.querySelector('.ej-detail-tipo-btn.active');
+      const activeTipoBtn = overlay.querySelector('.ej-detail-tipo-toggle .ej-type-btn.active');
       const newTipo = activeTipoBtn ? activeTipoBtn.dataset.setTipo : currentTipo;
 
       saveEjercicioMeta(nombre, {

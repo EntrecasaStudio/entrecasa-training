@@ -77,7 +77,7 @@ function renderCategorySection(cat, ejercicios, collapsed, lastUsedMap = {}) {
             const lastInfo = last
               ? `<span class="ej-item-last">${last.reps}r &middot; ${last.peso}kg</span>`
               : '';
-            const hasNota = getNotaEjercicio(e.nombre) ? '<span class="ej-item-note">📝</span>' : '';
+            const hasNota = getNotaEjercicio(e.nombre) ? `<span class="ej-item-note">${icon.edit}</span>` : '';
             return `
               <div class="ej-item" data-action="show-detail" data-nombre="${e.nombre}">
                 <span class="ej-item-name">${e.nombre}${lastInfo}${hasNota}</span>
