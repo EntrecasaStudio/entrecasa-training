@@ -87,30 +87,33 @@ function renderRutinaCard(rutina) {
   const dia = DIAS_LABEL[rutina.diaSemana] || '';
   const badge = dia ? `<div class="rutina-card-day">${dia}</div>` : '';
   const displayName = getDisplayName(rutina);
-
   const num = formatNumero(rutina.numero);
-  const tipoIcon = getTipoIcon(rutina.tipo);
-  const volantaParts = [num, tipoIcon].filter(Boolean);
-  const volanta = volantaParts.length
-    ? `<div class="rutina-card-volanta">${volantaParts.join(' · ')}</div>`
-    : '';
+  const { numCirc, numEj } = getRoutineStats(rutina);
 
-  const meta = getMetaText(rutina);
+  const infoParts = [num, `${numCirc}c · ${numEj}ej`].filter(Boolean);
+  const infoLine = infoParts.join(' — ');
+
+  const ultimaSesion = getUltimaSesionDeRutina(rutina.id);
+  const lastDone = ultimaSesion ? formatTimeAgo(ultimaSesion.fecha) : '';
+
   const delay = cardCounter++ * 60;
+  const grupos = [...new Set(rutina.circuitos.map((c) => c.grupoMuscular))];
 
   return `
     <div class="rutina-card card animate-in" style="animation-delay:${delay}ms" data-rutina-id="${rutina.id}">
-      ${badge}
-      <div class="rutina-card-name">${displayName}</div>
-      ${volanta}
-      <div class="rutina-card-tags">${getCompositeMuscleSvg([...new Set(rutina.circuitos.map((c) => c.grupoMuscular))], 52)}</div>
-      <div class="rutina-card-footer">
-        <span class="rutina-card-meta">${meta}</span>
-        <div class="rutina-card-actions">
-          <button class="btn-icon-action" data-action="start" data-id="${rutina.id}">${icon.play}</button>
-          <button class="btn-icon-action" data-action="duplicate" data-id="${rutina.id}">${icon.copy}</button>
-          <button class="btn-icon-action" data-action="edit" data-id="${rutina.id}">${icon.edit}</button>
+      <div class="rutina-card-body">
+        <div class="rutina-card-info">
+          ${badge}
+          <div class="rutina-card-name">${displayName}</div>
+          <div class="rutina-card-volanta">${infoLine}</div>
+          ${lastDone ? `<div class="rutina-card-last">${lastDone}</div>` : ''}
         </div>
+        <div class="rutina-card-illustration">${getCompositeMuscleSvg(grupos, 80)}</div>
+      </div>
+      <div class="rutina-card-actions">
+        <button class="btn-icon-action" data-action="start" data-id="${rutina.id}">${icon.play}</button>
+        <button class="btn-icon-action" data-action="duplicate" data-id="${rutina.id}">${icon.copy}</button>
+        <button class="btn-icon-action" data-action="edit" data-id="${rutina.id}">${icon.edit}</button>
       </div>
     </div>
   `;

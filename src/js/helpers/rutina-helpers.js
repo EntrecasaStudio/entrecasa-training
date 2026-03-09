@@ -84,15 +84,7 @@ export function showPreview(rutinaId) {
         const typeBadge = circTipo !== 'normal' ? `<span class="preview-type-badge ${circTipo}">${circTipo === 'velocidad' ? 'Vel' : 'HIIT'}</span>` : '';
 
         const exercisesHtml = c.ejercicios.map((ej) => {
-          let meta;
-          if (circTipo === 'velocidad') {
-            meta = `${ej.cantidadPasadas} pasadas &middot; ${ej.velocidad}km/h`;
-          } else if (circTipo === 'hiit') {
-            meta = `${ej.rounds}r &middot; ${ej.workTime}s/${ej.restTime}s`;
-          } else {
-            meta = `${ej.repsObjetivo}r &middot; ${ej.pesoKg}kg`;
-          }
-          return `<div class="preview-exercise">${ej.nombre} <span class="preview-exercise-meta">${meta}</span></div>`;
+          return `<div class="preview-exercise">${ej.nombre}</div>`;
         }).join('');
 
         return `

@@ -842,19 +842,19 @@
 .rutinas-view-modes {
   display: flex;
   gap: 2px;
-  background: var(--color-surface-alt);
-  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border-radius: var(--radius-full);
   padding: 3px;
   flex-shrink: 0;
 }
 
 .rutinas-view-btn {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-full);
   color: var(--color-text-muted);
   transition: all var(--transition-fast);
   -webkit-tap-highlight-color: transparent;
@@ -959,6 +959,23 @@
   padding: var(--space-md);
 }
 
+.rutina-card-body {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.rutina-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.rutina-card-illustration {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
 .rutina-card-day {
   font-size: var(--text-xs);
   font-weight: var(--fw-semibold);
@@ -977,15 +994,13 @@
 .rutina-card-volanta {
   font-size: var(--text-xs);
   color: var(--color-text-dim);
-  margin-bottom: var(--space-xs);
   letter-spacing: 0.3px;
 }
 
-.rutina-card-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: var(--space-sm);
+.rutina-card-last {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-top: 2px;
 }
 
 .tag-sm {
@@ -994,20 +1009,10 @@
   letter-spacing: 0.3px;
 }
 
-.rutina-card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.rutina-card-meta {
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-}
-
 .rutina-card-actions {
   display: flex;
   gap: var(--space-xs);
+  justify-content: flex-end;
 }
 
 .rutina-card-actions .btn {
@@ -1906,6 +1911,10 @@
   overflow-y: auto;
 }
 
+.ej-detail-top-tag {
+  margin-bottom: var(--space-sm);
+}
+
 .ej-detail-header {
   margin-bottom: var(--space-md);
 }
@@ -1943,7 +1952,7 @@
 .ej-detail-tipo-toggle {
   display: flex;
   gap: var(--space-xs);
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-sm);
 }
 
 .ej-detail-tipo-btn {
@@ -2076,7 +2085,7 @@
 
 /* ── Description textarea ── */
 .ej-detail-desc-section {
-  margin-bottom: var(--space-xs);
+  margin-bottom: var(--space-lg);
 }
 
 .ej-detail-desc-textarea {

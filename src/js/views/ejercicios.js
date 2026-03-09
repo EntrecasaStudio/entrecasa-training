@@ -192,7 +192,7 @@ export function mount() {
   const app = document.getElementById('app');
   let activeType = 'todos';
   let searchQuery = '';
-  const collapsedCats = new Set();
+  const collapsedCats = new Set(CATEGORIAS);
 
   const lastUsedMap = buildLastUsedMap();
 

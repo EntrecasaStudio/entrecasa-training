@@ -12,7 +12,6 @@ export function showVoicePreview(rutina) {
     const ejHTML = c.ejercicios.map((ej) =>
       `<div class="voice-preview-ej">
         <span class="voice-preview-ej-name">${ej.nombre}</span>
-        <span class="voice-preview-ej-meta">${ej.repsObjetivo}r · ${ej.pesoKg}kg</span>
       </div>`
     ).join('');
 

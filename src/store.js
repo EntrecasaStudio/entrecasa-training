@@ -62,7 +62,10 @@ export function duplicateRutina(id) {
   copia.id = crypto.randomUUID();
   copia.nombre = original.nombre + ' (copia)';
   copia.diaSemana = null; // don't copy day assignment
+  // Assign next available numero for this tipo
   const rutinas = getRutinas();
+  const sameType = rutinas.filter((r) => r.tipo === (copia.tipo || 'gimnasio'));
+  copia.numero = sameType.reduce((m, r) => Math.max(m, r.numero || 0), 0) + 1;
   rutinas.push(copia);
   write(KEYS.rutinas, rutinas);
   bumpVersion();

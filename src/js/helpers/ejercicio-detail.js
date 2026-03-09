@@ -49,12 +49,12 @@ export function showExerciseDetail(nombre, { onSave } = {}) {
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
     <div class="modal-box ej-detail-modal">
+      <div class="ej-detail-top-tag">
+        <span class="tag tag-sm">${ej.categoria}</span>
+      </div>
       ${illustrationHtml}
       <div class="ej-detail-header">
         <div class="ej-detail-name">${nombre}</div>
-        <div class="ej-detail-badges">
-          <span class="tag tag-sm">${ej.categoria}</span>
-        </div>
       </div>
       <div class="ej-detail-separator"></div>
       <div class="ej-detail-desc-section">
@@ -62,12 +62,12 @@ export function showExerciseDetail(nombre, { onSave } = {}) {
         <button class="btn btn-ghost btn-xs ej-detail-desc-edit-btn" data-action="edit-desc">${icon.edit} Editar</button>
         <textarea class="ej-detail-desc-textarea hidden" placeholder="Descripción del ejercicio..." rows="3">${desc}</textarea>
       </div>
-      <div class="ej-detail-tipo-toggle">
-        <button class="ej-detail-tipo-btn ${currentTipo === 'funcional' ? 'active' : ''}" data-set-tipo="funcional">Funcional</button>
-        <button class="ej-detail-tipo-btn ${currentTipo === 'maquina' ? 'active' : ''}" data-set-tipo="maquina">Máquina</button>
-      </div>
       <div class="ej-detail-params">
         <span class="ej-detail-params-label">Parámetros</span>
+        <div class="ej-detail-tipo-toggle">
+          <button class="ej-detail-tipo-btn ${currentTipo === 'funcional' ? 'active' : ''}" data-set-tipo="funcional">Funcional</button>
+          <button class="ej-detail-tipo-btn ${currentTipo === 'maquina' ? 'active' : ''}" data-set-tipo="maquina">Máquina</button>
+        </div>
         <label class="ej-param-toggle">
           <input type="checkbox" class="ej-param-cb" data-param="usaPeso" ${meta.usaPeso ? 'checked' : ''}>
           <span class="ej-param-icon">${icon.kettlebell}</span>

@@ -324,7 +324,7 @@ function renderForm(isEdit) {
 
     <div class="form-footer">
       <button class="btn btn-primary btn-full" data-action="save">Guardar Rutina</button>
-      <button class="btn btn-ghost btn-full" data-action="${isEdit ? 'back' : 'back'}">${isEdit ? 'Cerrar' : 'Cancelar'}</button>
+      <button class="btn btn-ghost btn-full" data-action="back">${isEdit ? 'Cerrar' : 'Descartar'}</button>
     </div>
   `;
 }

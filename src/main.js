@@ -20,10 +20,10 @@ import { initSwipeBack } from '@js/helpers/swipe-back.js';
 import { initPullToRefresh } from '@js/helpers/pull-to-refresh.js';
 import { mountOfflineBanner } from '@js/components/offline-banner.js';
 
-// ── Splash progress bar ──────────────
+// ── Splash loader (kettlebell fill) ──────────────
 function setSplashProgress(pct) {
-  const fill = document.getElementById('splash-progress-fill');
-  if (fill) fill.style.width = pct + '%';
+  const kbFill = document.getElementById('splash-kb-fill');
+  if (kbFill) kbFill.style.clipPath = `inset(${100 - pct}% 0 0 0)`;
 }
 
 // Seed initial rutinas from Notion data (only if empty)

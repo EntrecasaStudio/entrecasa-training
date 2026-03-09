@@ -25,29 +25,17 @@
   <!-- Splash screen (shows instantly while JS loads + auth resolves) -->
   <style>
     @keyframes splash-icon-enter {
-      from { opacity: 0; transform: scale(0) rotateY(0deg); }
-      to   { opacity: 1; transform: scale(1) rotateY(0deg); }
+      from { opacity: 0; transform: scale(0); }
+      to   { opacity: 1; transform: scale(1); }
     }
     @keyframes splash-text-enter {
       from { opacity: 0; transform: translateY(10px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    @keyframes kb3d-spin {
-      from { transform: rotateY(0deg); }
-      to   { transform: rotateY(360deg); }
+    @keyframes kb-glow-pulse {
+      0%, 100% { opacity: 0.08; }
+      50%      { opacity: 0.18; }
     }
-    @keyframes kb3d-shadow {
-      0%, 100% { transform: translateX(-50%) scaleX(1) scaleY(1); opacity: 0.25; }
-      25%      { transform: translateX(-50%) scaleX(0.4) scaleY(0.7); opacity: 0.08; }
-      50%      { transform: translateX(-50%) scaleX(1) scaleY(1); opacity: 0.25; }
-      75%      { transform: translateX(-50%) scaleX(0.4) scaleY(0.7); opacity: 0.08; }
-    }
-    @keyframes kb3d-glow {
-      0%, 100% { opacity: 0.35; }
-      25%, 75% { opacity: 0.1; }
-      50%      { opacity: 0.35; }
-    }
-    /* Neumorphic container */
     .splash-neumorph {
       width: 120px; height: 120px; border-radius: 32px;
       background: #222;
@@ -57,109 +45,43 @@
         inset 0 1px 0 rgba(255,255,255,0.04);
       display: flex; align-items: center; justify-content: center;
     }
-    @keyframes kb3d-brightness {
-      0%, 50%, 100% { filter: brightness(1); }
-      25%, 75%      { filter: brightness(0.72); }
+    #splash-kb-fill {
+      transition: clip-path 500ms cubic-bezier(0.4, 0, 0.2, 1);
     }
-    /* 3D kettlebell scene */
-    .kb3d-scene {
-      width: 80px; height: 80px;
-      perspective: 300px;
-    }
-    .kb3d-rotator {
-      width: 100%; height: 100%;
-      transform-style: preserve-3d;
-      animation: kb3d-spin 2.8s cubic-bezier(0.4, 0, 0.2, 1) 700ms infinite,
-                 kb3d-brightness 2.8s ease-in-out 700ms infinite;
-    }
-    /* Front face */
-    .kb3d-face {
-      position: absolute; inset: 0;
-      display: flex; align-items: center; justify-content: center;
-      backface-visibility: hidden;
-    }
-    .kb3d-face--back {
-      transform: rotateY(180deg);
-    }
-    /* Side "thickness" panels — create volume illusion */
-    .kb3d-edge {
-      position: absolute; top: 50%; left: 50%;
-      width: 4px; height: 50px; margin-top: -8px;
-      background: linear-gradient(180deg, #b8940a 0%, #8a6f08 100%);
-      border-radius: 2px;
-      backface-visibility: hidden;
-    }
-    .kb3d-edge--l { transform: translate(-32px, 0) rotateY(-90deg) translateZ(2px); }
-    .kb3d-edge--r { transform: translate(28px, 0) rotateY(90deg) translateZ(2px); }
   </style>
   <div id="splash" style="position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1A1A1A;transition:opacity 0.4s ease,transform 0.4s ease;">
-    <!-- Neumorphic card with 3D Kettlebell -->
+    <!-- Neumorphic card with fill-loader kettlebell -->
     <div style="position:relative;opacity:0;animation:splash-icon-enter 600ms cubic-bezier(0.34,1.56,0.64,1) forwards;">
       <div class="splash-neumorph">
-        <div class="kb3d-scene">
-          <div class="kb3d-rotator">
-            <!-- Front face: kettlebell with gradient shading -->
-            <div class="kb3d-face">
-              <svg width="72" height="72" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <radialGradient id="kb-body-f" cx="40%" cy="40%" r="55%">
-                    <stop offset="0%" stop-color="#FFE066"/>
-                    <stop offset="60%" stop-color="#FFCD00"/>
-                    <stop offset="100%" stop-color="#B8940A"/>
-                  </radialGradient>
-                  <linearGradient id="kb-handle-f" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#DDB800"/>
-                    <stop offset="100%" stop-color="#AA8800"/>
-                  </linearGradient>
-                </defs>
-                <!-- Handle (single continuous path — no gaps) -->
-                <path d="M9 9V5a3 3 0 0 1 6 0v4" stroke="url(#kb-handle-f)" stroke-width="1.8" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
-                <!-- Body with 3D gradient -->
-                <circle cx="12" cy="14.5" r="6" fill="url(#kb-body-f)" stroke="#AA8800" stroke-width="0.3"/>
-                <!-- Specular highlight -->
-                <ellipse cx="10.5" cy="12.5" rx="2" ry="1.5" fill="rgba(255,255,255,0.25)"/>
-              </svg>
-            </div>
-            <!-- Back face: darker kettlebell (shadow side) -->
-            <div class="kb3d-face kb3d-face--back">
-              <svg width="72" height="72" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <radialGradient id="kb-body-b" cx="60%" cy="40%" r="55%">
-                    <stop offset="0%" stop-color="#C9A30A"/>
-                    <stop offset="60%" stop-color="#A08208"/>
-                    <stop offset="100%" stop-color="#7A6206"/>
-                  </radialGradient>
-                  <linearGradient id="kb-handle-b" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#AA8800"/>
-                    <stop offset="100%" stop-color="#886600"/>
-                  </linearGradient>
-                </defs>
-                <path d="M15 9V5a3 3 0 0 0 -6 0v4" stroke="url(#kb-handle-b)" stroke-width="1.8" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
-                <circle cx="12" cy="14.5" r="6" fill="url(#kb-body-b)" stroke="#7A6206" stroke-width="0.3"/>
-                <ellipse cx="13.5" cy="12.5" rx="2" ry="1.5" fill="rgba(255,255,255,0.1)"/>
-              </svg>
-            </div>
-            <!-- Side edges for volume -->
-            <div class="kb3d-edge kb3d-edge--l"></div>
-            <div class="kb3d-edge kb3d-edge--r"></div>
-          </div>
-        </div>
+        <svg width="72" height="72" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="kb-handle" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#DDB800"/>
+              <stop offset="100%" stop-color="#AA8800"/>
+            </linearGradient>
+            <radialGradient id="kb-liquid" cx="40%" cy="45%" r="55%">
+              <stop offset="0%" stop-color="#FFE066"/>
+              <stop offset="60%" stop-color="#FFCD00"/>
+              <stop offset="100%" stop-color="#B8940A"/>
+            </radialGradient>
+          </defs>
+          <!-- Handle -->
+          <path d="M9 9V5a3 3 0 0 1 6 0v4" stroke="url(#kb-handle)" stroke-width="1.8" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+          <!-- Empty body outline -->
+          <circle cx="12" cy="14.5" r="6" fill="rgba(255,205,0,0.04)" stroke="rgba(170,136,0,0.2)" stroke-width="0.5"/>
+          <!-- Filled body — clip-path reveals from bottom up -->
+          <circle id="splash-kb-fill" cx="12" cy="14.5" r="5.85" fill="url(#kb-liquid)" stroke="#AA8800" stroke-width="0.2" style="clip-path:inset(100% 0 0 0)"/>
+          <!-- Specular highlight -->
+          <ellipse cx="10.5" cy="12.8" rx="1.8" ry="1.2" fill="rgba(255,255,255,0.12)"/>
+        </svg>
       </div>
       <!-- Ambient glow -->
-      <div style="position:absolute;inset:-20px;border-radius:52px;background:radial-gradient(circle,rgba(255,205,0,0.12),transparent 70%);pointer-events:none;animation:kb3d-glow 2.8s ease-in-out 700ms infinite;"></div>
-      <!-- Ground shadow -->
-      <div style="position:absolute;bottom:-16px;left:50%;width:80px;height:12px;background:radial-gradient(ellipse,rgba(255,205,0,0.2),transparent 70%);border-radius:50%;animation:kb3d-shadow 2.8s cubic-bezier(0.4,0,0.2,1) 700ms infinite;"></div>
+      <div style="position:absolute;inset:-20px;border-radius:52px;background:radial-gradient(circle,rgba(255,205,0,0.12),transparent 70%);pointer-events:none;animation:kb-glow-pulse 2s ease-in-out infinite;"></div>
     </div>
-    <!-- Text: ENTRECASA volanta + TRAINER bold -->
+    <!-- Text -->
     <div style="margin-top:32px;text-align:center;opacity:0;animation:splash-text-enter 400ms ease-out 400ms forwards;">
       <div style="font-family:system-ui,-apple-system,sans-serif;font-size:0.65rem;font-weight:400;color:rgba(245,240,232,0.5);letter-spacing:4px;text-transform:uppercase;">ENTRECASA</div>
       <div style="font-family:system-ui,-apple-system,sans-serif;font-size:1.8rem;font-weight:800;color:#F5F0E8;letter-spacing:5px;text-transform:uppercase;margin-top:2px;">TRAINER</div>
-    </div>
-    <!-- Progress bar -->
-    <div style="margin-top:24px;width:120px;opacity:0;animation:splash-text-enter 400ms ease-out 600ms forwards;">
-      <div style="height:3px;background:rgba(245,240,232,0.08);border-radius:2px;overflow:hidden;">
-        <div id="splash-progress-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#FFCD00,#FFE066);border-radius:2px;transition:width 350ms cubic-bezier(0.4,0,0.2,1);"></div>
-      </div>
     </div>
   </div>
 
