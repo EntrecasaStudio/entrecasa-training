@@ -1930,20 +1930,6 @@
   font-size: var(--text-lg);
   font-weight: var(--fw-semibold);
   margin-bottom: var(--space-xs);
-  cursor: text;
-}
-
-.ej-detail-name-input {
-  font-size: var(--text-lg);
-  font-weight: var(--fw-semibold);
-  margin-bottom: var(--space-xs);
-  background: transparent;
-  color: var(--color-text);
-  border: none;
-  outline: none;
-  width: 100%;
-  padding: 0 0 2px 0;
-  font-family: inherit;
 }
 
 .ej-detail-badges {
