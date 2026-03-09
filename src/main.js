@@ -20,10 +20,9 @@ import { initSwipeBack } from '@js/helpers/swipe-back.js';
 import { initPullToRefresh } from '@js/helpers/pull-to-refresh.js';
 import { mountOfflineBanner } from '@js/components/offline-banner.js';
 
-// ── Splash loader (kettlebell fill) ──────────────
+// ── Splash loader (kettlebell liquid fill) ──────────────
 function setSplashProgress(pct) {
-  const kbFill = document.getElementById('splash-kb-fill');
-  if (kbFill) kbFill.style.clipPath = `inset(${100 - pct}% 0 0 0)`;
+  if (window.__splashFill) window.__splashFill(pct);
 }
 
 // Seed initial rutinas from Notion data (only if empty)
@@ -78,6 +77,7 @@ initPullToRefresh(async () => {
 let authResolved = false;
 
 function hideSplash() {
+  if (window.__splashStop) window.__splashStop();
   const splash = document.getElementById('splash');
   if (splash) {
     splash.style.opacity = '0';

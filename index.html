@@ -45,12 +45,9 @@
         inset 0 1px 0 rgba(255,255,255,0.04);
       display: flex; align-items: center; justify-content: center;
     }
-    #splash-kb-fill {
-      transition: clip-path 500ms cubic-bezier(0.4, 0, 0.2, 1);
-    }
   </style>
   <div id="splash" style="position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1A1A1A;transition:opacity 0.4s ease,transform 0.4s ease;">
-    <!-- Neumorphic card with fill-loader kettlebell -->
+    <!-- Neumorphic card with liquid-fill kettlebell -->
     <div style="position:relative;opacity:0;animation:splash-icon-enter 600ms cubic-bezier(0.34,1.56,0.64,1) forwards;">
       <div class="splash-neumorph">
         <svg width="72" height="72" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -59,18 +56,28 @@
               <stop offset="0%" stop-color="#DDB800"/>
               <stop offset="100%" stop-color="#AA8800"/>
             </linearGradient>
-            <radialGradient id="kb-liquid" cx="40%" cy="45%" r="55%">
+            <linearGradient id="kb-liquid" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stop-color="#FFE066"/>
-              <stop offset="60%" stop-color="#FFCD00"/>
+              <stop offset="50%" stop-color="#FFCD00"/>
               <stop offset="100%" stop-color="#B8940A"/>
-            </radialGradient>
+            </linearGradient>
+            <linearGradient id="kb-surface" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="rgba(255,255,255,0.3)"/>
+              <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+            </linearGradient>
+            <clipPath id="kb-clip">
+              <circle cx="12" cy="14.5" r="5.85"/>
+            </clipPath>
           </defs>
           <!-- Handle -->
           <path d="M9 9V5a3 3 0 0 1 6 0v4" stroke="url(#kb-handle)" stroke-width="1.8" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
           <!-- Empty body outline -->
           <circle cx="12" cy="14.5" r="6" fill="rgba(255,205,0,0.04)" stroke="rgba(170,136,0,0.2)" stroke-width="0.5"/>
-          <!-- Filled body — clip-path reveals from bottom up -->
-          <circle id="splash-kb-fill" cx="12" cy="14.5" r="5.85" fill="url(#kb-liquid)" stroke="#AA8800" stroke-width="0.2" style="clip-path:inset(100% 0 0 0)"/>
+          <!-- Liquid (clipped to circle) -->
+          <g clip-path="url(#kb-clip)">
+            <path id="splash-liquid" d="M5 21 L19 21 L19 24 L5 24Z" fill="url(#kb-liquid)"/>
+            <path id="splash-surface" d="M5 21 L19 21" stroke="url(#kb-surface)" stroke-width="0.6" fill="none"/>
+          </g>
           <!-- Specular highlight -->
           <ellipse cx="10.5" cy="12.8" rx="1.8" ry="1.2" fill="rgba(255,255,255,0.12)"/>
         </svg>
@@ -84,6 +91,62 @@
       <div style="font-family:system-ui,-apple-system,sans-serif;font-size:1.8rem;font-weight:800;color:#F5F0E8;letter-spacing:5px;text-transform:uppercase;margin-top:2px;">TRAINER</div>
     </div>
   </div>
+  <!-- Liquid physics engine for splash -->
+  <script>
+    (function() {
+      var liquid = document.getElementById('splash-liquid');
+      var surface = document.getElementById('splash-surface');
+      if (!liquid) return;
+
+      var BOT = 20.5, TOP = 8.5, RANGE = BOT - TOP;
+      var level = BOT, vel = 0, target = BOT;
+      var phase = 0, amp = 0;
+      var running = true;
+
+      function tick() {
+        if (!running) return;
+        // Spring physics
+        var force = (target - level) * 0.06;
+        vel = (vel + force) * 0.82;
+        level += vel;
+
+        // Wave amplitude from velocity
+        amp = amp * 0.94 + Math.abs(vel) * 3;
+        if (amp > 1.5) amp = 1.5;
+        if (amp < 0.05) amp = 0;
+        phase += 0.14;
+
+        // Build wavy top path
+        var d = 'M5 ' + (level + 1);
+        for (var x = 5; x <= 19; x += 0.7) {
+          var w = Math.sin((x - 5) * 0.9 + phase) * amp;
+          d += ' L' + x.toFixed(1) + ' ' + (level + w).toFixed(2);
+        }
+        d += ' L19 24 L5 24Z';
+        liquid.setAttribute('d', d);
+
+        // Surface highlight follows wave center
+        if (surface) {
+          var sd = 'M6 ' + level.toFixed(2);
+          for (var sx = 6; sx <= 18; sx += 1) {
+            var sw = Math.sin((sx - 5) * 0.9 + phase) * amp * 0.5;
+            sd += ' L' + sx + ' ' + (level + sw).toFixed(2);
+          }
+          surface.setAttribute('d', sd);
+        }
+
+        requestAnimationFrame(tick);
+      }
+
+      requestAnimationFrame(tick);
+
+      window.__splashFill = function(pct) {
+        target = BOT - (pct / 100) * RANGE;
+        amp = 1.2; // trigger slosh
+      };
+      window.__splashStop = function() { running = false; };
+    })();
+  </script>
 
   <a href="#view-container" class="skip-to-content">Ir al contenido</a>
   <div id="avatar-menu-container"></div>
