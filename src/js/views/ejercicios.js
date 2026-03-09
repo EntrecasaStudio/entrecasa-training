@@ -1,5 +1,5 @@
 import { CATEGORIAS, getEjerciciosPorCategoria, addEjercicioCustom } from '@js/ejercicios-catalogo.js';
-import { getSesiones, getUsuarioActivo, getNotaEjercicio, getEjBestRound } from '@/store.js';
+import { getSesiones, getUsuarioActivo, getNotaEjercicio, getEjBestRound, getEjercicioMeta } from '@/store.js';
 import { showExerciseDetail } from '@js/helpers/ejercicio-detail.js';
 import { getMuscleSvgCropped } from '@js/helpers/muscle-illustrations.js';
 import { icon } from '@js/icons.js';
@@ -78,9 +78,11 @@ function renderCategorySection(cat, ejercicios, collapsed, lastUsedMap = {}) {
               ? `<span class="ej-item-last">${last.reps}r &middot; ${last.peso}kg</span>`
               : '';
             const hasNota = getNotaEjercicio(e.nombre) ? `<span class="ej-item-note">${icon.edit}</span>` : '';
+            const ejMeta = getEjercicioMeta(e.nombre);
+            const ejLabel = ejMeta.displayName || e.nombre;
             return `
               <div class="ej-item" data-action="show-detail" data-nombre="${e.nombre}">
-                <span class="ej-item-name">${e.nombre}${lastInfo}${hasNota}</span>
+                <span class="ej-item-name">${ejLabel}${lastInfo}${hasNota}</span>
                 <span class="ej-item-type ${e.tipo}">${e.tipo === 'maquina' ? 'M' : 'F'}</span>
               </div>
             `;
@@ -206,7 +208,12 @@ export function mount() {
     const q = searchQuery.toLowerCase();
     const filtered = {};
     for (const [cat, items] of Object.entries(grouped)) {
-      const matches = q ? items.filter((e) => e.nombre.toLowerCase().includes(q)) : items;
+      const matches = q
+        ? items.filter((e) => {
+            const dn = getEjercicioMeta(e.nombre).displayName;
+            return e.nombre.toLowerCase().includes(q) || (dn && dn.toLowerCase().includes(q));
+          })
+        : items;
       if (matches.length > 0) filtered[cat] = matches;
     }
 

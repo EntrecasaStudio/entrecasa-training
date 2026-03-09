@@ -1930,6 +1930,26 @@
   font-size: var(--text-lg);
   font-weight: var(--fw-semibold);
   margin-bottom: var(--space-xs);
+  cursor: text;
+}
+
+.ej-detail-name-input {
+  font-size: var(--text-lg);
+  font-weight: var(--fw-semibold);
+  margin-bottom: var(--space-xs);
+  background: transparent;
+  color: var(--color-text);
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 0;
+  outline: none;
+  width: 100%;
+  padding: 0 0 2px 0;
+  font-family: inherit;
+}
+
+.ej-detail-name-input:focus {
+  border-bottom-color: var(--color-accent);
 }
 
 .ej-detail-badges {
@@ -1986,6 +2006,8 @@
   height: 14px;
 }
 
+.ej-detail-name.hidden,
+.ej-detail-name-input.hidden,
 .ej-detail-desc-textarea.hidden,
 .ej-detail-desc-text.hidden,
 .ej-detail-desc-edit-btn.hidden {
