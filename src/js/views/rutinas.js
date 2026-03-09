@@ -15,7 +15,7 @@ import {
   getTipoIcon,
   normalizeGrupos,
 } from '@js/helpers/rutina-helpers.js';
-// SVG fallback removed — 3D renders directly via mount3DViewers()
+import { getCompositeMuscleSvg } from '@js/helpers/muscle-illustrations.js';
 
 // ── Module-level state ───────────────────────
 let activeFilter = 'gimnasio';
@@ -102,9 +102,7 @@ function renderRutinaCard(rutina) {
           <div class="rutina-card-name">${displayName}</div>
           ${lastDone ? `<div class="rutina-card-last">${lastDone}</div>` : ''}
         </div>
-        <div class="rutina-card-illustration" data-3d-grupos="${grupos.join(',')}" data-3d-size="110">
-          <div class="skeleton skeleton-3d-placeholder"></div>
-        </div>
+        <div class="rutina-card-illustration">${getCompositeMuscleSvg(grupos, 80)}</div>
       </div>
       <button class="rutina-card-play" data-action="start" data-id="${rutina.id}">${icon.play}</button>
     </div>
@@ -187,29 +185,6 @@ export function render() {
 export function mount() {
   const app = document.getElementById('app');
 
-  // Rotating 3D viewers for muscle illustrations
-  let viewer3dCleanups = [];
-
-  function cleanup3DViewers() {
-    viewer3dCleanups.forEach((fn) => fn());
-    viewer3dCleanups = [];
-  }
-
-  function mount3DViewers() {
-    cleanup3DViewers();
-    const els = document.querySelectorAll('[data-3d-grupos]');
-    if (!els.length) return;
-    import('@js/helpers/muscle-3d.js').then(({ mountRotating3D }) => {
-      Array.from(els).forEach((el) => {
-        const grupos = el.dataset['3dGrupos'].split(',').filter(Boolean);
-        const size = parseInt(el.dataset['3dSize']) || 28;
-        if (!grupos.length) return;
-        mountRotating3D(el, grupos, size).then((cleanup) => {
-          viewer3dCleanups.push(cleanup);
-        });
-      });
-    });
-  }
 
   function rerender() {
     cardCounter = 0;
@@ -257,7 +232,6 @@ export function mount() {
       `;
     }
 
-    mount3DViewers();
   }
 
   const handleClick = (e) => {
@@ -312,11 +286,7 @@ export function mount() {
 
   app.addEventListener('click', handleClick);
 
-  // Initial 3D mount
-  mount3DViewers();
-
   return () => {
-    cleanup3DViewers();
     app.removeEventListener('click', handleClick);
   };
 }

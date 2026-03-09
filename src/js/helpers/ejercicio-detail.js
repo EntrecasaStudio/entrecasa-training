@@ -32,10 +32,11 @@ export function showExerciseDetail(nombre, { onSave } = {}) {
   const displayName = meta.displayName || nombre;
   const tipoLabel = ej.tipo === 'maquina' ? 'Máquina' : 'Funcional';
 
-  // Muscle illustration — 3D viewer (falls back to SVG while loading)
+  // Muscle illustration — SVG silhouette
   const muscleColor = CATEGORY_COLORS[ej.categoria] || 'var(--color-accent)';
-  const illustrationHtml = ej.categoria
-    ? `<div class="ej-detail-illustration" style="--muscle-color: ${muscleColor}" data-muscle-3d="${ej.categoria}"></div>`
+  const muscleSvg = ej.categoria ? getMuscleSvg(ej.categoria, 120) : '';
+  const illustrationHtml = muscleSvg
+    ? `<div class="ej-detail-illustration" style="--muscle-color: ${muscleColor}">${muscleSvg}</div>`
     : '';
 
   // Notes dot indicator
@@ -98,19 +99,7 @@ export function showExerciseDetail(nombre, { onSave } = {}) {
 
   document.body.appendChild(overlay);
 
-  // Mount 3D viewer
-  let cleanup3D = null;
-  const viewer3dContainer = overlay.querySelector('[data-muscle-3d]');
-  if (viewer3dContainer) {
-    import('./muscle-3d.js').then(({ mountMuscle3D }) => {
-      mountMuscle3D(viewer3dContainer, ej.categoria).then((fn) => {
-        cleanup3D = fn;
-      });
-    });
-  }
-
   const close = () => {
-    if (cleanup3D) cleanup3D();
     clearTimeout(_autoSaveTimer);
     autoSave(); // flush pending save
     overlay.classList.add('modal-closing');

@@ -70,7 +70,7 @@ const GRUPO_COLORS = {
 };
 
 // Model base URL (from public/)
-const MODEL_URL = '/models/body-model.glb';
+const MODEL_URL = `${import.meta.env.BASE_URL}models/body-model.glb`;
 
 // Cache the loaded model scene so we only fetch once
 let _modelCache = null;
