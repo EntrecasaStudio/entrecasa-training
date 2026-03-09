@@ -32,7 +32,7 @@ import { calcVolumenSesion } from '@/store.js';
 // ── Calendar state ──────────────────────────
 let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth();
-let calExpanded = false;
+let calExpanded = true;
 let selectedDate = new Date();
 
 const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -459,7 +459,7 @@ export function mount() {
     switch (action) {
       case 'start':
       case 'preview-routine':
-        showPreview(id);
+        showPreview(id, { from: 'home' });
         break;
 
       case 'resume-workout': {

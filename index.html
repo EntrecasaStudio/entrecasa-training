@@ -47,41 +47,9 @@
     }
   </style>
   <div id="splash" style="position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1A1A1A;transition:opacity 0.4s ease,transform 0.4s ease;">
-    <!-- Neumorphic card with liquid-fill kettlebell -->
+    <!-- 3D kettlebell container — canvas injected by splash-3d.js -->
     <div style="position:relative;opacity:0;animation:splash-icon-enter 600ms cubic-bezier(0.34,1.56,0.64,1) forwards;">
-      <div class="splash-neumorph">
-        <svg width="72" height="72" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="kb-handle" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#DDB800"/>
-              <stop offset="100%" stop-color="#AA8800"/>
-            </linearGradient>
-            <linearGradient id="kb-liquid" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#FFE066"/>
-              <stop offset="50%" stop-color="#FFCD00"/>
-              <stop offset="100%" stop-color="#B8940A"/>
-            </linearGradient>
-            <linearGradient id="kb-surface" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="rgba(255,255,255,0.3)"/>
-              <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-            </linearGradient>
-            <clipPath id="kb-clip">
-              <circle cx="12" cy="14.5" r="5.85"/>
-            </clipPath>
-          </defs>
-          <!-- Handle -->
-          <path d="M9 9V5a3 3 0 0 1 6 0v4" stroke="url(#kb-handle)" stroke-width="1.8" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
-          <!-- Empty body outline -->
-          <circle cx="12" cy="14.5" r="6" fill="rgba(255,205,0,0.04)" stroke="rgba(170,136,0,0.2)" stroke-width="0.5"/>
-          <!-- Liquid (clipped to circle) -->
-          <g clip-path="url(#kb-clip)">
-            <path id="splash-liquid" d="M5 21 L19 21 L19 24 L5 24Z" fill="url(#kb-liquid)"/>
-            <path id="splash-surface" d="M5 21 L19 21" stroke="url(#kb-surface)" stroke-width="0.6" fill="none"/>
-          </g>
-          <!-- Specular highlight -->
-          <ellipse cx="10.5" cy="12.8" rx="1.8" ry="1.2" fill="rgba(255,255,255,0.12)"/>
-        </svg>
-      </div>
+      <div class="splash-neumorph"></div>
       <!-- Ambient glow -->
       <div style="position:absolute;inset:-20px;border-radius:52px;background:radial-gradient(circle,rgba(255,205,0,0.12),transparent 70%);pointer-events:none;animation:kb-glow-pulse 2s ease-in-out infinite;"></div>
     </div>
@@ -91,80 +59,6 @@
       <div style="font-family:system-ui,-apple-system,sans-serif;font-size:1.8rem;font-weight:800;color:#F5F0E8;letter-spacing:5px;text-transform:uppercase;margin-top:2px;">TRAINER</div>
     </div>
   </div>
-  <!-- Liquid physics engine for splash -->
-  <script>
-    (function() {
-      var liquid = document.getElementById('splash-liquid');
-      var surface = document.getElementById('splash-surface');
-      if (!liquid) return;
-
-      var BOT = 20.5, TOP = 8.5, RANGE = BOT - TOP;
-      var level = BOT, vel = 0, target = BOT;
-      var phase1 = 0, phase2 = 0, amp = 0;
-      var running = true;
-
-      // Sample the wave height at position t (0-1 across width)
-      function waveAt(t) {
-        var w1 = Math.sin(t * Math.PI * 2 + phase1);
-        var w2 = Math.sin(t * Math.PI * 3.3 + phase2) * 0.4;
-        return (w1 + w2) * amp;
-      }
-
-      function tick() {
-        if (!running) return;
-        // Spring physics — softer spring, more damping for water feel
-        var force = (target - level) * 0.05;
-        vel = (vel + force) * 0.88;
-        level += vel;
-
-        // Wave amplitude: gentle idle ripple + slosh on movement
-        var movAmp = Math.abs(vel) * 2.5;
-        amp = amp * 0.96 + movAmp * 0.04;
-        if (amp > 1.0) amp = 1.0;
-        // Gentle idle ripple when liquid is present
-        var idle = level < BOT - 0.5 ? 0.08 : 0;
-        if (amp < idle) amp = idle;
-
-        phase1 += 0.07;
-        phase2 -= 0.05; // counter-direction for organic feel
-
-        // Sample 5 points across the surface
-        var L = 5, R = 19, W = R - L;
-        var p0 = level + waveAt(0);
-        var p1 = level + waveAt(0.25);
-        var p2 = level + waveAt(0.5);
-        var p3 = level + waveAt(0.75);
-        var p4 = level + waveAt(1);
-
-        // Build smooth cubic bezier path
-        var x0 = L, x1 = L + W*0.25, x2 = L + W*0.5, x3 = L + W*0.75, x4 = R;
-        var d = 'M' + x0 + ' ' + p0.toFixed(2);
-        d += ' C' + ((x0+x1)/2).toFixed(1) + ' ' + p0.toFixed(2) + ',' + ((x0+x1)/2).toFixed(1) + ' ' + p1.toFixed(2) + ',' + x1.toFixed(1) + ' ' + p1.toFixed(2);
-        d += ' C' + ((x1+x2)/2).toFixed(1) + ' ' + p1.toFixed(2) + ',' + ((x1+x2)/2).toFixed(1) + ' ' + p2.toFixed(2) + ',' + x2.toFixed(1) + ' ' + p2.toFixed(2);
-        d += ' C' + ((x2+x3)/2).toFixed(1) + ' ' + p2.toFixed(2) + ',' + ((x2+x3)/2).toFixed(1) + ' ' + p3.toFixed(2) + ',' + x3.toFixed(1) + ' ' + p3.toFixed(2);
-        d += ' C' + ((x3+x4)/2).toFixed(1) + ' ' + p3.toFixed(2) + ',' + ((x3+x4)/2).toFixed(1) + ' ' + p4.toFixed(2) + ',' + x4.toFixed(1) + ' ' + p4.toFixed(2);
-        d += ' L19 24 L5 24Z';
-        liquid.setAttribute('d', d);
-
-        // Surface highlight — smooth line following wave
-        if (surface) {
-          var sd = 'M6 ' + (level + waveAt(0.07)).toFixed(2);
-          sd += ' Q12 ' + (level + waveAt(0.5)).toFixed(2) + ' 18 ' + (level + waveAt(0.93)).toFixed(2);
-          surface.setAttribute('d', sd);
-        }
-
-        requestAnimationFrame(tick);
-      }
-
-      requestAnimationFrame(tick);
-
-      window.__splashFill = function(pct) {
-        target = BOT - (pct / 100) * RANGE;
-        amp = 1.2; // trigger slosh
-      };
-      window.__splashStop = function() { running = false; };
-    })();
-  </script>
 
   <a href="#view-container" class="skip-to-content">Ir al contenido</a>
   <div id="avatar-menu-container"></div>

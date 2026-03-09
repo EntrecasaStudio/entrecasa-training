@@ -32,12 +32,10 @@ export function showExerciseDetail(nombre, { onSave } = {}) {
   const displayName = meta.displayName || nombre;
   const tipoLabel = ej.tipo === 'maquina' ? 'Máquina' : 'Funcional';
 
-  // Muscle illustration — full body, 120px
-  const muscleSvg = ej.categoria ? getMuscleSvg(ej.categoria, 120, { allMuscles: true }) : '';
+  // Muscle illustration — 3D viewer (falls back to SVG while loading)
   const muscleColor = CATEGORY_COLORS[ej.categoria] || 'var(--color-accent)';
-
-  const illustrationHtml = muscleSvg
-    ? `<div class="ej-detail-illustration" style="--muscle-color: ${muscleColor}">${muscleSvg}</div>`
+  const illustrationHtml = ej.categoria
+    ? `<div class="ej-detail-illustration" style="--muscle-color: ${muscleColor}" data-muscle-3d="${ej.categoria}"></div>`
     : '';
 
   // Notes dot indicator
@@ -95,20 +93,84 @@ export function showExerciseDetail(nombre, { onSave } = {}) {
           <textarea class="ej-detail-textarea" placeholder="Agrega tus notas personales..." rows="3">${nota}</textarea>
         </div>
       </div>
-      <div class="modal-actions">
-        <button class="btn btn-ghost btn-sm" data-detail-close>Cerrar</button>
-        <button class="btn btn-primary btn-sm" data-detail-save>Guardar</button>
-      </div>
     </div>
   `;
 
   document.body.appendChild(overlay);
 
+  // Mount 3D viewer
+  let cleanup3D = null;
+  const viewer3dContainer = overlay.querySelector('[data-muscle-3d]');
+  if (viewer3dContainer) {
+    import('./muscle-3d.js').then(({ mountMuscle3D }) => {
+      mountMuscle3D(viewer3dContainer, ej.categoria).then((fn) => {
+        cleanup3D = fn;
+      });
+    });
+  }
+
   const close = () => {
+    if (cleanup3D) cleanup3D();
+    clearTimeout(_autoSaveTimer);
+    autoSave(); // flush pending save
     overlay.classList.add('modal-closing');
-    overlay.addEventListener('animationend', () => overlay.remove(), { once: true });
+    let closed = false;
+    const handleClose = () => {
+      if (closed) return;
+      closed = true;
+      overlay.remove();
+      if (onSave) onSave();
+    };
+    overlay.addEventListener('animationend', handleClose, { once: true });
+    setTimeout(handleClose, 400); // fallback if animation skips
   };
 
+  // ── Auto-save: persist on every change (debounced for blur events) ──
+  let _autoSaveTimer = null;
+  function autoSaveDebounced() {
+    clearTimeout(_autoSaveTimer);
+    _autoSaveTimer = setTimeout(autoSave, 300);
+  }
+  function autoSave() {
+    clearTimeout(_autoSaveTimer);
+    const notaTextarea = overlay.querySelector('.ej-detail-textarea');
+    const descTextarea = overlay.querySelector('.ej-detail-desc-textarea');
+    const nameInput = overlay.querySelector('[data-name-input]');
+    const usaPesoEl = overlay.querySelector('[data-param="usaPeso"]');
+    const usaChalecoEl = overlay.querySelector('[data-param="usaChaleco"]');
+    const activeTipoBtn = overlay.querySelector('.ej-detail-tipo-toggle .ej-type-btn.active');
+    const newTipo = activeTipoBtn ? activeTipoBtn.dataset.setTipo : currentTipo;
+    const newName = nameInput ? nameInput.value.trim() : '';
+
+    if (notaTextarea) saveNotaEjercicio(nombre, notaTextarea.value);
+
+    saveEjercicioMeta(nombre, {
+      usaPeso: usaPesoEl ? usaPesoEl.checked : !!meta.usaPeso,
+      usaChaleco: usaChalecoEl ? usaChalecoEl.checked : !!meta.usaChaleco,
+      descripcion: descTextarea ? descTextarea.value : desc,
+      tipo: newTipo,
+      displayName: newName && newName !== nombre ? newName : undefined,
+    });
+
+    updateEjercicioTipo(nombre, newTipo);
+  }
+
+  // Auto-save on checkbox change
+  overlay.querySelectorAll('.ej-param-cb').forEach((cb) => {
+    cb.addEventListener('change', autoSave);
+  });
+
+  // Auto-save on textarea blur (debounced to avoid rapid-fire saves)
+  const notaTA = overlay.querySelector('.ej-detail-textarea');
+  if (notaTA) notaTA.addEventListener('blur', autoSaveDebounced);
+  const descTA = overlay.querySelector('.ej-detail-desc-textarea');
+  if (descTA) descTA.addEventListener('blur', autoSaveDebounced);
+
+  // Auto-save on name blur (debounced)
+  const nameIn = overlay.querySelector('[data-name-input]');
+  if (nameIn) nameIn.addEventListener('blur', autoSaveDebounced);
+
+  // ── Click handlers ──
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay || e.target.closest('[data-detail-close]')) {
       close();
@@ -142,11 +204,12 @@ export function showExerciseDetail(nombre, { onSave } = {}) {
       return;
     }
 
-    // Tipo toggle (funcional / maquina)
+    // Tipo toggle (funcional / maquina) — auto-save immediately
     const tipoBtn = e.target.closest('[data-set-tipo]');
     if (tipoBtn) {
       overlay.querySelectorAll('.ej-detail-tipo-toggle .ej-type-btn').forEach((b) => b.classList.remove('active'));
       tipoBtn.classList.add('active');
+      autoSave();
       return;
     }
 
@@ -158,41 +221,11 @@ export function showExerciseDetail(nombre, { onSave } = {}) {
       body.classList.toggle('collapsed');
       chevron.classList.toggle('open');
       toggle.classList.toggle('active');
-      // Auto-focus textarea when expanding
       if (!body.classList.contains('collapsed')) {
         const ta = body.querySelector('textarea');
         setTimeout(() => ta && ta.focus(), 200);
       }
       return;
-    }
-
-    if (e.target.closest('[data-detail-save]')) {
-      // Save notes
-      const notaTextarea = overlay.querySelector('.ej-detail-textarea');
-      saveNotaEjercicio(nombre, notaTextarea.value);
-
-      // Save description + params + tipo + displayName
-      const descTextarea = overlay.querySelector('.ej-detail-desc-textarea');
-      const nameInput = overlay.querySelector('[data-name-input]');
-      const usaPeso = overlay.querySelector('[data-param="usaPeso"]').checked;
-      const usaChaleco = overlay.querySelector('[data-param="usaChaleco"]').checked;
-      const activeTipoBtn = overlay.querySelector('.ej-detail-tipo-toggle .ej-type-btn.active');
-      const newTipo = activeTipoBtn ? activeTipoBtn.dataset.setTipo : currentTipo;
-      const newName = nameInput ? nameInput.value.trim() : '';
-
-      saveEjercicioMeta(nombre, {
-        usaPeso,
-        usaChaleco,
-        descripcion: descTextarea.value,
-        tipo: newTipo,
-        displayName: newName && newName !== nombre ? newName : undefined,
-      });
-
-      // Also update the catalog entry tipo
-      updateEjercicioTipo(nombre, newTipo);
-
-      close();
-      if (onSave) onSave();
     }
   });
 }

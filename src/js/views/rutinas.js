@@ -1,12 +1,10 @@
 import {
   getRutinas,
   deleteRutina,
-  duplicateRutina,
   getUltimaSesionDeRutina,
 } from '@/store.js';
 import { navigate } from '@/router.js';
 import { showModal } from '@js/components/modal.js';
-import { showToastAction } from '@js/components/toast.js';
 import { icon, iconLg } from '@js/icons.js';
 import {
   DIAS_LABEL,
@@ -17,7 +15,7 @@ import {
   getTipoIcon,
   normalizeGrupos,
 } from '@js/helpers/rutina-helpers.js';
-import { getCompositeMuscleSvg } from '@js/helpers/muscle-illustrations.js';
+// SVG fallback removed — 3D renders directly via mount3DViewers()
 
 // ── Module-level state ───────────────────────
 let activeFilter = 'gimnasio';
@@ -67,34 +65,28 @@ function renderCompactCard(rutina) {
   const meta = getMetaText(rutina);
   const num = formatNumero(rutina.numero);
   const metaParts = [num, meta].filter(Boolean).join(' · ');
-  const grupos = [...new Set(rutina.circuitos.flatMap((c) => normalizeGrupos(c)))];
-  const muscleSvg = getCompositeMuscleSvg(grupos, 28);
   const delay = cardCounter++ * 40;
 
   return `
     <div class="rutina-compact animate-in" style="animation-delay:${delay}ms" data-rutina-id="${rutina.id}">
-      <div class="rutina-compact-main" data-action="start" data-id="${rutina.id}" style="cursor:pointer">
+      <div class="rutina-compact-main" data-action="preview" data-id="${rutina.id}" style="cursor:pointer">
         <div class="rutina-compact-name">${displayName}</div>
         ${metaParts ? `<div class="rutina-compact-meta">${metaParts}</div>` : ''}
       </div>
-      <div class="rutina-compact-tags">${muscleSvg}</div>
       <div class="rutina-compact-actions">
         <button class="btn-icon-action" data-action="start" data-id="${rutina.id}">${icon.play}</button>
-        <button class="btn-icon-action" data-action="edit" data-id="${rutina.id}">${icon.edit}</button>
       </div>
     </div>
   `;
 }
 
 function renderRutinaCard(rutina) {
-  const dia = DIAS_LABEL[rutina.diaSemana] || '';
-  const badge = dia ? `<div class="rutina-card-day">${dia}</div>` : '';
   const displayName = getDisplayName(rutina);
   const num = formatNumero(rutina.numero);
   const { numCirc, numEj } = getRoutineStats(rutina);
 
-  const infoParts = [num, `${numCirc}c · ${numEj}ej`].filter(Boolean);
-  const infoLine = infoParts.join(' — ');
+  const volantaParts = [num, `${numCirc}c · ${numEj}ej`].filter(Boolean);
+  const volanta = volantaParts.join(' · ');
 
   const ultimaSesion = getUltimaSesionDeRutina(rutina.id);
   const lastDone = ultimaSesion ? formatTimeAgo(ultimaSesion.fecha) : '';
@@ -104,20 +96,17 @@ function renderRutinaCard(rutina) {
 
   return `
     <div class="rutina-card card animate-in" style="animation-delay:${delay}ms" data-rutina-id="${rutina.id}">
-      <div class="rutina-card-body">
+      <div class="rutina-card-body" data-action="preview" data-id="${rutina.id}" style="cursor:pointer">
         <div class="rutina-card-info">
-          ${badge}
+          <div class="rutina-card-volanta">${volanta}</div>
           <div class="rutina-card-name">${displayName}</div>
-          <div class="rutina-card-volanta">${infoLine}</div>
           ${lastDone ? `<div class="rutina-card-last">${lastDone}</div>` : ''}
         </div>
-        <div class="rutina-card-illustration">${getCompositeMuscleSvg(grupos, 80)}</div>
+        <div class="rutina-card-illustration" data-3d-grupos="${grupos.join(',')}" data-3d-size="110">
+          <div class="skeleton skeleton-3d-placeholder"></div>
+        </div>
       </div>
-      <div class="rutina-card-actions">
-        <button class="btn-icon-action" data-action="start" data-id="${rutina.id}">${icon.play}</button>
-        <button class="btn-icon-action" data-action="duplicate" data-id="${rutina.id}">${icon.copy}</button>
-        <button class="btn-icon-action" data-action="edit" data-id="${rutina.id}">${icon.edit}</button>
-      </div>
+      <button class="rutina-card-play" data-action="start" data-id="${rutina.id}">${icon.play}</button>
     </div>
   `;
 }
@@ -198,6 +187,30 @@ export function render() {
 export function mount() {
   const app = document.getElementById('app');
 
+  // Rotating 3D viewers for muscle illustrations
+  let viewer3dCleanups = [];
+
+  function cleanup3DViewers() {
+    viewer3dCleanups.forEach((fn) => fn());
+    viewer3dCleanups = [];
+  }
+
+  function mount3DViewers() {
+    cleanup3DViewers();
+    const els = document.querySelectorAll('[data-3d-grupos]');
+    if (!els.length) return;
+    import('@js/helpers/muscle-3d.js').then(({ mountRotating3D }) => {
+      Array.from(els).forEach((el) => {
+        const grupos = el.dataset['3dGrupos'].split(',').filter(Boolean);
+        const size = parseInt(el.dataset['3dSize']) || 28;
+        if (!grupos.length) return;
+        mountRotating3D(el, grupos, size).then((cleanup) => {
+          viewer3dCleanups.push(cleanup);
+        });
+      });
+    });
+  }
+
   function rerender() {
     cardCounter = 0;
     const allRutinas = getRutinas();
@@ -243,6 +256,8 @@ export function mount() {
         <button class="btn btn-primary" data-action="new-rutina">${icon.plus} Nueva rutina</button>
       `;
     }
+
+    mount3DViewers();
   }
 
   const handleClick = (e) => {
@@ -257,22 +272,13 @@ export function mount() {
         navigate('/rutina/nueva');
         break;
       case 'start':
+      case 'preview':
         showPreview(id);
         break;
       case 'edit':
         navigate(`/rutina/editar/${id}`);
         break;
-      case 'duplicate': {
-        const copia = duplicateRutina(id);
-        if (copia) {
-          rerender();
-          showToastAction('Rutina duplicada', 'Deshacer', () => {
-            deleteRutina(copia.id);
-            rerender();
-          });
-        }
-        break;
-      }
+      /* duplicate moved to preview modal */
       case 'filter-rutina-type': {
         const newFilter = btn.dataset.type;
         if (newFilter !== activeFilter) {
@@ -306,7 +312,11 @@ export function mount() {
 
   app.addEventListener('click', handleClick);
 
+  // Initial 3D mount
+  mount3DViewers();
+
   return () => {
+    cleanup3DViewers();
     app.removeEventListener('click', handleClick);
   };
 }

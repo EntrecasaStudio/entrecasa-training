@@ -21,6 +21,7 @@ let restStepIdx = 1; // default 90s
 let longPressTimer = null;
 let longPressInterval = null;
 let _removePopGuard = null;
+const expandedEjs = new Set(); // Track which exercises are expanded
 
 // ── Velocidad/HIIT timer state ────────────
 let activeTimer = null;     // { type, ejIdx, phase, remaining, pasadaIdx?, roundIdx? }
@@ -223,21 +224,22 @@ function renderEjercicio(ej, ejIdx) {
     </div>
   ` : '';
 
-  // Column headers (with spacer for check circle)
+  // Column headers — new layout: [Reps] [Peso] ... [V] [✓] [action]
   const columnHeaders = `
-    <div class="workout-vuelta-headers">
-      <span class="workout-vuelta-header-check-spacer"></span>
-      <span class="workout-vuelta-header-spacer"></span>
-      <span class="workout-vuelta-header">Reps</span>
-      ${showPeso ? '<span class="workout-vuelta-header">Peso (kg)</span>' : ''}
+    <div class="workout-vuelta-headers workout-vuelta-headers--v2">
+      <span class="workout-vuelta-header workout-vuelta-header--stepper">Reps</span>
+      ${showPeso ? '<span class="workout-vuelta-header workout-vuelta-header--stepper">Peso (kg)</span>' : ''}
+      <span class="workout-vuelta-header workout-vuelta-header--right"></span>
     </div>
   `;
 
-  // Round rows with check circle
+  // Round rows: [reps] [peso] | [V label] [done check] [remove/+]
+  const totalVueltas = ej.vueltas.length;
   const vueltasHtml = ej.vueltas.map((v, vIdx) => {
     const isDone = v.done;
     const doneClass = isDone ? ' workout-vuelta-done' : '';
     const checkIcon = isDone ? icon.checkCircle : icon.circle;
+    const isLast = vIdx === totalVueltas - 1;
 
     const weightStepper = showPeso ? `
       <div class="workout-vuelta-group">
@@ -251,41 +253,50 @@ function renderEjercicio(ej, ejIdx) {
       </div>
     ` : '';
 
-    const removeBtn = ej.vueltas.length > 1
-      ? `<button class="workout-vuelta-remove" data-action="remove-vuelta" data-ej="${ejIdx}" data-vuelta="${vIdx}" aria-label="Quitar vuelta ${vIdx + 1}">${icon.close}</button>`
-      : '';
+    // Right-side action: remove for non-last rows (if >1 vuelta), add "+" on last row
+    let actionBtn = '';
+    if (isLast) {
+      actionBtn = `<button class="workout-vuelta-add-inline" data-action="add-vuelta" data-ej="${ejIdx}" aria-label="Agregar vuelta">${icon.plus}</button>`;
+    } else if (totalVueltas > 1) {
+      actionBtn = `<button class="workout-vuelta-remove" data-action="remove-vuelta" data-ej="${ejIdx}" data-vuelta="${vIdx}" aria-label="Quitar vuelta ${vIdx + 1}">${icon.close}</button>`;
+    }
 
     return `
-      <div class="workout-vuelta-row${doneClass}">
-        <button class="workout-vuelta-check" data-action="toggle-vuelta-done" data-ej="${ejIdx}" data-vuelta="${vIdx}">
-          ${checkIcon}
-        </button>
-        <span class="workout-vuelta-label">V${vIdx + 1}</span>
-        <div class="workout-vuelta-group">
-          <div class="stepper workout-stepper-sm" role="group">
-            <button class="stepper-btn" data-action="dec" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="repsReal" aria-label="Disminuir reps vuelta ${vIdx + 1}">-</button>
-            <input type="number" class="stepper-value" inputmode="numeric"
-                   value="${v.repsReal}" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="repsReal"
-                   aria-label="Reps vuelta ${vIdx + 1}" aria-valuemin="0">
-            <button class="stepper-btn" data-action="inc" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="repsReal" aria-label="Aumentar reps vuelta ${vIdx + 1}">+</button>
+      <div class="workout-vuelta-row workout-vuelta-row--v2${doneClass}">
+        <div class="workout-vuelta-left">
+          <div class="workout-vuelta-group">
+            <div class="stepper workout-stepper-sm" role="group">
+              <button class="stepper-btn" data-action="dec" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="repsReal" aria-label="Disminuir reps vuelta ${vIdx + 1}">-</button>
+              <input type="number" class="stepper-value" inputmode="numeric"
+                     value="${v.repsReal}" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="repsReal"
+                     aria-label="Reps vuelta ${vIdx + 1}" aria-valuemin="0">
+              <button class="stepper-btn" data-action="inc" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="repsReal" aria-label="Aumentar reps vuelta ${vIdx + 1}">+</button>
+            </div>
           </div>
+          ${weightStepper}
         </div>
-        ${weightStepper}
-        ${removeBtn}
+        <div class="workout-vuelta-right">
+          <span class="workout-vuelta-label">V${vIdx + 1}</span>
+          <button class="workout-vuelta-check" data-action="toggle-vuelta-done" data-ej="${ejIdx}" data-vuelta="${vIdx}">
+            ${checkIcon}
+          </button>
+          ${actionBtn}
+        </div>
       </div>
     `;
   }).join('');
 
-  // Add vuelta button
-  const addVueltaBtn = `
-    <button class="workout-add-vuelta-btn" data-action="add-vuelta" data-ej="${ejIdx}">
-      ${icon.plus} Vuelta
-    </button>
-  `;
+  // Collapsed summary: "3v · 10r · 20kg"
+  const doneCount = ej.vueltas.filter((v) => v.done).length;
+  const summaryParts = [`${totalVueltas}v`];
+  if (ej.vueltas[0]) summaryParts.push(`${ej.vueltas[0].repsReal}r`);
+  if (showPeso && ej.vueltas[0]) summaryParts.push(`${ej.vueltas[0].pesoRealKg}kg`);
+  if (doneCount > 0) summaryParts.push(`${doneCount}/${totalVueltas} ✓`);
+  const summaryText = summaryParts.join(' · ');
 
   return `
     <div class="workout-ejercicio animate-in" style="animation-delay:${ejIdx * 60}ms">
-      <div class="workout-ejercicio-header">
+      <div class="workout-ejercicio-header" data-action="toggle-ej-expand" data-ej="${ejIdx}" style="cursor:pointer">
         <div class="workout-ejercicio-name">${ej.nombre}</div>
         <button class="workout-info-btn" data-action="replace-exercise" data-ej="${ejIdx}" aria-label="Cambiar ${ej.nombre}">
           ${icon.swap}
@@ -293,15 +304,20 @@ function renderEjercicio(ej, ejIdx) {
         <button class="workout-info-btn" data-action="show-detail" data-nombre="${ej.nombre}" aria-label="Info de ${ej.nombre}">
           ${icon.info}
         </button>
+        <button class="workout-ej-toggle ${expandedEjs.has(ejIdx) ? 'expanded' : ''}" data-action="toggle-ej-expand" data-ej="${ejIdx}" aria-label="Expandir">
+          ${icon.chevronDown}
+        </button>
       </div>
-      ${overload ? `<div class="workout-overload-hint">${icon.arrowUp} Subir peso</div>` : ''}
-      ${renderExerciseHistory(ej.nombre)}
-      ${vestHtml}
-      <div class="workout-ej-divider"></div>
-      ${columnHeaders}
-      <div class="workout-vueltas">
-        ${vueltasHtml}
-        ${addVueltaBtn}
+      <div class="workout-ej-summary" data-ej-summary="${ejIdx}" ${expandedEjs.has(ejIdx) ? 'style="display:none"' : ''}>${summaryText}</div>
+      <div class="workout-ej-collapsible" data-ej-body="${ejIdx}" ${expandedEjs.has(ejIdx) ? '' : 'style="display:none"'}>
+        ${overload ? `<div class="workout-overload-hint">${icon.arrowUp} Subir peso</div>` : ''}
+        ${renderExerciseHistory(ej.nombre)}
+        ${vestHtml}
+        <div class="workout-ej-divider"></div>
+        ${columnHeaders}
+        <div class="workout-vueltas">
+          ${vueltasHtml}
+        </div>
       </div>
     </div>
   `;
@@ -880,6 +896,9 @@ function finishWorkout() {
           if (copia) {
             copia.circuitos = state.resultados.map((circ) => ({
               grupoMuscular: circ.grupoMuscular,
+              tipo: circ.tipo || 'normal',
+              ...(circ.tipo === 'velocidad' ? { velocidad: circ.velocidad, tiempo: circ.tiempo, descanso: circ.descanso } : {}),
+              ...(circ.tipo === 'hiit' ? { workTime: circ.workTime, restTime: circ.restTime } : {}),
               ejercicios: circ.ejercicios.map((ej) => ({
                 nombre: ej.nombre,
                 repsObjetivo: ej.repsObjetivo,
@@ -1015,6 +1034,7 @@ function transitionCircuit(container, params, direction) {
   const exitClass = direction === 'next' ? 'circuit-exit-left' : 'circuit-exit-right';
   const enterClass = direction === 'next' ? 'circuit-enter-right' : 'circuit-enter-left';
 
+  expandedEjs.clear(); // Reset collapse state for new circuit
   container.classList.add(exitClass);
   container.addEventListener('animationend', () => {
     container.classList.remove(exitClass);
@@ -1300,6 +1320,27 @@ export function mount(params) {
         break;
       }
 
+      case 'toggle-ej-expand': {
+        const ejIdx = parseInt(btn.dataset.ej);
+        const body = document.querySelector(`[data-ej-body="${ejIdx}"]`);
+        const summary = document.querySelector(`[data-ej-summary="${ejIdx}"]`);
+        const toggle = document.querySelector(`.workout-ej-toggle[data-ej="${ejIdx}"]`);
+
+        if (expandedEjs.has(ejIdx)) {
+          expandedEjs.delete(ejIdx);
+          if (body) body.style.display = 'none';
+          if (summary) summary.style.display = '';
+          if (toggle) toggle.classList.remove('expanded');
+        } else {
+          expandedEjs.add(ejIdx);
+          if (body) body.style.display = '';
+          if (summary) summary.style.display = 'none';
+          if (toggle) toggle.classList.add('expanded');
+        }
+        haptic.light();
+        break;
+      }
+
       case 'toggle-vuelta-done': {
         const ejIdx = parseInt(btn.dataset.ej);
         const vIdx = parseInt(btn.dataset.vuelta);
@@ -1314,6 +1355,19 @@ export function mount(params) {
           if (row) {
             row.classList.toggle('workout-vuelta-done');
             btn.innerHTML = ej.vueltas[vIdx].done ? icon.checkCircle : icon.circle;
+          }
+          // Update collapsed summary
+          const summaryEl = document.querySelector(`[data-ej-summary="${ejIdx}"]`);
+          if (summaryEl) {
+            const meta = getEjercicioMeta(ej.nombre);
+            const totalV = ej.vueltas.length;
+            const doneCount = ej.vueltas.filter((v) => v.done).length;
+            const parts = [`${totalV}v`];
+            if (ej.vueltas[0]) parts.push(`${ej.vueltas[0].repsReal}r`);
+            const showPeso = ej.pesoObjetivoKg !== 0 || meta.usaPeso;
+            if (showPeso && ej.vueltas[0]) parts.push(`${ej.vueltas[0].pesoRealKg}kg`);
+            if (doneCount > 0) parts.push(`${doneCount}/${totalV} ✓`);
+            summaryEl.textContent = parts.join(' · ');
           }
         }
         break;

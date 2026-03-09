@@ -57,7 +57,7 @@ function renderCategorySection(cat, ejercicios, collapsed, lastUsedMap = {}) {
   const muscleSvg = getMuscleSvgCropped(cat, 36);
   const muscleColor = CATEGORY_COLORS[cat] || 'var(--color-accent)';
   const illustration = muscleSvg
-    ? `<span class="ej-category-muscle" style="--muscle-color: ${muscleColor}">${muscleSvg}</span>`
+    ? `<span class="ej-category-muscle" style="--muscle-color: ${muscleColor}" data-3d-grupo="${cat}" data-3d-size="36">${muscleSvg}</span>`
     : '';
 
   return `
@@ -200,6 +200,26 @@ export function mount() {
 
   const lastUsedMap = buildLastUsedMap();
 
+  // Progressive 3D upgrade for category muscle illustrations (cropped view)
+  function upgrade3D() {
+    const els = document.querySelectorAll('[data-3d-grupo]');
+    if (!els.length) return;
+    els.forEach((el) => el.classList.add('loading-3d'));
+    import('@js/helpers/muscle-3d.js').then(({ prerenderCroppedSingle3D }) => {
+      els.forEach((el) => {
+        const grupo = el.dataset['3dGrupo'];
+        const size = parseInt(el.dataset['3dSize']) || 36;
+        if (!grupo) return;
+        prerenderCroppedSingle3D(grupo, size).then((html) => {
+          if (el.isConnected) {
+            el.innerHTML = html;
+            el.classList.remove('loading-3d');
+          }
+        });
+      });
+    });
+  }
+
   function rerender() {
     const tipo = activeType === 'todos' ? null : activeType;
     const grouped = getEjerciciosPorCategoria(tipo);
@@ -228,6 +248,8 @@ export function mount() {
       if (!items) return '';
       return renderCategorySection(cat, items, collapsedCats.has(cat), lastUsedMap);
     }).join('');
+
+    upgrade3D();
   }
 
   function handleClick(e) {
@@ -274,6 +296,9 @@ export function mount() {
 
   app.addEventListener('click', handleClick);
   app.addEventListener('input', handleInput);
+
+  // Initial 3D upgrade
+  upgrade3D();
 
   return () => {
     app.removeEventListener('click', handleClick);

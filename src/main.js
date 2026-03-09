@@ -20,18 +20,14 @@ import { initSwipeBack } from '@js/helpers/swipe-back.js';
 import { initPullToRefresh } from '@js/helpers/pull-to-refresh.js';
 import { mountOfflineBanner } from '@js/components/offline-banner.js';
 
-// ── Splash loader (kettlebell liquid fill) ──────────────
-function setSplashProgress(pct) {
-  if (window.__splashFill) window.__splashFill(pct);
-}
+// ── Splash 3D kettlebell (loaded immediately) ──────────────
+import('@js/helpers/splash-3d.js').then(({ mountSplash3D }) => mountSplash3D()).catch(() => {});
 
 // Seed initial rutinas from Notion data (only if empty)
 seedIfEmpty();
-setSplashProgress(20);
 
 // Load saved theme customizations
 loadSavedTheme();
-setSplashProgress(40);
 
 // Register service worker with update detection
 if ('serviceWorker' in navigator) {
@@ -77,7 +73,8 @@ initPullToRefresh(async () => {
 let authResolved = false;
 
 function hideSplash() {
-  if (window.__splashStop) window.__splashStop();
+  // Clean up 3D kettlebell renderer
+  import('@js/helpers/splash-3d.js').then(({ cleanupSplash3D }) => cleanupSplash3D()).catch(() => {});
   const splash = document.getElementById('splash');
   if (splash) {
     splash.style.opacity = '0';
@@ -90,8 +87,6 @@ onAuth(async (user) => {
   if (!authResolved) {
     authResolved = true;
 
-    setSplashProgress(60);
-
     // First auth callback — user session restored (or null)
     if (user) {
       // Keep stored profile or default to 'Lean'
@@ -103,7 +98,6 @@ onAuth(async (user) => {
       } catch (err) {
         console.warn('[app] Initial sync failed:', err.message);
       }
-      setSplashProgress(80);
       startRealtimeSync(() => {
         // Remote data changed — refresh current view
         const hash = window.location.hash || '#/';
@@ -112,11 +106,9 @@ onAuth(async (user) => {
     } else if (!auth) {
       // No Firebase — keep stored user or default to 'Lean'
       if (!localStorage.getItem('gym_usuario')) setUsuarioActivo('Lean');
-      setSplashProgress(80);
     }
 
     updateAvatarMenu();
-    setSplashProgress(100);
 
     // Init router now that auth state is known
     initRouter();
@@ -154,7 +146,6 @@ setTimeout(() => {
   if (!authResolved) {
     authResolved = true;
     console.warn('[app] Auth timeout — proceeding without Firebase');
-    setSplashProgress(100);
     initRouter();
     hideSplash();
   }

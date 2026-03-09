@@ -24,6 +24,8 @@ const MAX_EJERCICIOS = 4;
 const MIN_REPS = 6;
 const MAX_REPS = 99;
 
+let returnTo = '/rutinas';
+
 // Map form grupoMuscular → catalog categorías
 const GRUPO_A_CATEGORIAS = {
   Pecho: ['Pecho'],
@@ -286,6 +288,7 @@ function renderCircuito(circ, idx) {
 
 export function render(params) {
   const isEdit = params.mode === 'editar';
+  returnTo = params.from === 'home' ? '/' : '/rutinas';
 
   if (isEdit && params.id) {
     const existing = getRutinaById(params.id);
@@ -326,7 +329,7 @@ function renderForm(isEdit) {
 
     <div class="form-section">
       <label class="input-label">Nombre de la rutina</label>
-      <input type="text" class="input" id="rutina-nombre" placeholder="Ej: Pecho y espalda"
+      <input type="text" class="input" id="rutina-nombre" data-field="nombre" placeholder="Ej: Pecho y espalda"
              value="${rutina.nombre}">
     </div>
 
@@ -474,7 +477,7 @@ function showSaveOptionsModal() {
         close(() => {
           saveRutina(rutina);
           showToast('Rutina actualizada');
-          navigate('/rutinas');
+          navigate(returnTo);
         });
         break;
       case 'new':
@@ -485,7 +488,7 @@ function showSaveOptionsModal() {
           copia.diaSemana = null;
           saveRutina(copia);
           showToast(`Rutina ${formatNumero(copia.numero)} creada`);
-          navigate('/rutinas');
+          navigate(returnTo);
         });
         break;
       case 'cancel':
@@ -540,7 +543,7 @@ function showExitEditModal() {
             if (!rutina.numero) rutina.numero = getNextNumero(rutina.tipo);
             saveRutina(rutina);
             showToast('Rutina guardada');
-            navigate('/rutinas');
+            navigate(returnTo);
           }
         });
         break;
@@ -548,7 +551,7 @@ function showExitEditModal() {
         close();
         break;
       case 'discard':
-        close(() => navigate('/rutinas'));
+        close(() => navigate(returnTo));
         break;
     }
   });
@@ -569,7 +572,7 @@ export function mount(params) {
         if (isDirty) {
           showExitEditModal();
         } else {
-          navigate('/rutinas');
+          navigate(returnTo);
         }
         break;
 
@@ -798,7 +801,7 @@ export function mount(params) {
             }
             saveRutina(rutina);
             showToast('Rutina guardada');
-            navigate('/rutinas');
+            navigate(returnTo);
           }
         }
         break;

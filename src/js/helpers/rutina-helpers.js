@@ -1,5 +1,5 @@
-import { getRutinaById, getRutinas, getUltimaSesionDeRutina, assignRutinaADia, clearRutinaDelDia, setPlanDia } from '@/store.js';
-import { navigate } from '@/router.js';
+import { getRutinaById, getRutinas, getUltimaSesionDeRutina, assignRutinaADia, clearRutinaDelDia, setPlanDia, getUsuarioActivo, getPlanSemanal, duplicateRutina } from '@/store.js';
+import { navigate, refreshCurrentTab } from '@/router.js';
 import { icon } from '@js/icons.js';
 
 // ── Helpers ──────────────────────────────────
@@ -82,7 +82,7 @@ export function renderLastDone(rutina) {
 
 // ── Preview modal ────────────────────────────
 
-export function showPreview(rutinaId) {
+export function showPreview(rutinaId, { from } = {}) {
   const rutina = getRutinaById(rutinaId);
   if (!rutina) return;
 
@@ -94,19 +94,23 @@ export function showPreview(rutinaId) {
 
         const grupos = normalizeGrupos(c);
         const tagsHtml = grupos.map((g) => `<span class="tag ${TAG_CLASS[g] || ''}">${g}</span>`).join('');
+        const colorSlug = (TAG_CLASS[grupos[0]] || 'tag-core').replace('tag-', '');
 
         const exercisesHtml = c.ejercicios.map((ej) => {
           return `<div class="preview-exercise">${ej.nombre}</div>`;
         }).join('');
 
         return `
-          <div class="preview-circuit">
-            <div class="preview-circuit-header">
-              <span class="preview-circuit-num">${i + 1}</span>
-              ${tagsHtml}
-              ${typeBadge}
+          <div class="preview-circuit preview-circuit-color-${colorSlug}">
+            <div class="preview-circuit-bar"></div>
+            <div class="preview-circuit-content">
+              <div class="preview-circuit-header">
+                <span class="preview-circuit-num">${i + 1}</span>
+                ${tagsHtml}
+                ${typeBadge}
+              </div>
+              <div class="preview-exercises">${exercisesHtml}</div>
             </div>
-            <div class="preview-exercises">${exercisesHtml}</div>
           </div>
         `;
       },
@@ -116,13 +120,15 @@ export function showPreview(rutinaId) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
-    <div class="modal-box" role="dialog" aria-modal="true">
+    <div class="modal-box preview-modal" role="dialog" aria-modal="true">
+      <button class="ej-detail-close-x" data-preview-cancel>${icon.close}</button>
       <div class="modal-title">${rutina.nombre}</div>
       <div class="modal-body"><div class="preview-body">${circuitsHtml}</div></div>
-      <div class="modal-actions">
-        <button class="btn btn-ghost btn-sm" data-preview-cancel>Volver</button>
-        <button class="btn btn-ghost btn-sm" data-preview-edit>${icon.edit} Editar</button>
-        <button class="btn btn-primary btn-sm" data-preview-start>${icon.kettlebell} Iniciar</button>
+      <div class="preview-modal-actions">
+        <button class="btn-icon-action" data-preview-edit title="Editar">${icon.edit}</button>
+        <button class="btn-icon-action" data-preview-duplicate title="Duplicar">${icon.copy}</button>
+        ${from === 'home' ? `<button class="btn-icon-action" data-preview-cambiar title="Cambiar rutina">${icon.swap}</button>` : ''}
+        <button class="btn-icon-action btn-icon-action--primary" data-preview-start title="Iniciar">${icon.play}</button>
       </div>
     </div>
   `;
@@ -130,8 +136,13 @@ export function showPreview(rutinaId) {
 
   const close = (cb) => {
     overlay.classList.add('modal-closing');
-    overlay.addEventListener('animationend', () => { overlay.remove(); if (cb) cb(); }, { once: true });
+    let closed = false;
+    const handleClose = () => { if (closed) return; closed = true; overlay.remove(); if (cb) cb(); };
+    overlay.addEventListener('animationend', handleClose, { once: true });
+    setTimeout(handleClose, 400);
   };
+
+  const editFrom = from === 'home' ? '?from=home' : '';
 
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay || e.target.closest('[data-preview-cancel]')) {
@@ -139,7 +150,24 @@ export function showPreview(rutinaId) {
     } else if (e.target.closest('[data-preview-start]')) {
       close(() => navigate(`/workout/${rutinaId}`));
     } else if (e.target.closest('[data-preview-edit]')) {
-      close(() => navigate(`/rutina/editar/${rutinaId}`));
+      close(() => navigate(`/rutina/editar/${rutinaId}${editFrom}`));
+    } else if (e.target.closest('[data-preview-duplicate]')) {
+      const copia = duplicateRutina(rutinaId);
+      if (copia) {
+        close(() => refreshCurrentTab());
+      }
+    } else if (e.target.closest('[data-preview-cambiar]')) {
+      const dia = rutina.diaSemana;
+      if (dia != null) {
+        const usuario = getUsuarioActivo();
+        const plan = getPlanSemanal(usuario);
+        const tipoActual = plan[dia] || rutina.tipo || 'gimnasio';
+        close(() => showDayAssignmentModal(usuario, dia, tipoActual, () => {
+          refreshCurrentTab();
+        }));
+      } else {
+        close();
+      }
     }
   });
 }
@@ -200,7 +228,10 @@ export function showDayAssignmentModal(usuario, dia, tipoActual, onDone) {
 
   const close = () => {
     overlay.classList.add('modal-closing');
-    overlay.addEventListener('animationend', () => overlay.remove(), { once: true });
+    let closed = false;
+    const handleClose = () => { if (closed) return; closed = true; overlay.remove(); };
+    overlay.addEventListener('animationend', handleClose, { once: true });
+    setTimeout(handleClose, 400);
   };
 
   overlay.addEventListener('click', (e) => {

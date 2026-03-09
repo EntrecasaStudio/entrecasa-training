@@ -15,7 +15,7 @@ const TAB_ROUTES = {
 
 const OTHER_ROUTES = [
   { pattern: /^#\/rutina\/nueva$/,         load: () => import('@js/views/rutina-form.js'), params: { mode: 'crear' } },
-  { pattern: /^#\/rutina\/editar\/(.+)$/,  load: () => import('@js/views/rutina-form.js'), params: { mode: 'editar' } },
+  { pattern: /^#\/rutina\/editar\/([^?]+)/, load: () => import('@js/views/rutina-form.js'), params: { mode: 'editar' } },
   { pattern: /^#\/workout\/(.+)$/,         load: () => import('@js/views/workout.js'), fullscreen: true },
   { pattern: /^#\/summary\/(.+)$/,         load: () => import('@js/views/workout-summary.js') },
   { pattern: /^#\/sesion\/(.+)$/,          load: () => import('@js/views/sesion-detalle.js') },
@@ -60,19 +60,53 @@ function getContainer() {
   return document.getElementById('view-container');
 }
 
-// ── View loader (snow-ball spinner) ────────
-function showViewLoader() {
+// ── View loader (skeleton or spinner) ────────
+
+const SKELETON_HTML = {
+  '#/': `<div class="skeleton-home" style="padding:var(--space-lg)">
+    <div class="skeleton skeleton-greeting"></div>
+    <div class="skeleton-week-planner">${'<div class="skeleton skeleton-day-circle skeleton-circle"></div>'.repeat(7)}</div>
+    <div class="skeleton skeleton-hero"></div>
+    <div class="skeleton skeleton-card"></div>
+  </div>`,
+  '#/rutinas': `<div class="skeleton-rutinas" style="padding:var(--space-lg)">
+    <div class="skeleton skeleton-text" style="width:40%;height:1.5rem;margin-bottom:var(--space-md)"></div>
+    <div class="skeleton skeleton-rutina-card"></div>
+    <div class="skeleton skeleton-rutina-card"></div>
+    <div class="skeleton skeleton-rutina-card"></div>
+  </div>`,
+  '#/progreso': `<div style="padding:var(--space-lg);display:flex;flex-direction:column;gap:var(--space-md)">
+    <div class="skeleton skeleton-text" style="width:35%;height:1.5rem"></div>
+    <div class="skeleton-progreso-stats">
+      <div class="skeleton skeleton-progreso-stat"></div>
+      <div class="skeleton skeleton-progreso-stat"></div>
+      <div class="skeleton skeleton-progreso-stat"></div>
+      <div class="skeleton skeleton-progreso-stat"></div>
+    </div>
+    <div class="skeleton skeleton-activity-grid"></div>
+    <div class="skeleton skeleton-card"></div>
+    <div class="skeleton skeleton-card"></div>
+  </div>`,
+};
+
+function showViewLoader(hashKey) {
   const container = getContainer();
   if (!container || container.querySelector('.view-loader')) return;
   const loader = document.createElement('div');
   loader.className = 'view-loader';
-  loader.innerHTML = `
-    <div class="view-loader-spinner">
-      <div class="view-loader-track"></div>
-      <div class="view-loader-orbit">
-        <div class="view-loader-ball"></div>
-      </div>
-    </div>`;
+
+  const skeletonMarkup = hashKey && SKELETON_HTML[hashKey];
+  if (skeletonMarkup) {
+    loader.innerHTML = skeletonMarkup;
+  } else {
+    loader.innerHTML = `
+      <div class="view-loader-spinner">
+        <div class="view-loader-track"></div>
+        <div class="view-loader-orbit">
+          <div class="view-loader-ball"></div>
+        </div>
+      </div>`;
+  }
   container.appendChild(loader);
 }
 
@@ -124,7 +158,7 @@ async function handleTabRoute(hashKey, tabDef) {
   // Clean up current view
   cleanupCurrentView(container);
 
-  showViewLoader();
+  showViewLoader(hashKey);
   const mod = await tabDef.load();
   hideViewLoader();
 
@@ -192,7 +226,13 @@ async function handleOtherRoute(route, hash) {
   const mod = await route.load();
   hideViewLoader();
 
-  const params = { ...(route.params || {}), id: match[1] || null };
+  // Extract query params from hash (e.g. #/rutina/editar/id?from=home)
+  const qIdx = hash.indexOf('?');
+  const queryParams = {};
+  if (qIdx !== -1) {
+    new URLSearchParams(hash.slice(qIdx + 1)).forEach((v, k) => { queryParams[k] = v; });
+  }
+  const params = { ...(route.params || {}), ...queryParams, id: match[1] || null };
 
   const wrapper = document.createElement('div');
   wrapper.className = 'other-view';
