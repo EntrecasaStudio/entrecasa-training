@@ -543,6 +543,19 @@
   border-radius: var(--radius-sm);
 }
 
+.btn-play-circle {
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.btn-play-circle svg {
+  width: 14px;
+  height: 14px;
+}
+
 /* Month grid: dual dots */
 .cal-month-dots {
   display: flex;
@@ -1073,8 +1086,70 @@
   margin-bottom: var(--space-md);
 }
 
-.circuito-form-header select {
+/* ── Multi-select grupo muscular ────────── */
+.circuito-grupo-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
   flex: 1;
+  position: relative;
+}
+
+.circuito-grupo-tag {
+  cursor: default;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.circuito-grupo-remove {
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.circuito-grupo-remove:active {
+  opacity: 1;
+}
+
+.circuito-grupo-add-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  border: 1px dashed var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.circuito-grupo-add-btn:active {
+  background-color: var(--color-surface-alt);
+}
+
+.circuito-grupo-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  margin-top: 4px;
+  padding: var(--space-xs);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.circuito-grupo-dropdown-option {
+  cursor: pointer;
 }
 
 .circuito-reorder {
@@ -1916,6 +1991,31 @@
 .ej-detail-modal {
   max-height: 80vh;
   overflow-y: auto;
+  position: relative;
+}
+
+.ej-detail-close-x {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  color: var(--color-text-muted);
+  z-index: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ej-detail-close-x svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ej-detail-close-x:active {
+  background-color: var(--color-surface-alt);
 }
 
 .ej-detail-top-tag {
@@ -1978,6 +2078,24 @@
 /* ── Tipo toggle (funcional / maquina) — uses shared .ej-type-toggle ── */
 .ej-detail-tipo-toggle {
   margin-bottom: var(--space-sm);
+  background-color: transparent;
+  padding: 0;
+  gap: var(--space-xs);
+}
+
+.ej-detail-tipo-toggle .ej-type-btn {
+  min-height: 28px;
+  font-size: var(--text-xs);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  color: var(--color-text-muted);
+}
+
+.ej-detail-tipo-toggle .ej-type-btn.active {
+  background-color: var(--color-surface-alt);
+  color: var(--color-text);
+  border-color: var(--color-text-muted);
 }
 
 /* ── Description text display + edit ── */
@@ -3051,14 +3169,14 @@
 
 /* ── Cardio tag color ──────────────────────── */
 .circuito-color-cardio {
-  border-left-color: var(--color-tag-core, #eab308);
+  border-left-color: var(--color-tag-cardio);
 }
 .circuito-num-cardio {
-  background: var(--color-tag-core, #eab308);
-  color: #000;
+  color: var(--color-tag-cardio);
 }
 .circuito-select-cardio {
-  color: var(--color-tag-core, #eab308);
+  border-color: color-mix(in srgb, var(--color-tag-cardio) 40%, var(--color-border));
+  color: var(--color-tag-cardio);
 }
 
 /* ── Preview type badge ────────────────────── */

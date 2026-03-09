@@ -1,7 +1,15 @@
 import { getRutinaById, getRutinas, getUltimaSesionDeRutina, assignRutinaADia, clearRutinaDelDia, setPlanDia } from '@/store.js';
 import { navigate } from '@/router.js';
-import { showModal } from '@js/components/modal.js';
 import { icon } from '@js/icons.js';
+
+// ── Helpers ──────────────────────────────────
+
+/** Always returns grupoMuscular as an array (backward compat) */
+export function normalizeGrupos(circuit) {
+  const g = circuit.grupoMuscular;
+  if (!g) return [];
+  return Array.isArray(g) ? g : [g];
+}
 
 // ── Tag class mapping ────────────────────────
 
@@ -13,6 +21,7 @@ export const TAG_CLASS = {
   Brazos: 'tag-brazos',
   'Glúteos': 'tag-gluteos',
   Hombros: 'tag-hombros',
+  Cardio: 'tag-cardio',
 };
 
 // ── Day labels ───────────────────────────────
@@ -55,7 +64,7 @@ export function getTipoIcon(tipo) {
 // ── Shared render helpers ────────────────────
 
 export function renderTags(rutina, small = false) {
-  const grupos = [...new Set(rutina.circuitos.map((c) => c.grupoMuscular))];
+  const grupos = [...new Set(rutina.circuitos.flatMap((c) => normalizeGrupos(c)))];
   const sizeClass = small ? 'tag-sm' : '';
   return grupos
     .map((g) => `<span class="tag ${sizeClass} ${TAG_CLASS[g] || ''}">${g}</span>`)
@@ -83,6 +92,9 @@ export function showPreview(rutinaId) {
         const circTipo = c.tipo || 'normal';
         const typeBadge = circTipo !== 'normal' ? `<span class="preview-type-badge ${circTipo}">${circTipo === 'velocidad' ? 'Vel' : 'HIIT'}</span>` : '';
 
+        const grupos = normalizeGrupos(c);
+        const tagsHtml = grupos.map((g) => `<span class="tag ${TAG_CLASS[g] || ''}">${g}</span>`).join('');
+
         const exercisesHtml = c.ejercicios.map((ej) => {
           return `<div class="preview-exercise">${ej.nombre}</div>`;
         }).join('');
@@ -91,7 +103,7 @@ export function showPreview(rutinaId) {
           <div class="preview-circuit">
             <div class="preview-circuit-header">
               <span class="preview-circuit-num">${i + 1}</span>
-              <span class="tag ${TAG_CLASS[c.grupoMuscular] || ''}">${c.grupoMuscular}</span>
+              ${tagsHtml}
               ${typeBadge}
             </div>
             <div class="preview-exercises">${exercisesHtml}</div>
@@ -101,13 +113,34 @@ export function showPreview(rutinaId) {
     )
     .join('');
 
-  showModal({
-    title: rutina.nombre,
-    body: `<div class="preview-body">${circuitsHtml}</div>`,
-    confirmText: `${icon.kettlebell} Iniciar`,
-    cancelText: 'Volver',
-    onConfirm: () => navigate(`/workout/${rutinaId}`),
-    html: true,
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box" role="dialog" aria-modal="true">
+      <div class="modal-title">${rutina.nombre}</div>
+      <div class="modal-body"><div class="preview-body">${circuitsHtml}</div></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-sm" data-preview-cancel>Volver</button>
+        <button class="btn btn-ghost btn-sm" data-preview-edit>${icon.edit} Editar</button>
+        <button class="btn btn-primary btn-sm" data-preview-start>${icon.kettlebell} Iniciar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = (cb) => {
+    overlay.classList.add('modal-closing');
+    overlay.addEventListener('animationend', () => { overlay.remove(); if (cb) cb(); }, { once: true });
+  };
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay || e.target.closest('[data-preview-cancel]')) {
+      close();
+    } else if (e.target.closest('[data-preview-start]')) {
+      close(() => navigate(`/workout/${rutinaId}`));
+    } else if (e.target.closest('[data-preview-edit]')) {
+      close(() => navigate(`/rutina/editar/${rutinaId}`));
+    }
   });
 }
 

@@ -15,6 +15,7 @@ import {
   getDisplayName,
   formatNumero,
   getTipoIcon,
+  normalizeGrupos,
 } from '@js/helpers/rutina-helpers.js';
 import { getCompositeMuscleSvg } from '@js/helpers/muscle-illustrations.js';
 
@@ -64,15 +65,17 @@ function getMetaText(rutina) {
 function renderCompactCard(rutina) {
   const displayName = getDisplayName(rutina);
   const meta = getMetaText(rutina);
-  const grupos = [...new Set(rutina.circuitos.map((c) => c.grupoMuscular))];
+  const num = formatNumero(rutina.numero);
+  const metaParts = [num, meta].filter(Boolean).join(' · ');
+  const grupos = [...new Set(rutina.circuitos.flatMap((c) => normalizeGrupos(c)))];
   const muscleSvg = getCompositeMuscleSvg(grupos, 28);
   const delay = cardCounter++ * 40;
 
   return `
     <div class="rutina-compact animate-in" style="animation-delay:${delay}ms" data-rutina-id="${rutina.id}">
-      <div class="rutina-compact-main">
+      <div class="rutina-compact-main" data-action="start" data-id="${rutina.id}" style="cursor:pointer">
         <div class="rutina-compact-name">${displayName}</div>
-        ${meta ? `<div class="rutina-compact-meta">${meta}</div>` : ''}
+        ${metaParts ? `<div class="rutina-compact-meta">${metaParts}</div>` : ''}
       </div>
       <div class="rutina-compact-tags">${muscleSvg}</div>
       <div class="rutina-compact-actions">
@@ -97,7 +100,7 @@ function renderRutinaCard(rutina) {
   const lastDone = ultimaSesion ? formatTimeAgo(ultimaSesion.fecha) : '';
 
   const delay = cardCounter++ * 60;
-  const grupos = [...new Set(rutina.circuitos.map((c) => c.grupoMuscular))];
+  const grupos = [...new Set(rutina.circuitos.flatMap((c) => normalizeGrupos(c)))];
 
   return `
     <div class="rutina-card card animate-in" style="animation-delay:${delay}ms" data-rutina-id="${rutina.id}">

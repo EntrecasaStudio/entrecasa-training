@@ -101,7 +101,8 @@ function renderDonutChart(sesion) {
   const groups = {};
   for (const c of sesion.circuitos) {
     if ((c.tipo || 'normal') !== 'normal') continue;
-    const group = (c.grupoMuscular || 'Otro').toLowerCase();
+    const grupos = Array.isArray(c.grupoMuscular) ? c.grupoMuscular : [c.grupoMuscular || 'Otro'];
+    const group = grupos[0].toLowerCase();
     const vol = c.ejercicios.reduce((sum, ej) => {
       const vueltas = getEjVueltas(ej);
       return sum + vueltas.reduce((vs, v) => vs + (v.pesoRealKg * v.repsReal), 0);

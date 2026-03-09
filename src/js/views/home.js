@@ -288,7 +288,7 @@ function renderUserDayRow(u, selectedDate, isToday, isPast, dow, isActive) {
   } else if (planned && planned.routine) {
     statusHtml = `
       <div class="cal-shared-row-info">
-        <span class="cal-shared-status">${planned.routine.nombre}</span>
+        <span class="cal-shared-status" data-action="start" data-id="${planned.routine.id}" style="cursor:pointer">${planned.routine.nombre}</span>
         <span class="cal-shared-tipo ${planned.tipo}">${planned.tipo === 'cross' ? 'Cross' : 'Gym'}</span>
       </div>`;
   } else if (planned && !planned.routine) {
@@ -310,7 +310,7 @@ function renderUserDayRow(u, selectedDate, isToday, isPast, dow, isActive) {
       actionHtml = `<button class="btn btn-ghost btn-xs" data-action="cal-view-session" data-id="${sessions[0].id}">Ver</button>`;
     } else if (planned && planned.routine && (isToday || !isPast)) {
       actionHtml = isToday
-        ? `<button class="btn btn-primary btn-xs" data-action="start" data-id="${planned.routine.id}">${icon.play}</button>`
+        ? `<button class="btn btn-primary btn-play-circle" data-action="start" data-id="${planned.routine.id}">${icon.play}</button>`
         : `<button class="btn btn-ghost btn-xs" data-action="cal-change-routine" data-day="${dow}">Cambiar</button>`;
     } else if (!isPast) {
       actionHtml = `<button class="btn btn-ghost btn-xs" data-action="cal-assign-training" data-day="${dow}">+</button>`;

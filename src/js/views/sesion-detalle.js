@@ -9,7 +9,9 @@ const TAG_CLASS = {
   Espalda: 'tag-espalda',
   Brazos: 'tag-brazos',
   Gluteos: 'tag-gluteos',
+  'Glúteos': 'tag-gluteos',
   Hombros: 'tag-hombros',
+  Cardio: 'tag-cardio',
 };
 
 function formatDate(isoStr) {
@@ -153,7 +155,7 @@ function renderCircuito(circ, circIdx, prevCirc, records) {
   return `
     <div class="card circuito-detalle-card animate-in" style="animation-delay:${100 + circIdx * 80}ms">
       <div class="circuito-detalle-header">
-        <span class="tag ${TAG_CLASS[circ.grupoMuscular] || ''}">${circ.grupoMuscular}</span>${typeBadge}
+        ${(Array.isArray(circ.grupoMuscular) ? circ.grupoMuscular : [circ.grupoMuscular]).filter(Boolean).map(g => `<span class="tag ${TAG_CLASS[g] || ''}">${g}</span>`).join('')}${typeBadge}
       </div>
       ${ejercicios}
     </div>

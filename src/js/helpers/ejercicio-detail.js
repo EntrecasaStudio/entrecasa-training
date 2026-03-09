@@ -14,6 +14,7 @@ const CATEGORY_COLORS = {
   Brazos: 'var(--color-tag-brazos)',
   'Glúteos': 'var(--color-tag-gluteos)',
   Hombros: 'var(--color-tag-hombros)',
+  Cardio: 'var(--color-tag-cardio)',
 };
 
 function findEjercicio(nombre) {
@@ -50,6 +51,7 @@ export function showExerciseDetail(nombre, { onSave } = {}) {
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
     <div class="modal-box ej-detail-modal">
+      <button class="ej-detail-close-x" data-detail-close>${icon.close}</button>
       <div class="ej-detail-top-tag">
         <span class="tag tag-sm">${ej.categoria}</span>
       </div>
@@ -65,7 +67,6 @@ export function showExerciseDetail(nombre, { onSave } = {}) {
         <textarea class="ej-detail-desc-textarea hidden" placeholder="Descripción del ejercicio..." rows="3">${desc}</textarea>
       </div>
       <div class="ej-detail-params">
-        <span class="ej-detail-params-label">Parámetros</span>
         <div class="ej-type-toggle ej-detail-tipo-toggle">
           <button class="ej-type-btn ${currentTipo === 'funcional' ? 'active' : ''}" data-set-tipo="funcional">Funcional</button>
           <button class="ej-type-btn ${currentTipo === 'maquina' ? 'active' : ''}" data-set-tipo="maquina">Máquina</button>

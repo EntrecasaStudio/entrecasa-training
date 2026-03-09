@@ -1,4 +1,4 @@
-import { getRutinaById, getRutinas, saveRutina, getUsuarioActivo } from '@/store.js';
+import { getRutinaById, getRutinas, saveRutina, getUsuarioActivo, getEjercicioMeta } from '@/store.js';
 import { generateId } from '@/id.js';
 import { navigate } from '@/router.js';
 import { icon } from '@js/icons.js';
@@ -6,7 +6,7 @@ import { buscarEjerciciosPorCategorias, addEjercicioCustom } from '@js/ejercicio
 import { showModal } from '@js/components/modal.js';
 import { showToast } from '@js/components/toast.js';
 import { showExerciseDetail } from '@js/helpers/ejercicio-detail.js';
-import { formatNumero } from '@js/helpers/rutina-helpers.js';
+import { formatNumero, normalizeGrupos } from '@js/helpers/rutina-helpers.js';
 
 const GRUPOS_MUSCULARES = ['Pecho', 'Espalda', 'Piernas', 'Core', 'Brazos', 'Glúteos', 'Hombros', 'Cardio'];
 const GRUPO_COLOR_SLUG = {
@@ -22,7 +22,7 @@ const GRUPO_COLOR_SLUG = {
 const MIN_EJERCICIOS = 2;
 const MAX_EJERCICIOS = 4;
 const MIN_REPS = 6;
-const MAX_REPS = 15;
+const MAX_REPS = 99;
 
 // Map form grupoMuscular → catalog categorías
 const GRUPO_A_CATEGORIAS = {
@@ -58,7 +58,7 @@ function crearCircuitoVacio(tipo = 'normal') {
   return {
     id: generateId(),
     tipo,
-    grupoMuscular: tipo === 'normal' ? 'Pecho' : 'Cardio',
+    grupoMuscular: tipo === 'normal' ? ['Pecho'] : ['Cardio'],
     ejercicios: [crearEjercicioPorTipo(tipo), crearEjercicioPorTipo(tipo)],
   };
 }
@@ -67,11 +67,12 @@ function crearCircuitoVacio(tipo = 'normal') {
 let rutina = null;
 let activePicker = null; // { circIdx, ejIdx } or null
 let pickerQuery = '';
+let activeGrupoDropdown = null; // circIdx or null
 let isDirty = false;
 
 function renderPicker(circIdx, ejIdx) {
   const circ = rutina.circuitos[circIdx];
-  const categorias = GRUPO_A_CATEGORIAS[circ.grupoMuscular] || [circ.grupoMuscular];
+  const categorias = [...new Set(normalizeGrupos(circ).flatMap((g) => GRUPO_A_CATEGORIAS[g] || [g]))];
   const resultados = buscarEjerciciosPorCategorias(categorias, pickerQuery);
   const q = pickerQuery.trim().toLowerCase();
 
@@ -161,17 +162,22 @@ function renderEjFields(ej, circIdx, ejIdx, circTipo) {
   }
 
   // Normal
+  const ejMeta = ej.nombre ? getEjercicioMeta(ej.nombre) : {};
+  const kgField = ejMeta.usaPeso ? `
+    <div class="field field-sm">
+      <label class="input-label">Kg</label>
+      <input type="number" class="input" inputmode="decimal" min="0" step="0.5"
+             value="${ej.pesoKg}" data-field="pesoKg" data-circ="${circIdx}" data-ej="${ejIdx}">
+    </div>
+  ` : '';
+
   return `
     <div class="field field-sm">
       <label class="input-label">Reps</label>
       <input type="number" class="input" inputmode="numeric" min="${MIN_REPS}" max="${MAX_REPS}"
              value="${ej.repsObjetivo}" data-field="repsObjetivo" data-circ="${circIdx}" data-ej="${ejIdx}">
     </div>
-    <div class="field field-sm">
-      <label class="input-label">Kg</label>
-      <input type="number" class="input" inputmode="decimal" min="0" step="0.5"
-             value="${ej.pesoKg}" data-field="pesoKg" data-circ="${circIdx}" data-ej="${ejIdx}">
-    </div>
+    ${kgField}
   `;
 }
 
@@ -210,10 +216,25 @@ function renderEjercicio(ej, circIdx, ejIdx, totalEj, circTipo = 'normal') {
 
 function renderCircuito(circ, idx) {
   const circTipo = circ.tipo || 'normal';
-  const colorSlug = GRUPO_COLOR_SLUG[circ.grupoMuscular] || 'pecho';
-  const opciones = GRUPOS_MUSCULARES.map(
-    (g) => `<option value="${g}" ${circ.grupoMuscular === g ? 'selected' : ''}>${g}</option>`,
-  ).join('');
+  const grupos = normalizeGrupos(circ);
+  const colorSlug = GRUPO_COLOR_SLUG[grupos[0]] || 'pecho';
+
+  const tagsHtml = grupos.map((g) => {
+    const slug = GRUPO_COLOR_SLUG[g] || 'pecho';
+    return `<span class="tag tag-sm tag-${slug} circuito-grupo-tag">${g}${grupos.length > 1 ? ` <span class="circuito-grupo-remove" data-action="remove-grupo" data-circ="${idx}" data-grupo="${g}">&times;</span>` : ''}</span>`;
+  }).join('');
+
+  const availableGrupos = GRUPOS_MUSCULARES.filter((g) => !grupos.includes(g));
+  const addBtn = availableGrupos.length > 0
+    ? `<button class="circuito-grupo-add-btn" data-action="toggle-grupo-dropdown" data-circ="${idx}">+</button>`
+    : '';
+
+  const dropdownHtml = activeGrupoDropdown === idx
+    ? `<div class="circuito-grupo-dropdown">${availableGrupos.map((g) => {
+        const slug = GRUPO_COLOR_SLUG[g] || 'pecho';
+        return `<button class="tag tag-sm tag-${slug} circuito-grupo-dropdown-option" data-action="add-grupo" data-circ="${idx}" data-grupo="${g}">${g}</button>`;
+      }).join('')}</div>`
+    : '';
 
   const totalEj = circ.ejercicios.length;
   const ejercicios = circ.ejercicios.map((ej, ejIdx) => renderEjercicio(ej, idx, ejIdx, totalEj, circTipo)).join('');
@@ -237,9 +258,11 @@ function renderCircuito(circ, idx) {
     <div class="card circuito-form-card circuito-color-${colorSlug}" data-circuito-idx="${idx}">
       <div class="circuito-form-header">
         <span class="circuito-form-number circuito-num-${colorSlug}">${idx + 1}</span>
-        <select class="input circuito-select-${colorSlug}" data-action="change-grupo" data-circ="${idx}">
-          ${opciones}
-        </select>
+        <div class="circuito-grupo-tags">
+          ${tagsHtml}
+          ${addBtn}
+          ${dropdownHtml}
+        </div>
         <div class="circuito-reorder" style="${rutina.circuitos.length <= 1 ? 'visibility:hidden' : ''}">
           <button class="btn-reorder" data-action="move-circuito-up" data-circ="${idx}"
                   ${canMoveCircUp ? '' : 'disabled'} title="Mover arriba">${icon.chevronUp}</button>
@@ -286,6 +309,7 @@ export function render(params) {
 
   activePicker = null;
   pickerQuery = '';
+  activeGrupoDropdown = null;
   isDirty = false;
 
   return renderForm(isEdit);
@@ -565,11 +589,53 @@ export function mount(params) {
           rutina.circuitos[circIdx].tipo = newTipo;
           // Reset exercises to match new type
           rutina.circuitos[circIdx].ejercicios = [crearEjercicioPorTipo(newTipo), crearEjercicioPorTipo(newTipo)];
-          if (newTipo !== 'normal' && rutina.circuitos[circIdx].grupoMuscular === 'Pecho') {
-            rutina.circuitos[circIdx].grupoMuscular = 'Cardio';
+          const currentGrupos = normalizeGrupos(rutina.circuitos[circIdx]);
+          if (newTipo !== 'normal' && currentGrupos.length === 1 && currentGrupos[0] === 'Pecho') {
+            rutina.circuitos[circIdx].grupoMuscular = ['Cardio'];
           }
           isDirty = true;
           activePicker = null;
+        }
+        reRender();
+        break;
+      }
+
+      case 'toggle-grupo-dropdown': {
+        syncFromInputs();
+        activeGrupoDropdown = activeGrupoDropdown === circIdx ? null : circIdx;
+        reRender();
+        break;
+      }
+
+      case 'add-grupo': {
+        syncFromInputs();
+        const grupo = btn.dataset.grupo;
+        const grupos = normalizeGrupos(rutina.circuitos[circIdx]);
+        if (!grupos.includes(grupo)) {
+          rutina.circuitos[circIdx].grupoMuscular = [...grupos, grupo];
+        }
+        isDirty = true;
+        activeGrupoDropdown = null;
+        if (activePicker && activePicker.circIdx === circIdx) {
+          activePicker = null;
+          pickerQuery = '';
+        }
+        reRender();
+        break;
+      }
+
+      case 'remove-grupo': {
+        syncFromInputs();
+        const grupo = btn.dataset.grupo;
+        const grupos = normalizeGrupos(rutina.circuitos[circIdx]);
+        const newGrupos = grupos.filter((g) => g !== grupo);
+        if (newGrupos.length > 0) {
+          rutina.circuitos[circIdx].grupoMuscular = newGrupos;
+          isDirty = true;
+          if (activePicker && activePicker.circIdx === circIdx) {
+            activePicker = null;
+            pickerQuery = '';
+          }
         }
         reRender();
         break;
@@ -580,6 +646,7 @@ export function mount(params) {
         isDirty = true;
         activePicker = null;
         pickerQuery = '';
+        activeGrupoDropdown = null;
         rutina.circuitos.push(crearCircuitoVacio());
         reRender();
         break;
@@ -645,7 +712,7 @@ export function mount(params) {
         const nombre = btn.dataset.nombre;
         const circ = rutina.circuitos[circIdx];
         // Use first category in mapping as default for custom exercise
-        const categorias = GRUPO_A_CATEGORIAS[circ.grupoMuscular] || [circ.grupoMuscular];
+        const categorias = [...new Set(normalizeGrupos(circ).flatMap((g) => GRUPO_A_CATEGORIAS[g] || [g]))];
         const categoria = categorias[0];
         syncFromInputs();
         isDirty = true;
@@ -739,18 +806,6 @@ export function mount(params) {
   };
 
   const handleChange = (e) => {
-    if (e.target.matches('[data-action="change-grupo"]')) {
-      const circIdx = parseInt(e.target.dataset.circ);
-      syncFromInputs();
-      rutina.circuitos[circIdx].grupoMuscular = e.target.value;
-      isDirty = true;
-      // Close picker when group changes (exercises will differ)
-      if (activePicker && activePicker.circIdx === circIdx) {
-        activePicker = null;
-        pickerQuery = '';
-      }
-      reRender();
-    }
     // Mark dirty on any numeric field change
     if (e.target.matches('[data-field]')) {
       isDirty = true;
@@ -765,7 +820,7 @@ export function mount(params) {
       if (panel && activePicker) {
         const { circIdx, ejIdx } = activePicker;
         const circ = rutina.circuitos[circIdx];
-        const categorias = GRUPO_A_CATEGORIAS[circ.grupoMuscular] || [circ.grupoMuscular];
+        const categorias = [...new Set(normalizeGrupos(circ).flatMap((g) => GRUPO_A_CATEGORIAS[g] || [g]))];
         const resultados = buscarEjerciciosPorCategorias(categorias, pickerQuery);
         const q = pickerQuery.trim().toLowerCase();
         const exactMatch = q && resultados.some((r) => r.nombre.toLowerCase() === q);

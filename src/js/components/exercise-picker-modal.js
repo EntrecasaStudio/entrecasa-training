@@ -21,7 +21,8 @@ export function showExercisePickerModal({ grupoMuscular, onSelect }) {
   if (existing) existing.remove();
 
   let query = '';
-  const categorias = GRUPO_A_CATEGORIAS[grupoMuscular] || CATEGORIAS;
+  const grupos = Array.isArray(grupoMuscular) ? grupoMuscular : [grupoMuscular];
+  const categorias = [...new Set(grupos.flatMap((g) => GRUPO_A_CATEGORIAS[g] || [g]))] || CATEGORIAS;
 
   const overlay = document.createElement('div');
   overlay.id = 'exercise-picker-modal';

@@ -16,7 +16,10 @@ function getMonthLabel(isoStr) {
 function getUniqueMuscleGroups(sesion) {
   const groups = new Set();
   for (const c of sesion.circuitos) {
-    if (c.grupoMuscular) groups.add(c.grupoMuscular);
+    const gm = c.grupoMuscular;
+    if (gm) {
+      for (const g of (Array.isArray(gm) ? gm : [gm])) groups.add(g);
+    }
   }
   return [...groups];
 }
@@ -28,7 +31,9 @@ const TAG_CLASS = {
   Espalda: 'tag-espalda',
   Brazos: 'tag-brazos',
   Gluteos: 'tag-gluteos',
+  'Glúteos': 'tag-gluteos',
   Hombros: 'tag-hombros',
+  Cardio: 'tag-cardio',
 };
 
 let cardIdx = 0;

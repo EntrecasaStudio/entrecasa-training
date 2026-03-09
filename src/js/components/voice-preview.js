@@ -17,7 +17,7 @@ export function showVoicePreview(rutina) {
 
     return `
       <div class="voice-preview-circuit">
-        <div class="voice-preview-circuit-header">${i + 1}. ${c.grupoMuscular}</div>
+        <div class="voice-preview-circuit-header">${i + 1}. ${Array.isArray(c.grupoMuscular) ? c.grupoMuscular.join(', ') : c.grupoMuscular}</div>
         ${ejHTML}
       </div>
     `;

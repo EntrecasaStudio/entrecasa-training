@@ -164,7 +164,7 @@ function renderCircuitSelector() {
       } else {
         numHtml = `<span class="circuit-seg-num">${i + 1}</span>`;
       }
-      const label = circ.grupoMuscular || '';
+      const label = Array.isArray(circ.grupoMuscular) ? circ.grupoMuscular.join(', ') : (circ.grupoMuscular || '');
       return `<button class="${cls}" data-action="goto-circuit" data-idx="${i}">${numHtml}<span class="circuit-seg-label">${label}</span></button>`;
     })
     .join('');
@@ -1567,7 +1567,7 @@ export function mount(params) {
             grupoMuscular: grupo,
             onSelect: (nombre) => {
               state.resultados.push({
-                grupoMuscular: grupo,
+                grupoMuscular: [grupo],
                 ejercicios: [{
                   nombre,
                   repsObjetivo: 10,
@@ -1595,7 +1595,7 @@ export function mount(params) {
         if (state.resultados.length <= 1) break;
         showModal({
           title: 'Quitar circuito',
-          body: `¿Eliminar el circuito ${state.circuitoActual + 1} (${state.resultados[state.circuitoActual].grupoMuscular})?`,
+          body: `¿Eliminar el circuito ${state.circuitoActual + 1} (${Array.isArray(state.resultados[state.circuitoActual].grupoMuscular) ? state.resultados[state.circuitoActual].grupoMuscular.join(', ') : state.resultados[state.circuitoActual].grupoMuscular})?`,
           confirmText: 'Eliminar',
           danger: true,
           onConfirm: () => {
