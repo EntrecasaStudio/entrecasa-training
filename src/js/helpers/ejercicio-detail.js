@@ -54,12 +54,13 @@ export function showExerciseDetail(nombre, { onSave } = {}) {
       </div>
       ${illustrationHtml}
       <div class="ej-detail-header">
-        <div class="ej-detail-name">${nombre}</div>
+        <div class="ej-detail-name" data-action="edit-name">${nombre}</div>
+        <input class="ej-detail-name-input hidden" type="text" value="${nombre}" data-name-input />
       </div>
       <div class="ej-detail-separator"></div>
       <div class="ej-detail-desc-section">
         <div class="ej-detail-desc-text" data-desc-display>${desc || '<span class="ej-detail-desc-empty">Sin descripción</span>'}</div>
-        <button class="btn btn-ghost btn-xs ej-detail-desc-edit-btn" data-action="edit-desc">${icon.edit} Editar</button>
+        <button class="btn btn-ghost btn-xs ej-detail-desc-edit-btn" data-action="edit-desc">${icon.edit}</button>
         <textarea class="ej-detail-desc-textarea hidden" placeholder="Descripción del ejercicio..." rows="3">${desc}</textarea>
       </div>
       <div class="ej-detail-params">
@@ -112,6 +113,19 @@ export function showExerciseDetail(nombre, { onSave } = {}) {
       return;
     }
 
+    // Edit name — tap name to switch to input
+    if (e.target.closest('[data-action="edit-name"]')) {
+      const nameDiv = overlay.querySelector('[data-action="edit-name"]');
+      const nameInput = overlay.querySelector('[data-name-input]');
+      if (nameDiv && nameInput) {
+        nameDiv.classList.add('hidden');
+        nameInput.classList.remove('hidden');
+        nameInput.focus();
+        nameInput.select();
+      }
+      return;
+    }
+
     // Edit description button — switch from text to textarea
     if (e.target.closest('[data-action="edit-desc"]')) {
       const display = overlay.querySelector('[data-desc-display]');
@@ -155,18 +169,21 @@ export function showExerciseDetail(nombre, { onSave } = {}) {
       const notaTextarea = overlay.querySelector('.ej-detail-textarea');
       saveNotaEjercicio(nombre, notaTextarea.value);
 
-      // Save description + params + tipo
+      // Save description + params + tipo + name
       const descTextarea = overlay.querySelector('.ej-detail-desc-textarea');
+      const nameInput = overlay.querySelector('[data-name-input]');
       const usaPeso = overlay.querySelector('[data-param="usaPeso"]').checked;
       const usaChaleco = overlay.querySelector('[data-param="usaChaleco"]').checked;
       const activeTipoBtn = overlay.querySelector('.ej-detail-tipo-toggle .ej-type-btn.active');
       const newTipo = activeTipoBtn ? activeTipoBtn.dataset.setTipo : currentTipo;
+      const newName = nameInput ? nameInput.value.trim() : '';
 
       saveEjercicioMeta(nombre, {
         usaPeso,
         usaChaleco,
         descripcion: descTextarea.value,
         tipo: newTipo,
+        displayName: newName && newName !== nombre ? newName : undefined,
       });
 
       // Also update the catalog entry tipo
