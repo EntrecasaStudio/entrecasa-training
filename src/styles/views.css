@@ -834,9 +834,9 @@
   margin-bottom: var(--space-md);
 }
 
-.rutinas-filter-toggle {
+.rutinas-filter-row .ej-type-toggle {
   flex: 1;
-  margin-bottom: 0; /* override .ej-type-toggle default */
+  margin-bottom: 0;
 }
 
 .rutinas-view-modes {

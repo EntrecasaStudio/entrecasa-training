@@ -1,7 +1,7 @@
 /**
  * Muscle group SVG illustrations using polygon data.
  * Based on react-body-highlighter (MIT license).
- * ViewBox: 0 0 100 200 (front) / 0 0 100 220 (back)
+ * ViewBox: 0 0 100 200 (front) / 0 0 100 225 (back)
  *
  * Usage: getMuscleSvg('Pecho') → SVG string with Pecho highlighted
  */
@@ -69,10 +69,8 @@ const FRONT_PARTS = {
     '35.51 158.37 35.92 162.45 35.92 166.94 35.1 172.24 35.1 176.73 32.24 182.04 30.61 187.35 26.94 194.69 27.35 187.76 28.16 180.41 28.57 175.51 28.98 169.8 29.8 164.08 30.2 158.78',
   ],
   hands: [
-    // Left hand — palm + fingers extending from forearm end
-    '0 100 4 97 7 98 9 100 10 104 9 108 6 111 3 112 0 110',
-    // Right hand
-    '100 100 96 97 93 98 91 100 90 104 91 108 94 111 97 112 100 110',
+    '0 98 5 95 9 97 11 102 10 108 7 112 3 113 0 110',
+    '100 98 95 95 91 97 89 102 90 108 93 112 97 113 100 110',
   ],
   feet: [
     '18 195 22 193 27 193 29 195 28 199 22 200 17 199',
@@ -143,12 +141,12 @@ const BACK_PARTS = {
     '69.79 195.74 71.91 195.74 73.62 198.3 71.91 213.19 70.21 219.57 67.23 202.13',
   ],
   back_hands: [
-    '0 106 4 103 7 104 9 106 10 110 9 114 6 117 3 118 0 116',
-    '100 106 96 103 93 104 91 106 90 110 91 114 94 117 97 118 100 116',
+    '0 105 5 102 9 104 11 109 10 115 7 118 3 119 0 116',
+    '100 105 95 102 91 104 89 109 90 115 93 118 97 119 100 116',
   ],
   back_feet: [
-    '25 220 28 218 33 218 35 220 34 224 29 225 24 224',
-    '75 220 72 218 67 218 65 220 66 224 71 225 76 224',
+    '26 218 29 216 33 216 35 218 34 222 29 224 26 222',
+    '74 218 71 216 67 216 65 218 66 222 71 224 74 222',
   ],
 };
 
@@ -190,8 +188,8 @@ export function getMuscleSvg(grupo, size = 64, opts = {}) {
 
   const { view, parts: activeParts } = mapping;
   const allParts = view === 'front' ? FRONT_PARTS : BACK_PARTS;
-  const vb = view === 'front' ? '0 0 100 200' : '0 0 100 232';
-  const vbH = view === 'front' ? 200 : 232;
+  const vb = view === 'front' ? '0 0 100 200' : '0 0 100 225';
+  const vbH = view === 'front' ? 200 : 225;
   const w = size * (100 / vbH);
 
   let polygonsHtml = '';
@@ -261,7 +259,7 @@ export function getCompositeMuscleSvg(grupos, size = 32) {
   }
 
   const frontSvg = renderView(FRONT_PARTS, frontActive, '0 0 100 200', 200);
-  const backSvg = renderView(BACK_PARTS, backActive, '0 0 100 232', 232);
+  const backSvg = renderView(BACK_PARTS, backActive, '0 0 100 225', 225);
 
   return `<span class="muscle-composite">${frontSvg}${backSvg}</span>`;
 }
