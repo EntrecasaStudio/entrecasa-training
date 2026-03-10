@@ -21,6 +21,7 @@ import { getCompositeMuscleSvg } from '@js/helpers/muscle-illustrations.js';
 let activeFilter = 'gimnasio';
 let compactView = false;
 let cardCounter = 0;
+let searchQuery = '';
 
 // ── Helpers ──────────────────────────────────
 
@@ -125,9 +126,19 @@ export function render() {
   const header = `
     <div class="rutinas-header">
       <h1 class="rutinas-title">Rutinas</h1>
-      <button class="btn-icon-header" data-action="new-rutina">
-        ${icon.plus}
-      </button>
+      <div class="rutinas-header-actions">
+        <button class="btn-icon-header" data-action="toggle-search" title="Buscar">
+          ${icon.search}
+        </button>
+        <button class="btn-icon-header" data-action="new-rutina">
+          ${icon.plus}
+        </button>
+      </div>
+    </div>
+    <div class="rutinas-search ${searchQuery ? 'open' : ''}" id="rutinas-search-wrap">
+      <input type="text" class="rutinas-search-input" id="rutinas-search-input"
+             placeholder="Buscar rutina..." value="${searchQuery}"
+             data-action="search-rutina" autocomplete="off">
     </div>
   `;
 
@@ -158,15 +169,26 @@ export function render() {
     </div>
   `;
 
-  const filtered = activeFilter === 'cross' ? cross : gimnasio;
+  let filtered = activeFilter === 'cross' ? cross : gimnasio;
+
+  // Apply search filter
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    filtered = filtered.filter((r) => {
+      const name = (r.nombre || '').toLowerCase();
+      const num = formatNumero(r.numero).toLowerCase();
+      return name.includes(q) || num.includes(q);
+    });
+  }
+
   const listClass = compactView ? 'rutinas-list rutinas-list--compact' : 'rutinas-list';
   const renderCard = compactView ? renderCompactCard : renderRutinaCard;
 
   const list = filtered.length > 0
     ? `<div class="${listClass}" id="rutinas-filtered-list">${filtered.map(renderCard).join('')}</div>`
     : `<div class="empty-state" id="rutinas-filtered-list">
-        <div class="empty-state-text">No hay rutinas de ${activeFilter === 'cross' ? 'Cross Training' : 'Gimnasio'}.</div>
-        <button class="btn btn-primary" data-action="new-rutina">${icon.plus} Nueva rutina</button>
+        <div class="empty-state-text">${searchQuery ? 'No se encontraron rutinas.' : `No hay rutinas de ${activeFilter === 'cross' ? 'Cross Training' : 'Gimnasio'}.`}</div>
+        ${!searchQuery ? `<button class="btn btn-primary" data-action="new-rutina">${icon.plus} Nueva rutina</button>` : ''}
       </div>`;
 
   return `
@@ -214,7 +236,18 @@ export function mount() {
     const container = document.getElementById('rutinas-filtered-list');
     if (!container) return;
 
-    const filtered = activeFilter === 'cross' ? cross : gimnasio;
+    let filtered = activeFilter === 'cross' ? cross : gimnasio;
+
+    // Apply search filter
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter((r) => {
+        const name = (r.nombre || '').toLowerCase();
+        const num = formatNumero(r.numero).toLowerCase();
+        return name.includes(q) || num.includes(q);
+      });
+    }
+
     const renderCard = compactView ? renderCompactCard : renderRutinaCard;
 
     if (filtered.length > 0) {
@@ -223,8 +256,8 @@ export function mount() {
     } else {
       container.className = 'empty-state';
       container.innerHTML = `
-        <div class="empty-state-text">No hay rutinas de ${activeFilter === 'cross' ? 'Cross Training' : 'Gimnasio'}.</div>
-        <button class="btn btn-primary" data-action="new-rutina">${icon.plus} Nueva rutina</button>
+        <div class="empty-state-text">${searchQuery ? 'No se encontraron rutinas.' : `No hay rutinas de ${activeFilter === 'cross' ? 'Cross Training' : 'Gimnasio'}.`}</div>
+        ${!searchQuery ? `<button class="btn btn-primary" data-action="new-rutina">${icon.plus} Nueva rutina</button>` : ''}
       `;
     }
 
@@ -264,6 +297,20 @@ export function mount() {
         }
         break;
       }
+      case 'toggle-search': {
+        const wrap = document.getElementById('rutinas-search-wrap');
+        if (wrap) {
+          const isOpen = wrap.classList.toggle('open');
+          if (isOpen) {
+            const input = document.getElementById('rutinas-search-input');
+            if (input) setTimeout(() => input.focus(), 100);
+          } else {
+            searchQuery = '';
+            rerender();
+          }
+        }
+        break;
+      }
       case 'delete':
         showModal({
           title: 'Eliminar rutina',
@@ -281,7 +328,17 @@ export function mount() {
 
   app.addEventListener('click', handleClick);
 
+  // Search input listener
+  const handleSearchInput = (e) => {
+    if (e.target.id === 'rutinas-search-input') {
+      searchQuery = e.target.value;
+      rerender();
+    }
+  };
+  app.addEventListener('input', handleSearchInput);
+
   return () => {
     app.removeEventListener('click', handleClick);
+    app.removeEventListener('input', handleSearchInput);
   };
 }

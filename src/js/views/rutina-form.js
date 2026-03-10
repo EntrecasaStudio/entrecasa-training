@@ -60,7 +60,7 @@ function crearCircuitoVacio(tipo = 'normal') {
   return {
     id: generateId(),
     tipo,
-    grupoMuscular: tipo === 'normal' ? ['Pecho'] : ['Cardio'],
+    grupoMuscular: [],
     ejercicios: [crearEjercicioPorTipo(tipo), crearEjercicioPorTipo(tipo)],
   };
 }
@@ -192,13 +192,22 @@ function renderEjercicio(ej, circIdx, ejIdx, totalEj, circTipo = 'normal') {
   const canMoveDown = ejIdx < totalEj - 1;
   const fieldsModifier = circTipo !== 'normal' ? ` ejercicio-form-fields--${circTipo}` : '';
 
+  const ejActions = ej.nombre ? `
+    <div class="ej-picker-actions">
+      <button class="ej-picker-action-btn" data-action="ej-info" data-circ="${circIdx}" data-ej="${ejIdx}" title="Ver detalle">${icon.info}</button>
+      <button class="ej-picker-action-btn" data-action="clear-ejercicio" data-circ="${circIdx}" data-ej="${ejIdx}" title="Limpiar">${icon.close}</button>
+    </div>` : '';
+
   return `
     <div class="ejercicio-form-row" data-circ="${circIdx}" data-ej="${ejIdx}">
       <div class="ej-picker-wrap">
-        <button class="${triggerClass}" data-action="open-picker"
-                data-circ="${circIdx}" data-ej="${ejIdx}">
-          ${ej.nombre || 'Seleccionar ejercicio...'}
-        </button>
+        <div class="ej-picker-row">
+          <button class="${triggerClass}" data-action="open-picker"
+                  data-circ="${circIdx}" data-ej="${ejIdx}">
+            ${ej.nombre || 'Seleccionar ejercicio...'}
+          </button>
+          ${ejActions}
+        </div>
         ${isPickerOpen ? renderPicker(circIdx, ejIdx) : ''}
       </div>
       <div class="ejercicio-form-fields${fieldsModifier}">
@@ -219,11 +228,11 @@ function renderEjercicio(ej, circIdx, ejIdx, totalEj, circTipo = 'normal') {
 function renderCircuito(circ, idx) {
   const circTipo = circ.tipo || 'normal';
   const grupos = normalizeGrupos(circ);
-  const colorSlug = GRUPO_COLOR_SLUG[grupos[0]] || 'pecho';
+  const colorSlug = grupos.length > 0 ? (GRUPO_COLOR_SLUG[grupos[0]] || 'pecho') : 'none';
 
   const tagsHtml = grupos.map((g) => {
     const slug = GRUPO_COLOR_SLUG[g] || 'pecho';
-    return `<span class="tag tag-sm tag-${slug} circuito-grupo-tag">${g}${grupos.length > 1 ? ` <span class="circuito-grupo-remove" data-action="remove-grupo" data-circ="${idx}" data-grupo="${g}">&times;</span>` : ''}</span>`;
+    return `<span class="tag tag-${slug} circuito-grupo-tag">${g}<span class="circuito-grupo-remove" data-action="remove-grupo" data-circ="${idx}" data-grupo="${g}">&times;</span></span>`;
   }).join('');
 
   const availableGrupos = GRUPOS_MUSCULARES.filter((g) => !grupos.includes(g));
@@ -234,7 +243,7 @@ function renderCircuito(circ, idx) {
   const dropdownHtml = activeGrupoDropdown === idx
     ? `<div class="circuito-grupo-dropdown">${availableGrupos.map((g) => {
         const slug = GRUPO_COLOR_SLUG[g] || 'pecho';
-        return `<button class="tag tag-sm tag-${slug} circuito-grupo-dropdown-option" data-action="add-grupo" data-circ="${idx}" data-grupo="${g}">${g}</button>`;
+        return `<button class="tag tag-${slug} circuito-grupo-dropdown-option" data-action="add-grupo" data-circ="${idx}" data-grupo="${g}">${g}</button>`;
       }).join('')}</div>`
     : '';
 
@@ -476,6 +485,7 @@ function showSaveOptionsModal() {
       case 'update':
         close(() => {
           saveRutina(rutina);
+          isDirty = false;
           showToast('Rutina actualizada');
           navigate(returnTo);
         });
@@ -487,6 +497,7 @@ function showSaveOptionsModal() {
           copia.numero = getNextNumero(rutina.tipo);
           copia.diaSemana = null;
           saveRutina(copia);
+          isDirty = false;
           showToast(`Rutina ${formatNumero(copia.numero)} creada`);
           navigate(returnTo);
         });
@@ -542,6 +553,7 @@ function showExitEditModal() {
           } else {
             if (!rutina.numero) rutina.numero = getNextNumero(rutina.tipo);
             saveRutina(rutina);
+            isDirty = false;
             showToast('Rutina guardada');
             navigate(returnTo);
           }
@@ -730,6 +742,29 @@ export function mount(params) {
         reRender();
         break;
 
+      case 'ej-info': {
+        const ejIdx = parseInt(btn.dataset.ej);
+        const ej = rutina.circuitos[circIdx].ejercicios[ejIdx];
+        if (ej && ej.nombre) {
+          showExerciseDetail(ej.nombre);
+        }
+        break;
+      }
+
+      case 'clear-ejercicio': {
+        const ejIdx = parseInt(btn.dataset.ej);
+        syncFromInputs();
+        isDirty = true;
+        const ej = rutina.circuitos[circIdx].ejercicios[ejIdx];
+        if (ej) {
+          ej.nombre = '';
+          ej.repsObjetivo = 10;
+          ej.pesoKg = 0;
+        }
+        reRender();
+        break;
+      }
+
       case 'move-ejercicio-up': {
         const ejIdx = parseInt(btn.dataset.ej);
         if (ejIdx > 0) {
@@ -800,6 +835,7 @@ export function mount(params) {
               rutina.numero = getNextNumero(rutina.tipo);
             }
             saveRutina(rutina);
+            isDirty = false;
             showToast('Rutina guardada');
             navigate(returnTo);
           }
