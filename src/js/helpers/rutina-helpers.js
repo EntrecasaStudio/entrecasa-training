@@ -176,52 +176,82 @@ export function showPreview(rutinaId, { from } = {}) {
 
 export function showDayAssignmentModal(usuario, dia, tipoActual, onDone) {
   const diaLabel = DIAS_LABEL[dia];
-  const otroTipo = tipoActual === 'gimnasio' ? 'cross' : 'gimnasio';
-  const otroIcon = otroTipo === 'gimnasio' ? '🏋️' : '🏃';
-  const otroLabel = otroTipo === 'gimnasio' ? 'Gimnasio' : 'Cross';
-  const tipoIcon = tipoActual === 'gimnasio' ? '🏋️' : '🏃';
+  let currentTipo = tipoActual;
 
-  // Get routines matching current type (shared between users)
-  const rutinas = getRutinas().filter((r) => r.tipo === tipoActual);
-  const assigned = rutinas.find((r) => r.diaSemana === dia);
+  // ── Helpers ──
+  function getRoutinesForTipo(tipo) {
+    return getRutinas()
+      .filter((r) => r.tipo === tipo)
+      .sort((a, b) => (b.numero || 0) - (a.numero || 0));
+  }
 
-  const rutinasHtml = rutinas.map((r) => {
-    const isActive = assigned && r.id === assigned.id ? 'active' : '';
-    return `<button class="day-assign-option ${isActive}" data-assign-rutina="${r.id}">${r.nombre}</button>`;
-  }).join('');
+  function renderList() {
+    const rutinas = getRoutinesForTipo(currentTipo);
+    const assigned = rutinas.find((r) => r.diaSemana === dia);
+    const tipoNombre = currentTipo === 'gimnasio' ? 'Gimnasio' : 'Cross';
 
-  const tipoNombre = tipoActual === 'gimnasio' ? 'Gimnasio' : 'Cross';
-  const emptyMsg = `<div style="color:var(--color-text-muted);padding:var(--space-sm) 0">No hay rutinas de ${tipoNombre}</div>`;
+    if (rutinas.length === 0) {
+      return `<div class="day-assign-empty">No hay rutinas de ${tipoNombre}</div>`;
+    }
 
-  const bodyHtml = `
-    <div class="day-assign-body">
-      <div class="day-assign-quick-actions">
-        <button class="day-assign-quick-btn day-assign-quick-switch" data-assign-switch="${otroTipo}">
-          <span class="day-assign-quick-icon">${otroIcon}</span>
-          <span>${otroLabel}</span>
-        </button>
-        <button class="day-assign-quick-btn day-assign-quick-clear" data-assign-clear>
-          <span class="day-assign-quick-icon">✕</span>
-          <span>Sin rutina</span>
-        </button>
-        <button class="day-assign-quick-btn day-assign-quick-rest" data-assign-rest>
-          <span class="day-assign-quick-icon">😴</span>
-          <span>Descanso</span>
-        </button>
-      </div>
-      <div class="day-assign-divider"></div>
-      <div class="day-assign-section-label">${tipoIcon} Rutinas de ${tipoNombre}</div>
-      ${rutinasHtml || emptyMsg}
-    </div>
-  `;
+    return rutinas.map((r) => {
+      const isActive = assigned && r.id === assigned.id ? ' active' : '';
+      const code = formatNumero(r.numero);
+      const name = getDisplayName(r);
+      return `
+        <div class="day-assign-option${isActive}" data-assign-rutina="${r.id}">
+          ${code ? `<span class="day-assign-option-code">${code}</span>` : ''}
+          <span class="day-assign-option-name">${name}</span>
+          <button class="day-assign-option-info" data-assign-info="${r.id}" title="Ver detalle">
+            ${icon.info}
+          </button>
+        </div>`;
+    }).join('');
+  }
 
-  // Use a custom modal with event delegation
+  function updateList() {
+    const listEl = overlay.querySelector('.day-assign-list');
+    if (listEl) listEl.innerHTML = renderList();
+    // Update tipo toggle active states
+    overlay.querySelectorAll('[data-assign-tipo]').forEach((b) => {
+      b.classList.toggle('active', b.dataset.assignTipo === currentTipo);
+    });
+  }
+
+  // ── Count routines per type ──
+  const gimCount = getRoutinesForTipo('gimnasio').length;
+  const crossCount = getRoutinesForTipo('cross').length;
+
+  // ── Build modal HTML ──
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
-    <div class="modal-box">
+    <div class="modal-box day-assign-modal">
       <div class="modal-title">${diaLabel}</div>
-      <div class="modal-body">${bodyHtml}</div>
+      <div class="modal-body">
+        <div class="day-assign-body">
+          <div class="ej-type-toggle day-assign-status-toggle">
+            <button class="ej-type-btn active" data-assign-mode="rutina">
+              <span class="day-assign-btn-icon">${icon.checkCircle}</span> Rutina
+            </button>
+            <button class="ej-type-btn" data-assign-mode="libre">
+              <span class="day-assign-btn-icon">${icon.close}</span> Libre
+            </button>
+            <button class="ej-type-btn" data-assign-mode="descanso">
+              <span class="day-assign-btn-icon">${icon.moon}</span> Descanso
+            </button>
+          </div>
+          <div class="ej-type-toggle day-assign-tipo-toggle">
+            <button class="ej-type-btn ${currentTipo === 'gimnasio' ? 'active' : ''}" data-assign-tipo="gimnasio">
+              Gimnasio <span class="day-assign-tipo-count">(${gimCount})</span>
+            </button>
+            <button class="ej-type-btn ${currentTipo === 'cross' ? 'active' : ''}" data-assign-tipo="cross">
+              Cross <span class="day-assign-tipo-count">(${crossCount})</span>
+            </button>
+          </div>
+          <div class="day-assign-list">${renderList()}</div>
+        </div>
+      </div>
     </div>
   `;
   document.body.appendChild(overlay);
@@ -237,35 +267,47 @@ export function showDayAssignmentModal(usuario, dia, tipoActual, onDone) {
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) { close(); return; }
 
-    const btn = e.target.closest('[data-assign-rutina]');
-    if (btn) {
-      assignRutinaADia(btn.dataset.assignRutina, dia, usuario);
+    // ── Info button → open preview on top (modal stays) ──
+    const infoBtn = e.target.closest('[data-assign-info]');
+    if (infoBtn) {
+      e.stopPropagation();
+      showPreview(infoBtn.dataset.assignInfo);
+      return;
+    }
+
+    // ── Assign routine ──
+    const assignBtn = e.target.closest('[data-assign-rutina]');
+    if (assignBtn && !e.target.closest('[data-assign-info]')) {
+      setPlanDia(usuario, dia, currentTipo);
+      assignRutinaADia(assignBtn.dataset.assignRutina, dia, usuario);
       close();
       onDone();
       return;
     }
 
-    if (e.target.closest('[data-assign-switch]')) {
-      clearRutinaDelDia(dia, usuario);
-      setPlanDia(usuario, dia, otroTipo);
-      close();
-      onDone();
+    // ── Status toggle (Rutina / Libre / Descanso) ──
+    const modeBtn = e.target.closest('[data-assign-mode]');
+    if (modeBtn) {
+      const mode = modeBtn.dataset.assignMode;
+      if (mode === 'libre' || mode === 'descanso') {
+        clearRutinaDelDia(dia, usuario);
+        setPlanDia(usuario, dia, null);
+        close();
+        onDone();
+        return;
+      }
+      // 'rutina' mode — just visual, already showing list
       return;
     }
 
-    if (e.target.closest('[data-assign-clear]')) {
-      clearRutinaDelDia(dia, usuario);
-      setPlanDia(usuario, dia, null); // also clear the day plan type
-      close();
-      onDone();
-      return;
-    }
-
-    if (e.target.closest('[data-assign-rest]')) {
-      clearRutinaDelDia(dia, usuario);
-      setPlanDia(usuario, dia, null);
-      close();
-      onDone();
+    // ── Tipo toggle (Gimnasio / Cross) — in-place switch ──
+    const tipoBtn = e.target.closest('[data-assign-tipo]');
+    if (tipoBtn) {
+      const newTipo = tipoBtn.dataset.assignTipo;
+      if (newTipo !== currentTipo) {
+        currentTipo = newTipo;
+        updateList();
+      }
       return;
     }
   });

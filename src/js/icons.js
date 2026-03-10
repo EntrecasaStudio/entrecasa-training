@@ -63,6 +63,9 @@ export const icon = {
   // Vest (weighted vest)
   vest: s('<path d="M8 2h8l2 5v13a2 2 0 01-2 2H8a2 2 0 01-2-2V7l2-5z"/><path d="M12 2v6"/><path d="M6 7h12"/>'),
 
+  // Rest / Sleep
+  moon: s('<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'),
+
   // Calendar
   calendar: s('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="7" y="13" width="3" height="3" rx="0.5"/><rect x="14" y="13" width="3" height="3" rx="0.5"/>'),
 };
