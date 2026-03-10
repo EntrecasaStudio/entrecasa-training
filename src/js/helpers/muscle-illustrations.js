@@ -153,13 +153,14 @@ const BACK_PARTS = {
 // ── Group mapping: grupo → { view, activeParts } ──
 
 const GRUPO_MAP = {
-  Pecho:      { view: 'front', parts: ['chest'] },
-  Hombros:    { view: 'front', parts: ['front_deltoids'] },
-  Brazos:     { view: 'front', parts: ['biceps', 'triceps', 'forearm'] },
-  Core:       { view: 'front', parts: ['abs', 'obliques'] },
-  Piernas:    { view: 'front', parts: ['abductors', 'quadriceps', 'knees', 'calves'] },
-  Espalda:    { view: 'back',  parts: ['trapezius', 'upper_back', 'back_deltoids', 'lower_back'] },
-  'Glúteos':  { view: 'back',  parts: ['gluteal', 'abductor', 'hamstring'] },
+  Pecho:      { front: ['chest'],                                                              back: [] },
+  Hombros:    { front: ['front_deltoids'],                                                     back: ['back_deltoids'] },
+  Brazos:     { front: ['biceps', 'triceps', 'forearm'],                                       back: ['back_triceps', 'back_forearm'] },
+  Core:       { front: ['abs', 'obliques'],                                                    back: ['lower_back'] },
+  Piernas:    { front: ['abductors', 'quadriceps', 'knees', 'calves'],                         back: ['hamstring', 'back_knees', 'back_calves'] },
+  Espalda:    { front: [],                                                                     back: ['trapezius', 'upper_back', 'back_deltoids', 'lower_back'] },
+  'Glúteos':  { front: [],                                                                     back: ['gluteal', 'abductor'] },
+  Cardio:     { front: ['chest', 'abs'],                                                       back: ['upper_back'] },
 };
 
 // ── Cropped viewBox per grupo (zoomed to relevant area) ──
@@ -186,7 +187,9 @@ export function getMuscleSvg(grupo, size = 64, opts = {}) {
   const mapping = GRUPO_MAP[grupo];
   if (!mapping) return '';
 
-  const { view, parts: activeParts } = mapping;
+  // Pick the view that has the most active parts
+  const view = mapping.back.length >= mapping.front.length ? 'back' : 'front';
+  const activeParts = view === 'front' ? mapping.front : mapping.back;
   const allParts = view === 'front' ? FRONT_PARTS : BACK_PARTS;
   const vb = view === 'front' ? '0 0 100 200' : '0 0 100 225';
   const vbH = view === 'front' ? 200 : 225;
@@ -212,7 +215,7 @@ export function getMuscleSvgCropped(grupo, size = 40) {
   const crop = GRUPO_VIEWBOX[grupo];
   if (!mapping || !crop) return getMuscleSvg(grupo, size);
 
-  const { parts: activeParts } = mapping;
+  const activeParts = crop.view === 'front' ? mapping.front : mapping.back;
   const allParts = crop.view === 'front' ? FRONT_PARTS : BACK_PARTS;
   const [, , vbW, vbH] = crop.vb.split(' ').map(Number);
   const w = size * (vbW / vbH);
@@ -242,8 +245,8 @@ export function getCompositeMuscleSvg(grupos, size = 32) {
   for (const grupo of grupos) {
     const mapping = GRUPO_MAP[grupo];
     if (!mapping) continue;
-    const target = mapping.view === 'front' ? frontActive : backActive;
-    for (const part of mapping.parts) target.add(part);
+    for (const part of mapping.front) frontActive.add(part);
+    for (const part of mapping.back) backActive.add(part);
   }
 
   function renderView(allParts, activeSet, vb, vbH) {

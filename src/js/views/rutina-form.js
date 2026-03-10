@@ -470,10 +470,10 @@ function showSaveOptionsModal() {
 
   const close = (cb) => {
     overlay.classList.add('modal-closing');
-    overlay.addEventListener('animationend', () => {
-      overlay.remove();
-      if (cb) cb();
-    }, { once: true });
+    let closed = false;
+    const done = () => { if (closed) return; closed = true; overlay.remove(); if (cb) cb(); };
+    overlay.addEventListener('animationend', done, { once: true });
+    setTimeout(done, 400);
   };
 
   overlay.addEventListener('click', (e) => {
@@ -527,10 +527,10 @@ function showExitEditModal() {
 
   const close = (cb) => {
     overlay.classList.add('modal-closing');
-    overlay.addEventListener('animationend', () => {
-      overlay.remove();
-      if (cb) cb();
-    }, { once: true });
+    let closed = false;
+    const done = () => { if (closed) return; closed = true; overlay.remove(); if (cb) cb(); };
+    overlay.addEventListener('animationend', done, { once: true });
+    setTimeout(done, 400);
   };
 
   overlay.addEventListener('click', (e) => {
