@@ -117,11 +117,12 @@ function initState(rutinaId) {
         ejercicios: circ.ejercicios.map((ej) => {
           const prev = lastMap[ej.nombre];
           let vueltas;
+          const defaultCount = 3;
           if (prev) {
             const src = prev.vueltas[0];
-            vueltas = [{ repsReal: src.repsReal, pesoRealKg: src.pesoRealKg, done: false }];
+            vueltas = Array.from({ length: defaultCount }, () => ({ repsReal: src.repsReal, pesoRealKg: src.pesoRealKg, done: false }));
           } else {
-            vueltas = [{ repsReal: ej.repsObjetivo, pesoRealKg: ej.pesoKg, done: false }];
+            vueltas = Array.from({ length: defaultCount }, () => ({ repsReal: ej.repsObjetivo, pesoRealKg: ej.pesoKg, done: false }));
           }
           return {
             nombre: ej.nombre,
@@ -244,11 +245,11 @@ function renderEjercicio(ej, ejIdx) {
     const weightStepper = showPeso ? `
       <div class="workout-vuelta-group">
         <div class="stepper workout-stepper-sm" role="group">
-          <button class="stepper-btn" data-action="dec" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="pesoRealKg" aria-label="Disminuir peso vuelta ${vIdx + 1}">-</button>
+          <button class="stepper-btn" data-action="dec" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="pesoRealKg" aria-label="Disminuir peso serie ${vIdx + 1}">-</button>
           <input type="number" class="stepper-value" inputmode="decimal" step="0.5"
                  value="${v.pesoRealKg}" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="pesoRealKg"
-                 aria-label="Peso vuelta ${vIdx + 1}" aria-valuemin="0">
-          <button class="stepper-btn" data-action="inc" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="pesoRealKg" aria-label="Aumentar peso vuelta ${vIdx + 1}">+</button>
+                 aria-label="Peso serie ${vIdx + 1}" aria-valuemin="0">
+          <button class="stepper-btn" data-action="inc" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="pesoRealKg" aria-label="Aumentar peso serie ${vIdx + 1}">+</button>
         </div>
       </div>
     ` : '';
@@ -256,9 +257,9 @@ function renderEjercicio(ej, ejIdx) {
     // Right-side action: remove for non-last rows (if >1 vuelta), add "+" on last row
     let actionBtn = '';
     if (isLast) {
-      actionBtn = `<button class="workout-vuelta-add-inline" data-action="add-vuelta" data-ej="${ejIdx}" aria-label="Agregar vuelta">${icon.plus}</button>`;
+      actionBtn = `<button class="workout-vuelta-add-inline" data-action="add-vuelta" data-ej="${ejIdx}" aria-label="Agregar serie">${icon.plus}</button>`;
     } else if (totalVueltas > 1) {
-      actionBtn = `<button class="workout-vuelta-remove" data-action="remove-vuelta" data-ej="${ejIdx}" data-vuelta="${vIdx}" aria-label="Quitar vuelta ${vIdx + 1}">${icon.close}</button>`;
+      actionBtn = `<button class="workout-vuelta-remove" data-action="remove-vuelta" data-ej="${ejIdx}" data-vuelta="${vIdx}" aria-label="Quitar serie ${vIdx + 1}">${icon.close}</button>`;
     }
 
     return `
@@ -266,17 +267,17 @@ function renderEjercicio(ej, ejIdx) {
         <div class="workout-vuelta-left">
           <div class="workout-vuelta-group">
             <div class="stepper workout-stepper-sm" role="group">
-              <button class="stepper-btn" data-action="dec" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="repsReal" aria-label="Disminuir reps vuelta ${vIdx + 1}">-</button>
+              <button class="stepper-btn" data-action="dec" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="repsReal" aria-label="Disminuir reps serie ${vIdx + 1}">-</button>
               <input type="number" class="stepper-value" inputmode="numeric"
                      value="${v.repsReal}" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="repsReal"
-                     aria-label="Reps vuelta ${vIdx + 1}" aria-valuemin="0">
-              <button class="stepper-btn" data-action="inc" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="repsReal" aria-label="Aumentar reps vuelta ${vIdx + 1}">+</button>
+                     aria-label="Reps serie ${vIdx + 1}" aria-valuemin="0">
+              <button class="stepper-btn" data-action="inc" data-ej="${ejIdx}" data-vuelta="${vIdx}" data-field="repsReal" aria-label="Aumentar reps serie ${vIdx + 1}">+</button>
             </div>
           </div>
           ${weightStepper}
         </div>
         <div class="workout-vuelta-right">
-          <span class="workout-vuelta-label">V${vIdx + 1}</span>
+          <span class="workout-vuelta-label">S${vIdx + 1}</span>
           <button class="workout-vuelta-check" data-action="toggle-vuelta-done" data-ej="${ejIdx}" data-vuelta="${vIdx}">
             ${checkIcon}
           </button>
@@ -286,11 +287,11 @@ function renderEjercicio(ej, ejIdx) {
     `;
   }).join('');
 
-  // Collapsed summary: "3v · 10r · 20kg"
+  // Collapsed summary: "3 series · 15 rep · 20 kg"
   const doneCount = ej.vueltas.filter((v) => v.done).length;
-  const summaryParts = [`${totalVueltas}v`];
-  if (ej.vueltas[0]) summaryParts.push(`${ej.vueltas[0].repsReal}r`);
-  if (showPeso && ej.vueltas[0]) summaryParts.push(`${ej.vueltas[0].pesoRealKg}kg`);
+  const summaryParts = [`${totalVueltas} series`];
+  if (ej.vueltas[0]) summaryParts.push(`${ej.vueltas[0].repsReal} rep`);
+  if (showPeso && ej.vueltas[0]) summaryParts.push(`${ej.vueltas[0].pesoRealKg} kg`);
   if (doneCount > 0) summaryParts.push(`${doneCount}/${totalVueltas} ✓`);
   const summaryText = summaryParts.join(' · ');
 
@@ -1362,10 +1363,10 @@ export function mount(params) {
             const meta = getEjercicioMeta(ej.nombre);
             const totalV = ej.vueltas.length;
             const doneCount = ej.vueltas.filter((v) => v.done).length;
-            const parts = [`${totalV}v`];
-            if (ej.vueltas[0]) parts.push(`${ej.vueltas[0].repsReal}r`);
+            const parts = [`${totalV} series`];
+            if (ej.vueltas[0]) parts.push(`${ej.vueltas[0].repsReal} rep`);
             const showPeso = ej.pesoObjetivoKg !== 0 || meta.usaPeso;
-            if (showPeso && ej.vueltas[0]) parts.push(`${ej.vueltas[0].pesoRealKg}kg`);
+            if (showPeso && ej.vueltas[0]) parts.push(`${ej.vueltas[0].pesoRealKg} kg`);
             if (doneCount > 0) parts.push(`${doneCount}/${totalV} ✓`);
             summaryEl.textContent = parts.join(' · ');
           }

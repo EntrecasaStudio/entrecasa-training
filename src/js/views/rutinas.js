@@ -68,13 +68,10 @@ function renderCompactCard(rutina) {
   const delay = cardCounter++ * 40;
 
   return `
-    <div class="rutina-compact animate-in" style="animation-delay:${delay}ms" data-rutina-id="${rutina.id}">
-      <div class="rutina-compact-main" data-action="preview" data-id="${rutina.id}" style="cursor:pointer">
+    <div class="rutina-compact animate-in" style="animation-delay:${delay}ms" data-rutina-id="${rutina.id}" data-action="preview" data-id="${rutina.id}" style="cursor:pointer">
+      <div class="rutina-compact-main">
         <div class="rutina-compact-name">${displayName}</div>
         ${metaParts ? `<div class="rutina-compact-meta">${metaParts}</div>` : ''}
-      </div>
-      <div class="rutina-compact-actions">
-        <button class="btn-icon-action" data-action="start" data-id="${rutina.id}">${icon.play}</button>
       </div>
     </div>
   `;
@@ -104,7 +101,6 @@ function renderRutinaCard(rutina) {
         </div>
         <div class="rutina-card-illustration">${getCompositeMuscleSvg(grupos, 80)}</div>
       </div>
-      <button class="rutina-card-play" data-action="start" data-id="${rutina.id}">${icon.play}</button>
     </div>
   `;
 }
@@ -245,7 +241,6 @@ export function mount() {
       case 'new-rutina':
         navigate('/rutina/nueva');
         break;
-      case 'start':
       case 'preview':
         showPreview(id);
         break;

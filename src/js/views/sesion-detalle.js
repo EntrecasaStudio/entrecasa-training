@@ -127,7 +127,7 @@ function renderCircuito(circ, circIdx, prevCirc, records) {
         ? `<div class="detalle-vueltas">
             ${vueltas.map((v, i) => `
               <div class="detalle-vuelta-row">
-                <span class="detalle-vuelta-label">V${i + 1}</span>
+                <span class="detalle-vuelta-label">S${i + 1}</span>
                 <span>${v.repsReal} reps</span>
                 <span>${v.pesoRealKg > 0 ? v.pesoRealKg + ' kg' : ''}</span>
               </div>

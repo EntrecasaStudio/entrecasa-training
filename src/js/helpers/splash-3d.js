@@ -5,12 +5,22 @@
 
 let _cleanup = null;
 
+function updateProgress(pct) {
+  const bar = document.getElementById('splash-progress-bar');
+  if (bar) bar.style.width = `${Math.min(pct, 100)}%`;
+}
+
 export async function mountSplash3D() {
   const container = document.querySelector('.splash-neumorph');
   if (!container) return;
 
+  updateProgress(10); // Three.js loading started
+
   const THREE = await import('three');
   const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
+  const { DRACOLoader } = await import('three/addons/loaders/DRACOLoader.js');
+
+  updateProgress(30); // Three.js loaded
 
   // Set up renderer
   const size = 120; // match neumorphic card size
@@ -45,12 +55,31 @@ export async function mountSplash3D() {
   rimLight.position.set(0, 8, -8);
   scene.add(rimLight);
 
-  // Load kettlebell model
+  // Load kettlebell model with progress (Draco-compressed)
   const loader = new GLTFLoader();
+  const dracoLoader = new DRACOLoader();
+  dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+  dracoLoader.setDecoderConfig({ type: 'js' });
+  loader.setDRACOLoader(dracoLoader);
   const basePath = import.meta.env.BASE_URL || '/';
 
   try {
-    const gltf = await loader.loadAsync(`${basePath}models/kettlebell.glb`);
+    const gltf = await new Promise((resolve, reject) => {
+      loader.load(
+        `${basePath}models/kettlebell.glb`,
+        resolve,
+        (event) => {
+          if (event.lengthComputable) {
+            const pct = 30 + (event.loaded / event.total) * 60; // 30% → 90%
+            updateProgress(pct);
+          }
+        },
+        reject
+      );
+    });
+
+    updateProgress(95);
+
     const model = gltf.scene;
 
     // Center the model
@@ -76,6 +105,8 @@ export async function mountSplash3D() {
     container.innerHTML = '';
     container.appendChild(canvas);
 
+    updateProgress(100);
+
     // Animation loop
     let running = true;
     let angle = 0;
@@ -92,10 +123,12 @@ export async function mountSplash3D() {
     _cleanup = () => {
       running = false;
       renderer.dispose();
+      dracoLoader.dispose();
       scene.clear();
     };
   } catch (err) {
     console.warn('[splash-3d] Failed to load kettlebell:', err.message);
+    updateProgress(100); // complete bar even on error
     // Keep SVG fallback
   }
 }

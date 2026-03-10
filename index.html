@@ -53,8 +53,12 @@
       <!-- Ambient glow -->
       <div style="position:absolute;inset:-20px;border-radius:52px;background:radial-gradient(circle,rgba(255,205,0,0.12),transparent 70%);pointer-events:none;animation:kb-glow-pulse 2s ease-in-out infinite;"></div>
     </div>
+    <!-- Progress bar -->
+    <div style="width:120px;height:3px;margin-top:16px;border-radius:2px;background:rgba(255,255,255,0.08);overflow:hidden;opacity:0;animation:splash-text-enter 300ms ease-out 500ms forwards;">
+      <div id="splash-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffcd00,#ffb300);border-radius:2px;transition:width 0.3s ease;"></div>
+    </div>
     <!-- Text -->
-    <div style="margin-top:32px;text-align:center;opacity:0;animation:splash-text-enter 400ms ease-out 400ms forwards;">
+    <div style="margin-top:16px;text-align:center;opacity:0;animation:splash-text-enter 400ms ease-out 400ms forwards;">
       <div style="font-family:system-ui,-apple-system,sans-serif;font-size:0.65rem;font-weight:400;color:rgba(245,240,232,0.5);letter-spacing:4px;text-transform:uppercase;">ENTRECASA</div>
       <div style="font-family:system-ui,-apple-system,sans-serif;font-size:1.8rem;font-weight:800;color:#F5F0E8;letter-spacing:5px;text-transform:uppercase;margin-top:2px;">TRAINER</div>
     </div>

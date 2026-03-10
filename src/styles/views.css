@@ -945,21 +945,6 @@
   padding: 0px 5px;
 }
 
-.rutina-compact-actions {
-  display: flex;
-  gap: 2px;
-  flex-shrink: 0;
-}
-
-.rutina-compact-actions .btn-icon-action {
-  width: 30px;
-  height: 30px;
-}
-
-.rutina-compact-actions .btn-icon-action svg {
-  width: 14px;
-  height: 14px;
-}
 
 .rutinas-list {
   display: flex;
@@ -970,7 +955,6 @@
 
 .rutina-card {
   padding: var(--space-md);
-  padding-bottom: calc(var(--space-md) + 32px);
   position: relative;
 }
 
@@ -990,30 +974,6 @@
   opacity: 0.7;
 }
 
-.rutina-card-play {
-  position: absolute;
-  bottom: var(--space-sm);
-  left: var(--space-sm);
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-full);
-  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
-  color: var(--color-accent);
-  transition: background var(--transition-fast);
-  z-index: 1;
-}
-
-.rutina-card-play:active {
-  background: color-mix(in srgb, var(--color-accent) 30%, transparent);
-}
-
-.rutina-card-play svg {
-  width: 16px;
-  height: 16px;
-}
 
 .rutina-card-day {
   font-size: var(--text-xs);
