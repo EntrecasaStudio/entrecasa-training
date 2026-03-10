@@ -29,8 +29,8 @@ async function setupKettlebell3D(container, size, onProgress) {
   renderer.setSize(size, size);
   renderer.setPixelRatio(dpr);
   renderer.setClearColor(0x000000, 0);
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.4;
+  renderer.toneMapping = THREE.LinearToneMapping;
+  renderer.toneMappingExposure = 1.0;
 
   const scene = new THREE.Scene();
 
@@ -39,16 +39,16 @@ async function setupKettlebell3D(container, size, onProgress) {
   camera.position.set(0, 10, 30);
   camera.lookAt(0, 7, 0);
 
-  // Lighting — warm gold tones to complement yellow kettlebell
-  scene.add(new THREE.AmbientLight(0xfff5e0, 0.8));
+  // Lighting — bright white + warm fill for vivid yellow kettlebell
+  scene.add(new THREE.AmbientLight(0xffffff, 1.2));
 
-  const keyLight = new THREE.DirectionalLight(0xffdd44, 2.2);
+  const keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
   keyLight.position.set(3, 12, 8);
   scene.add(keyLight);
 
-  const rimLight = new THREE.DirectionalLight(0xffe066, 0.6);
-  rimLight.position.set(-4, 6, -6);
-  scene.add(rimLight);
+  const fillLight = new THREE.DirectionalLight(0xfff0cc, 1.0);
+  fillLight.position.set(-4, 6, -6);
+  scene.add(fillLight);
 
   // Load or reuse cached model
   let model;
@@ -88,13 +88,18 @@ async function setupKettlebell3D(container, size, onProgress) {
     model = _cachedGltfScene.clone();
   }
 
-  // Recolor model to golden yellow
+  // Recolor model to vivid yellow (#FFCD00)
   const kbColor = new THREE.Color(0xffcd00);
+  const emissive = new THREE.Color(0x332800); // subtle warm self-glow
   model.traverse((child) => {
     if (child.isMesh && child.material) {
       const mat = child.material.clone();
       mat.color.set(kbColor);
-      if (mat.metalness !== undefined) { mat.metalness = 0.6; mat.roughness = 0.3; }
+      mat.emissive = emissive;
+      if (mat.metalness !== undefined) { mat.metalness = 0.15; mat.roughness = 0.35; }
+      // Remove any maps that could override the yellow
+      mat.map = null;
+      mat.emissiveMap = null;
       child.material = mat;
     }
   });
