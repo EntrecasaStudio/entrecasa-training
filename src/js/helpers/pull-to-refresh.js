@@ -18,7 +18,7 @@ function createIndicator() {
   if (indicator) return;
   indicator = document.createElement('div');
   indicator.className = 'ptr-indicator';
-  indicator.innerHTML = icon.refresh || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>';
+  indicator.innerHTML = `<span class="ptr-icon">${icon.refresh}</span>`;
   document.body.appendChild(indicator);
 }
 
@@ -53,13 +53,20 @@ function onTouchMove(e) {
   if (progress > 0.1) {
     createIndicator();
     const translateY = Math.min(dy * 0.5, 80);
+    const rotation = progress * 360;
     indicator.style.transform = `translateX(-50%) translateY(${translateY}px)`;
     indicator.classList.add('ptr-visible');
 
+    // Rotate icon based on pull progress
+    const iconEl = indicator.querySelector('.ptr-icon');
+    if (iconEl) iconEl.style.transform = `rotate(${rotation}deg)`;
+
     if (dy >= PULL_THRESHOLD) {
       indicator.style.borderColor = 'var(--color-accent)';
+      indicator.classList.add('ptr-ready');
     } else {
       indicator.style.borderColor = '';
+      indicator.classList.remove('ptr-ready');
     }
   }
 }

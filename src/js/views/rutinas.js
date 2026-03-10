@@ -373,6 +373,9 @@ export function mount() {
   let swipeActive = false;
   let swipeBlocked = false; // blocks click after swipe gesture
   let wasSwiped = false; // tracks if target was already swiped open on touch start
+  let swipeStartTime = 0;
+  let swipeReady = false; // becomes true after hold delay
+  const SWIPE_HOLD_MS = 180; // must hold 180ms before swipe activates
 
   function closeAllSwipes(except) {
     document.querySelectorAll('.rutina-swipe-content.swiped').forEach((el) => {
@@ -391,8 +394,9 @@ export function mount() {
     swipeStartY = e.touches[0].clientY;
     swipeDeltaX = 0;
     swipeActive = false;
+    swipeReady = false;
     wasSwiped = content.classList.contains('swiped');
-    swipeTarget.style.transition = 'none';
+    swipeStartTime = Date.now();
   };
 
   const handleTouchMove = (e) => {
@@ -400,15 +404,28 @@ export function mount() {
     const dx = e.touches[0].clientX - swipeStartX;
     const dy = e.touches[0].clientY - swipeStartY;
 
+    // Require minimum hold time before allowing horizontal swipe
+    if (!swipeReady && !wasSwiped) {
+      if (Date.now() - swipeStartTime < SWIPE_HOLD_MS) {
+        // Too early — if moved significantly, treat as scroll/tap and abort
+        if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+          swipeTarget = null;
+          return;
+        }
+        return;
+      }
+      swipeReady = true;
+    }
+
     // Determine direction on first meaningful move (15px dead zone)
     if (!swipeActive && (Math.abs(dx) > 15 || Math.abs(dy) > 15)) {
       if (Math.abs(dy) > Math.abs(dx)) {
         // Vertical scroll — abort swipe
-        swipeTarget.style.transition = '';
         swipeTarget = null;
         return;
       }
       swipeActive = true;
+      swipeTarget.style.transition = 'none';
       closeAllSwipes(swipeTarget);
     }
 
@@ -441,6 +458,7 @@ export function mount() {
 
     swipeTarget = null;
     swipeActive = false;
+    swipeReady = false;
     wasSwiped = false;
   };
 

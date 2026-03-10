@@ -3342,20 +3342,6 @@
   overflow: hidden;
 }
 
-.login-kb-glow {
-  position: absolute;
-  inset: -20px;
-  border-radius: 52px;
-  background: radial-gradient(circle, rgba(255, 205, 0, 0.12), transparent 70%);
-  pointer-events: none;
-  animation: login-kb-glow-pulse 2s ease-in-out infinite;
-}
-
-@keyframes login-kb-glow-pulse {
-  0%, 100% { opacity: 0.08; }
-  50%      { opacity: 0.18; }
-}
-
 .login-title {
   font-size: var(--text-2xl);
   font-weight: var(--fw-bold);

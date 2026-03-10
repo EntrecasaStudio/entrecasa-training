@@ -14,7 +14,6 @@ export function render() {
       <div class="login-hero">
         <div class="login-icon">
           <div class="login-kb-card" id="login-kb-container">${iconLg('kettlebell', 64)}</div>
-          <div class="login-kb-glow"></div>
         </div>
         <h1 class="login-title">Mi Entrenamiento</h1>
         <p class="login-subtitle">Tu plan de entrenamiento sincronizado en todos tus dispositivos</p>

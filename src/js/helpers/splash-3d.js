@@ -90,12 +90,11 @@ async function setupKettlebell3D(container, size, onProgress) {
 
   // Recolor model to vivid yellow (#FFCD00)
   const kbColor = new THREE.Color(0xffcd00);
-  const emissive = new THREE.Color(0x332800); // subtle warm self-glow
   model.traverse((child) => {
     if (child.isMesh && child.material) {
       const mat = child.material.clone();
       mat.color.set(kbColor);
-      mat.emissive = emissive;
+      mat.emissive = new THREE.Color(0x000000);
       if (mat.metalness !== undefined) { mat.metalness = 0.15; mat.roughness = 0.35; }
       // Remove any maps that could override the yellow
       mat.map = null;
