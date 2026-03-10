@@ -489,10 +489,12 @@ function syncFromInputs() {
         ej.pesoKg = parseFloat(val) || 0;
       } else if (field === 'serie-reps') {
         const sIdx = parseInt(input.dataset.serie);
-        if (ej.series && ej.series[sIdx]) ej.series[sIdx].reps = parseInt(val) || 0;
+        if (!ej.series) ej.series = [{ reps: ej.repsObjetivo || 8, pesoKg: ej.pesoKg || 0 }];
+        if (ej.series[sIdx]) ej.series[sIdx].reps = parseInt(val) || 0;
       } else if (field === 'serie-peso') {
         const sIdx = parseInt(input.dataset.serie);
-        if (ej.series && ej.series[sIdx]) ej.series[sIdx].pesoKg = parseFloat(val) || 0;
+        if (!ej.series) ej.series = [{ reps: ej.repsObjetivo || 8, pesoKg: ej.pesoKg || 0 }];
+        if (ej.series[sIdx]) ej.series[sIdx].pesoKg = parseFloat(val) || 0;
       }
     });
   });
@@ -982,15 +984,18 @@ export function mount(params) {
       case 'add-form-serie': {
         const ejIdx = parseInt(btn.dataset.ej);
         syncFromInputs();
-        const ej = rutina.circuitos[circIdx].ejercicios[ejIdx];
-        if (ej && ej.series) {
-          const last = ej.series[ej.series.length - 1];
-          ej.series.push({ reps: last.reps, pesoKg: last.pesoKg });
-          isDirty = true;
-          // Ensure expanded
-          expandedFormEjs.add(`${circIdx}-${ejIdx}`);
-          reRender();
+        const ej = rutina.circuitos[circIdx]?.ejercicios[ejIdx];
+        if (!ej) break;
+        // Initialize series from legacy fields if missing
+        if (!ej.series) {
+          ej.series = [{ reps: ej.repsObjetivo || 8, pesoKg: ej.pesoKg || 0 }];
         }
+        const last = ej.series[ej.series.length - 1];
+        ej.series.push({ reps: last.reps, pesoKg: last.pesoKg });
+        isDirty = true;
+        // Ensure expanded
+        expandedFormEjs.add(`${circIdx}-${ejIdx}`);
+        reRender();
         break;
       }
 
@@ -998,8 +1003,12 @@ export function mount(params) {
         const ejIdx = parseInt(btn.dataset.ej);
         const sIdx = parseInt(btn.dataset.serie);
         syncFromInputs();
-        const ej = rutina.circuitos[circIdx].ejercicios[ejIdx];
-        if (ej && ej.series && ej.series.length > 1) {
+        const ej = rutina.circuitos[circIdx]?.ejercicios[ejIdx];
+        if (!ej) break;
+        if (!ej.series) {
+          ej.series = [{ reps: ej.repsObjetivo || 8, pesoKg: ej.pesoKg || 0 }];
+        }
+        if (ej.series.length > 1) {
           ej.series.splice(sIdx, 1);
           isDirty = true;
           reRender();
