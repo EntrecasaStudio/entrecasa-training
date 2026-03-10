@@ -349,12 +349,14 @@ function handleEditRoutine(data, confirmMessage) {
     }
   }
 
-  // Remove exercises
+  // Remove exercises — if circuitIndex omitted, remove from ALL circuits
   if (changes.removeExercises) {
     for (const rem of changes.removeExercises) {
-      const idx = rem.circuitIndex ?? 0;
-      if (target.circuitos[idx]) {
-        target.circuitos[idx].ejercicios = target.circuitos[idx].ejercicios.filter(
+      const circsToSearch = rem.circuitIndex !== undefined
+        ? [target.circuitos[rem.circuitIndex]].filter(Boolean)
+        : target.circuitos;
+      for (const circ of circsToSearch) {
+        circ.ejercicios = circ.ejercicios.filter(
           (e) => e.nombre.toLowerCase() !== rem.ejercicioNombre.toLowerCase(),
         );
       }
@@ -362,16 +364,20 @@ function handleEditRoutine(data, confirmMessage) {
   }
 
   // Update exercise properties (reps, weight)
+  // If circuitIndex is omitted, apply to ALL circuits containing the exercise
   if (changes.updateExercises) {
     for (const upd of changes.updateExercises) {
-      const circ = target.circuitos[upd.circuitIndex ?? 0];
-      if (!circ) continue;
-      const ej = circ.ejercicios.find(
-        (e) => e.nombre.toLowerCase() === upd.ejercicioNombre.toLowerCase(),
-      );
-      if (!ej) continue;
-      if (upd.repsObjetivo !== undefined) ej.repsObjetivo = upd.repsObjetivo;
-      if (upd.pesoKg !== undefined) ej.pesoKg = upd.pesoKg;
+      const circsToSearch = upd.circuitIndex !== undefined
+        ? [target.circuitos[upd.circuitIndex]].filter(Boolean)
+        : target.circuitos;
+      for (const circ of circsToSearch) {
+        const ej = circ.ejercicios.find(
+          (e) => e.nombre.toLowerCase() === upd.ejercicioNombre.toLowerCase(),
+        );
+        if (!ej) continue;
+        if (upd.repsObjetivo !== undefined) ej.repsObjetivo = upd.repsObjetivo;
+        if (upd.pesoKg !== undefined) ej.pesoKg = upd.pesoKg;
+      }
     }
   }
 
@@ -411,13 +417,102 @@ function handleFABClick() {
   }
 }
 
+// ── Draggable FAB ─────────────────────────
+
+const FAB_POS_KEY = 'gym_fab_position';
+let dragStartX = 0, dragStartY = 0;
+let fabStartX = 0, fabStartY = 0;
+let isDragging = false;
+let dragMoved = false;
+
+function loadFabPosition() {
+  try {
+    const raw = localStorage.getItem(FAB_POS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch { /* ignore */ }
+  return null;
+}
+
+function saveFabPosition(x, y) {
+  try { localStorage.setItem(FAB_POS_KEY, JSON.stringify({ x, y })); } catch { /* ignore */ }
+}
+
+function applyFabPosition(container) {
+  const pos = loadFabPosition();
+  if (!pos) return;
+  // Clamp to viewport bounds
+  const size = 56;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const x = Math.max(0, Math.min(pos.x, vw - size));
+  const y = Math.max(0, Math.min(pos.y, vh - size));
+  container.style.right = 'auto';
+  container.style.bottom = 'auto';
+  container.style.left = `${x}px`;
+  container.style.top = `${y}px`;
+}
+
+function setupFabDrag(container) {
+  const onTouchStart = (e) => {
+    const touch = e.touches[0];
+    dragStartX = touch.clientX;
+    dragStartY = touch.clientY;
+    const rect = container.getBoundingClientRect();
+    fabStartX = rect.left;
+    fabStartY = rect.top;
+    isDragging = true;
+    dragMoved = false;
+    container.style.transition = 'none';
+  };
+
+  const onTouchMove = (e) => {
+    if (!isDragging) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - dragStartX;
+    const dy = touch.clientY - dragStartY;
+    if (!dragMoved && Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+    dragMoved = true;
+    e.preventDefault();
+
+    const size = 56;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const newX = Math.max(0, Math.min(fabStartX + dx, vw - size));
+    const newY = Math.max(0, Math.min(fabStartY + dy, vh - size));
+    container.style.right = 'auto';
+    container.style.bottom = 'auto';
+    container.style.left = `${newX}px`;
+    container.style.top = `${newY}px`;
+  };
+
+  const onTouchEnd = () => {
+    if (!isDragging) return;
+    isDragging = false;
+    container.style.transition = '';
+    if (dragMoved) {
+      const rect = container.getBoundingClientRect();
+      saveFabPosition(rect.left, rect.top);
+      // Prevent click from firing after drag
+      setTimeout(() => { dragMoved = false; }, 100);
+    }
+  };
+
+  container.addEventListener('touchstart', onTouchStart, { passive: true });
+  container.addEventListener('touchmove', onTouchMove, { passive: false });
+  container.addEventListener('touchend', onTouchEnd);
+}
+
 /** Mount the voice FAB in #fab-container */
 export function mountVoiceFab() {
   const container = document.getElementById('fab-container');
   if (!container) return;
 
   container.innerHTML = renderFAB();
+  applyFabPosition(container);
+  setupFabDrag(container);
+
   container.addEventListener('click', (e) => {
+    if (dragMoved) return; // ignore click after drag
     if (e.target.closest('#voice-fab-btn')) {
       handleFABClick();
     }

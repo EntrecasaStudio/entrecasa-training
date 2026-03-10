@@ -159,6 +159,8 @@ async function handleTabRoute(hashKey, tabDef) {
   cleanupCurrentView(container);
 
   showViewLoader(hashKey);
+  // Yield to let browser paint the loader before heavy render
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
   const mod = await tabDef.load();
   hideViewLoader();
 
@@ -223,6 +225,8 @@ async function handleOtherRoute(route, hash) {
   }
 
   showViewLoader();
+  // Yield to let browser paint the loader before heavy render
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
   const mod = await route.load();
   hideViewLoader();
 
