@@ -1,6 +1,7 @@
-import { getRutinaById, getRutinas, getUltimaSesionDeRutina, assignRutinaADia, clearRutinaDelDia, setPlanDia, getUsuarioActivo, getPlanSemanal, duplicateRutina } from '@/store.js';
+import { getRutinaById, getRutinas, getUltimaSesionDeRutina, assignRutinaADia, clearRutinaDelDia, setPlanDia, getUsuarioActivo, getPlanSemanal, duplicateRutina, deleteRutina } from '@/store.js';
 import { navigate, refreshCurrentTab } from '@/router.js';
 import { icon } from '@js/icons.js';
+import { showToastAction } from '@js/components/toast.js';
 
 // ── Helpers ──────────────────────────────────
 
@@ -82,7 +83,7 @@ export function renderLastDone(rutina) {
 
 // ── Preview modal ────────────────────────────
 
-export function showPreview(rutinaId, { from } = {}) {
+export function showPreview(rutinaId, { from, dia: optDia } = {}) {
   const rutina = getRutinaById(rutinaId);
   if (!rutina) return;
 
@@ -90,7 +91,7 @@ export function showPreview(rutinaId, { from } = {}) {
     .map(
       (c, i) => {
         const circTipo = c.tipo || 'normal';
-        const typeBadge = circTipo !== 'normal' ? `<span class="preview-type-badge ${circTipo}">${circTipo === 'velocidad' ? 'Vel' : 'HIIT'}</span>` : '';
+        const typeBadge = circTipo !== 'normal' ? `<span class="preview-type-badge ${circTipo}">${circTipo === 'velocidad' ? 'Vel' : circTipo === 'caminata' ? 'Cam' : 'HIIT'}</span>` : '';
 
         const grupos = normalizeGrupos(c);
         const tagsHtml = grupos.map((g) => `<span class="tag ${TAG_CLASS[g] || ''}">${g}</span>`).join('');
@@ -154,15 +155,26 @@ export function showPreview(rutinaId, { from } = {}) {
     } else if (e.target.closest('[data-preview-duplicate]')) {
       const copia = duplicateRutina(rutinaId);
       if (copia) {
-        close(() => refreshCurrentTab());
+        close(() => {
+          refreshCurrentTab();
+          showToastAction(
+            `Rutina duplicada: ${copia.nombre}`,
+            'Deshacer',
+            () => {
+              deleteRutina(copia.id);
+              refreshCurrentTab();
+            },
+            { duration: 8000 }
+          );
+        });
       }
     } else if (e.target.closest('[data-preview-cambiar]')) {
-      const dia = rutina.diaSemana;
-      if (dia != null) {
+      const d = optDia != null ? optDia : rutina.diaSemana;
+      if (d != null) {
         const usuario = getUsuarioActivo();
         const plan = getPlanSemanal(usuario);
-        const tipoActual = plan[dia] || rutina.tipo || 'gimnasio';
-        close(() => showDayAssignmentModal(usuario, dia, tipoActual, () => {
+        const tipoActual = plan[d] || rutina.tipo || 'gimnasio';
+        close(() => showDayAssignmentModal(usuario, d, tipoActual, () => {
           refreshCurrentTab();
         }));
       } else {

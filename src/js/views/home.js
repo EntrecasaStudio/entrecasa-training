@@ -310,15 +310,26 @@ function renderUserDayRow(u, selectedDate, isToday, isPast, dow, isActive) {
       actionHtml = `<button class="btn btn-ghost btn-xs" data-action="cal-view-session" data-id="${sessions[0].id}">Ver</button>`;
     } else if (planned && planned.routine && (isToday || !isPast)) {
       actionHtml = isToday
-        ? `<button class="btn btn-primary btn-play-circle" data-action="start" data-id="${planned.routine.id}">${icon.play}</button>`
+        ? `<button class="btn btn-ghost btn-xs" data-action="cal-change-routine" data-day="${dow}">Cambiar</button>
+           <button class="btn btn-primary btn-play-circle" data-action="start" data-id="${planned.routine.id}">${icon.play}</button>`
         : `<button class="btn btn-ghost btn-xs" data-action="cal-change-routine" data-day="${dow}">Cambiar</button>`;
     } else if (!isPast) {
       actionHtml = `<button class="btn btn-ghost btn-xs" data-action="cal-assign-training" data-day="${dow}">+</button>`;
     }
   }
 
+  // Row-level click action (whole row is tappable)
+  let rowAction = '';
+  if (sessions.length > 0) {
+    rowAction = `data-action="cal-view-session" data-id="${sessions[0].id}"`;
+  } else if (planned && planned.routine) {
+    rowAction = `data-action="start" data-id="${planned.routine.id}"`;
+  } else if (!isPast && isActive) {
+    rowAction = `data-action="cal-assign-training" data-day="${dow}"`;
+  }
+
   return `
-    <div class="cal-shared-row${isActive ? ' cal-shared-row--active' : ''}">
+    <div class="cal-shared-row${isActive ? ' cal-shared-row--active' : ''}" ${rowAction} style="cursor:pointer">
       <span class="cal-shared-avatar cal-shared-avatar--${u.toLowerCase()}">${initial}</span>
       ${statusHtml}
       ${actionHtml}
@@ -401,7 +412,7 @@ export function render() {
     : '';
 
   // Greeting
-  const displayName = firebaseUser?.displayName?.split(' ')[0] || usuario;
+  const displayName = usuario;
   const greeting = `<div class="home-greeting animate-in">${getGreeting(displayName)}</div>`;
 
   // Unified calendar
@@ -414,8 +425,8 @@ export function render() {
 
   return `
     ${greeting}
-    ${calendar}
     ${dayDetail}
+    ${calendar}
     ${banner}
     <div id="hero-section">${rest}</div>
   `;
@@ -459,7 +470,7 @@ export function mount() {
     switch (action) {
       case 'start':
       case 'preview-routine':
-        showPreview(id, { from: 'home' });
+        showPreview(id, { from: 'home', dia: selectedDate.getDay() });
         break;
 
       case 'resume-workout': {

@@ -75,13 +75,14 @@ function renderCircuito(circ, circIdx, prevCirc, records) {
 
   const ejercicios = circ.ejercicios
     .map((ej, ejIdx) => {
-      // Velocidad exercise detail
-      if (circTipo === 'velocidad') {
+      // Velocidad/Caminata exercise detail
+      if (circTipo === 'velocidad' || circTipo === 'caminata') {
         const completadas = (ej.pasadas || []).filter((p) => p.completada).length;
         const total = ej.cantidadPasadas || ej.pasadas?.length || 0;
+        const badgeLabel = circTipo === 'caminata' ? 'Caminata' : 'Velocidad';
         return `
           <div class="ejercicio-detalle-row">
-            <div class="ejercicio-detalle-name">${ej.nombre} <span class="detalle-type-badge velocidad">Velocidad</span></div>
+            <div class="ejercicio-detalle-name">${ej.nombre} <span class="detalle-type-badge ${circTipo}">${badgeLabel}</span></div>
             <div class="ejercicio-detalle-values">
               <div class="ejercicio-detalle-col">
                 <div class="ejercicio-detalle-col-label">Pasadas</div>
@@ -150,7 +151,7 @@ function renderCircuito(circ, circIdx, prevCirc, records) {
     })
     .join('');
 
-  const typeBadge = circTipo !== 'normal' ? ` <span class="detalle-type-badge ${circTipo}">${circTipo === 'velocidad' ? 'Velocidad' : 'HIIT'}</span>` : '';
+  const typeBadge = circTipo !== 'normal' ? ` <span class="detalle-type-badge ${circTipo}">${circTipo === 'velocidad' ? 'Velocidad' : circTipo === 'caminata' ? 'Caminata' : 'HIIT'}</span>` : '';
 
   return `
     <div class="card circuito-detalle-card animate-in" style="animation-delay:${100 + circIdx * 80}ms">

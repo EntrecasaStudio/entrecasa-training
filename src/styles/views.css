@@ -979,6 +979,53 @@
   flex-shrink: 0;
 }
 
+/* ── Swipe-to-delete ──────────────────────── */
+.rutina-swipe-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+}
+
+.rutina-swipe-action {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  background: var(--color-danger, #ef4444);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 0;
+}
+
+.rutina-swipe-delete {
+  background: none;
+  border: none;
+  color: #fff;
+  padding: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rutina-swipe-delete svg {
+  width: 22px;
+  height: 22px;
+}
+
+.rutina-swipe-content {
+  position: relative;
+  z-index: 1;
+  transition: transform 0.2s ease;
+}
+
+.rutina-swipe-content > .rutina-card,
+.rutina-swipe-content > .rutina-compact {
+  animation: none !important;
+}
+
 .rutinas-list--compact {
   gap: var(--space-xs) !important;
 }
@@ -3223,11 +3270,41 @@
   color: var(--color-accent);
   display: flex;
   justify-content: center;
+  position: relative;
 }
 
 .login-icon svg {
   width: 64px;
   height: 64px;
+}
+
+.login-kb-card {
+  width: 140px;
+  height: 140px;
+  border-radius: 32px;
+  background: var(--color-surface);
+  box-shadow:
+    8px 8px 20px rgba(0, 0, 0, 0.6),
+    -6px -6px 16px rgba(60, 60, 60, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.login-kb-glow {
+  position: absolute;
+  inset: -20px;
+  border-radius: 52px;
+  background: radial-gradient(circle, rgba(255, 205, 0, 0.12), transparent 70%);
+  pointer-events: none;
+  animation: login-kb-glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes login-kb-glow-pulse {
+  0%, 100% { opacity: 0.08; }
+  50%      { opacity: 0.18; }
 }
 
 .login-title {
@@ -3326,8 +3403,8 @@
 
 /* ── Circuit type toggle in form ─────────── */
 .circuit-tipo-toggle {
-  margin: 0 0 var(--space-sm);
-  padding: 0 var(--space-sm);
+  margin: 0 0 var(--space-md);
+  padding: 3px;
   background-color: transparent;
   border: 1px solid var(--color-border);
 }
@@ -3382,6 +3459,7 @@
   color: #000;
 }
 .preview-type-badge.velocidad { background: #3b82f6; color: #fff; }
+.preview-type-badge.caminata { background: #22C55E; color: #fff; }
 .preview-type-badge.hiit { background: #ef4444; color: #fff; }
 
 /* ── Detalle type badge ────────────────────── */
@@ -3397,4 +3475,112 @@
   margin-left: 4px;
 }
 .detalle-type-badge.velocidad { background: #3b82f6; }
+.detalle-type-badge.caminata { background: #22C55E; }
 .detalle-type-badge.hiit { background: #ef4444; }
+
+/* ── Exercise Form — Series Section ────────── */
+
+.ej-series-section {
+  width: 100%;
+}
+
+.ej-series-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  width: 100%;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.ej-series-chevron {
+  margin-left: auto;
+  transition: transform 0.2s;
+  display: flex;
+  align-items: center;
+}
+.ej-series-chevron svg {
+  width: 16px;
+  height: 16px;
+}
+.ej-series-chevron.expanded {
+  transform: rotate(180deg);
+}
+
+.ej-series-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding-top: var(--space-xs);
+}
+
+.ej-serie-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.ej-serie-label {
+  width: 24px;
+  font-size: var(--text-xs);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.ej-serie-row .field {
+  flex: 1;
+}
+
+.ej-serie-row .field .input {
+  text-align: center;
+  padding: 4px 6px;
+  font-size: var(--text-sm);
+}
+
+.btn-remove-sm {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  transition: background 0.15s, color 0.15s;
+}
+.btn-remove-sm:active {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+.btn-remove-sm svg {
+  width: 14px;
+  height: 14px;
+}
+
+.btn-remove-sm-placeholder {
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.ej-series-add-btn {
+  font-size: var(--text-xs);
+  color: var(--color-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0;
+  text-align: left;
+  font-family: inherit;
+  font-weight: var(--fw-semibold);
+}

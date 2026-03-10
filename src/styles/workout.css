@@ -777,6 +777,10 @@
   flex: 1;
 }
 
+.workout-vuelta-group:only-child {
+  max-width: 50%;
+}
+
 /* Compact stepper for multi-round layout — 38px touch targets */
 
 .workout-stepper-sm {
@@ -1087,6 +1091,7 @@
   margin-left: auto;
 }
 .workout-circuit-type-badge.velocidad { background: #3b82f6; }
+.workout-circuit-type-badge.caminata { background: #22C55E; }
 .workout-circuit-type-badge.hiit { background: #ef4444; }
 
 /* ── Start timer button ──────────────────── */

@@ -78,11 +78,18 @@ function renderCompactCard(rutina) {
   const delay = cardCounter++ * 40;
 
   return `
-    <div class="rutina-compact animate-in" style="animation-delay:${delay}ms" data-rutina-id="${rutina.id}" data-action="preview" data-id="${rutina.id}" style="cursor:pointer">
-      <div class="rutina-compact-main">
-        ${num ? `<div class="rutina-compact-code">${num}</div>` : ''}
-        <div class="rutina-compact-name">${displayName}</div>
-        ${meta ? `<div class="rutina-compact-meta">${meta}</div>` : ''}
+    <div class="rutina-swipe-container animate-in" style="animation-delay:${delay}ms" data-rutina-id="${rutina.id}">
+      <div class="rutina-swipe-action">
+        <button class="rutina-swipe-delete" data-action="delete" data-id="${rutina.id}">${icon.trash}</button>
+      </div>
+      <div class="rutina-swipe-content">
+        <div class="rutina-compact" data-action="preview" data-id="${rutina.id}" style="cursor:pointer">
+          <div class="rutina-compact-main">
+            ${num ? `<div class="rutina-compact-code">${num}</div>` : ''}
+            <div class="rutina-compact-name">${displayName}</div>
+            ${meta ? `<div class="rutina-compact-meta">${meta}</div>` : ''}
+          </div>
+        </div>
       </div>
     </div>
   `;
@@ -104,14 +111,21 @@ function renderRutinaCard(rutina) {
   const grupos = [...new Set(rutina.circuitos.flatMap((c) => normalizeGrupos(c)))];
 
   return `
-    <div class="rutina-card card animate-in" style="animation-delay:${delay}ms" data-rutina-id="${rutina.id}">
-      <div class="rutina-card-body" data-action="preview" data-id="${rutina.id}" style="cursor:pointer">
-        <div class="rutina-card-info">
-          <div class="rutina-card-volanta">${volanta}</div>
-          <div class="rutina-card-name">${displayName}</div>
-          ${lastDone ? `<div class="rutina-card-last">${lastDone}</div>` : ''}
+    <div class="rutina-swipe-container animate-in" style="animation-delay:${delay}ms" data-rutina-id="${rutina.id}">
+      <div class="rutina-swipe-action">
+        <button class="rutina-swipe-delete" data-action="delete" data-id="${rutina.id}">${icon.trash}</button>
+      </div>
+      <div class="rutina-swipe-content">
+        <div class="rutina-card card" data-rutina-id="${rutina.id}">
+          <div class="rutina-card-body" data-action="preview" data-id="${rutina.id}" style="cursor:pointer">
+            <div class="rutina-card-info">
+              <div class="rutina-card-volanta">${volanta}</div>
+              <div class="rutina-card-name">${displayName}</div>
+              ${lastDone ? `<div class="rutina-card-last">${lastDone}</div>` : ''}
+            </div>
+            <div class="rutina-card-illustration">${getCompositeMuscleSvg(grupos, 88)}</div>
+          </div>
         </div>
-        <div class="rutina-card-illustration">${getCompositeMuscleSvg(grupos, 88)}</div>
       </div>
     </div>
   `;
@@ -348,8 +362,82 @@ export function mount() {
   };
   app.addEventListener('input', handleSearchInput);
 
+  // ── Swipe-to-delete touch handling ──────────
+  let swipeStartX = 0;
+  let swipeStartY = 0;
+  let swipeTarget = null;
+  let swipeDeltaX = 0;
+  let swipeActive = false;
+
+  function closeAllSwipes(except) {
+    document.querySelectorAll('.rutina-swipe-content.swiped').forEach((el) => {
+      if (el !== except) {
+        el.style.transform = '';
+        el.classList.remove('swiped');
+      }
+    });
+  }
+
+  const handleTouchStart = (e) => {
+    const content = e.target.closest('.rutina-swipe-content');
+    if (!content) return;
+    swipeTarget = content;
+    swipeStartX = e.touches[0].clientX;
+    swipeStartY = e.touches[0].clientY;
+    swipeDeltaX = 0;
+    swipeActive = false;
+    swipeTarget.style.transition = 'none';
+  };
+
+  const handleTouchMove = (e) => {
+    if (!swipeTarget) return;
+    const dx = e.touches[0].clientX - swipeStartX;
+    const dy = e.touches[0].clientY - swipeStartY;
+
+    // Determine direction on first meaningful move
+    if (!swipeActive && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+      if (Math.abs(dy) > Math.abs(dx)) {
+        // Vertical scroll — abort swipe
+        swipeTarget = null;
+        return;
+      }
+      swipeActive = true;
+      closeAllSwipes(swipeTarget);
+    }
+
+    if (!swipeActive) return;
+    e.preventDefault();
+
+    // Only allow left swipe (negative dx), cap at -80
+    swipeDeltaX = Math.max(-80, Math.min(0, dx));
+    swipeTarget.style.transform = `translateX(${swipeDeltaX}px)`;
+  };
+
+  const handleTouchEnd = () => {
+    if (!swipeTarget) return;
+    swipeTarget.style.transition = '';
+    if (swipeDeltaX < -40) {
+      // Snap open
+      swipeTarget.style.transform = 'translateX(-80px)';
+      swipeTarget.classList.add('swiped');
+    } else {
+      // Snap closed
+      swipeTarget.style.transform = '';
+      swipeTarget.classList.remove('swiped');
+    }
+    swipeTarget = null;
+    swipeActive = false;
+  };
+
+  app.addEventListener('touchstart', handleTouchStart, { passive: true });
+  app.addEventListener('touchmove', handleTouchMove, { passive: false });
+  app.addEventListener('touchend', handleTouchEnd);
+
   return () => {
     app.removeEventListener('click', handleClick);
     app.removeEventListener('input', handleSearchInput);
+    app.removeEventListener('touchstart', handleTouchStart);
+    app.removeEventListener('touchmove', handleTouchMove);
+    app.removeEventListener('touchend', handleTouchEnd);
   };
 }

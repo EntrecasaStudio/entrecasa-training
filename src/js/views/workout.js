@@ -81,9 +81,9 @@ function initState(rutinaId) {
     resultados: rutina.circuitos.map((circ) => {
       const circTipo = circ.tipo || 'normal';
 
-      if (circTipo === 'velocidad') {
+      if (circTipo === 'velocidad' || circTipo === 'caminata') {
         return {
-          tipo: 'velocidad',
+          tipo: circTipo,
           grupoMuscular: circ.grupoMuscular,
           ejercicios: circ.ejercicios.map((ej) => ({
             nombre: ej.nombre,
@@ -117,17 +117,20 @@ function initState(rutinaId) {
         ejercicios: circ.ejercicios.map((ej) => {
           const prev = lastMap[ej.nombre];
           let vueltas;
-          const defaultCount = 3;
           if (prev) {
             const src = prev.vueltas[0];
-            vueltas = Array.from({ length: defaultCount }, () => ({ repsReal: src.repsReal, pesoRealKg: src.pesoRealKg, done: false }));
+            const count = (ej.series && ej.series.length) || 3;
+            vueltas = Array.from({ length: count }, () => ({ repsReal: src.repsReal, pesoRealKg: src.pesoRealKg, done: false }));
+          } else if (ej.series && ej.series.length > 0) {
+            vueltas = ej.series.map((s) => ({ repsReal: s.reps, pesoRealKg: s.pesoKg, done: false }));
           } else {
-            vueltas = Array.from({ length: defaultCount }, () => ({ repsReal: ej.repsObjetivo, pesoRealKg: ej.pesoKg, done: false }));
+            vueltas = Array.from({ length: 3 }, () => ({ repsReal: ej.repsObjetivo || 8, pesoRealKg: ej.pesoKg || 0, done: false }));
           }
+          const firstSerie = ej.series?.[0];
           return {
             nombre: ej.nombre,
-            repsObjetivo: ej.repsObjetivo,
-            pesoObjetivoKg: ej.pesoKg,
+            repsObjetivo: firstSerie ? firstSerie.reps : ej.repsObjetivo,
+            pesoObjetivoKg: firstSerie ? firstSerie.pesoKg : ej.pesoKg,
             chaleco: prev ? prev.chaleco : false,
             pesoChalecoKg: prev ? prev.pesoChalecoKg : 0,
             vueltas,
@@ -254,11 +257,9 @@ function renderEjercicio(ej, ejIdx) {
       </div>
     ` : '';
 
-    // Right-side action: remove for non-last rows (if >1 vuelta), add "+" on last row
+    // Right-side action: remove for any row (if >1 vuelta)
     let actionBtn = '';
-    if (isLast) {
-      actionBtn = `<button class="workout-vuelta-add-inline" data-action="add-vuelta" data-ej="${ejIdx}" aria-label="Agregar serie">${icon.plus}</button>`;
-    } else if (totalVueltas > 1) {
+    if (totalVueltas > 1) {
       actionBtn = `<button class="workout-vuelta-remove" data-action="remove-vuelta" data-ej="${ejIdx}" data-vuelta="${vIdx}" aria-label="Quitar serie ${vIdx + 1}">${icon.close}</button>`;
     }
 
@@ -319,18 +320,19 @@ function renderEjercicio(ej, ejIdx) {
         <div class="workout-vueltas">
           ${vueltasHtml}
         </div>
+        <button class="workout-add-vuelta-btn" data-action="add-vuelta" data-ej="${ejIdx}">${icon.plus} Serie</button>
       </div>
     </div>
   `;
 }
 
-// ── Velocidad exercise rendering ─────────────
-function renderEjercicioVelocidad(ej, ejIdx) {
+// ── Velocidad/Caminata exercise rendering ────
+function renderEjercicioVelocidad(ej, ejIdx, tipo = 'velocidad') {
   const completadas = ej.pasadas.filter((p) => p.completada).length;
   const total = ej.cantidadPasadas;
   const allDone = completadas === total;
 
-  const isTimerActive = activeTimer && activeTimer.type === 'velocidad' && activeTimer.ejIdx === ejIdx;
+  const isTimerActive = activeTimer && (activeTimer.type === 'velocidad' || activeTimer.type === 'caminata') && activeTimer.ejIdx === ejIdx;
   const timerPhase = isTimerActive ? activeTimer.phase : null; // 'run' | 'rest'
   const timerRemaining = isTimerActive ? activeTimer.remaining : 0;
 
@@ -352,7 +354,7 @@ function renderEjercicioVelocidad(ej, ejIdx) {
   // Timer display (only when active)
   const timerHtml = isTimerActive ? `
     <div class="workout-timer-display">
-      <div class="workout-timer-phase ${timerPhase}">${timerPhase === 'run' ? 'CORRIENDO' : 'DESCANSO'}</div>
+      <div class="workout-timer-phase ${timerPhase}">${timerPhase === 'run' ? (tipo === 'caminata' ? 'CAMINANDO' : 'CORRIENDO') : 'DESCANSO'}</div>
       <div class="workout-timer-big" id="vel-timer-value">${timerRemaining}</div>
       <button class="btn btn-ghost btn-sm" data-action="skip-vel-timer" data-ej="${ejIdx}">Saltar</button>
     </div>
@@ -370,7 +372,7 @@ function renderEjercicioVelocidad(ej, ejIdx) {
     <div class="workout-ejercicio animate-in" style="animation-delay:${ejIdx * 60}ms">
       <div class="workout-ejercicio-header">
         <div class="workout-ejercicio-name">${ej.nombre}</div>
-        <span class="workout-circuit-type-badge velocidad">Velocidad</span>
+        <span class="workout-circuit-type-badge ${tipo}">${tipo === 'caminata' ? 'Caminata' : 'Velocidad'}</span>
       </div>
       <div class="workout-ejercicio-target">
         ${total} pasadas &middot; ${ej.velocidad} km/h &middot; ${ej.tiempo}s / ${ej.descanso}s desc
@@ -450,14 +452,14 @@ function renderEjercicioHIIT(ej, ejIdx) {
   `;
 }
 
-// ── Timer logic for velocidad ────────────────
-function startVelocidadTimer(ejIdx, pasadaIdx, params) {
+// ── Timer logic for velocidad/caminata ───────
+function startVelocidadTimer(ejIdx, pasadaIdx, params, timerType = 'velocidad') {
   const circ = state.resultados[state.circuitoActual];
   const ej = circ.ejercicios[ejIdx];
   if (!ej) return;
 
   clearActiveTimer();
-  activeTimer = { type: 'velocidad', ejIdx, phase: 'run', remaining: ej.tiempo, pasadaIdx };
+  activeTimer = { type: timerType, ejIdx, phase: 'run', remaining: ej.tiempo, pasadaIdx };
 
   activeTimerInterval = setInterval(() => {
     activeTimer.remaining--;
@@ -621,7 +623,8 @@ export function render(params) {
 
   // Branch exercise rendering by circuit type
   const ejercicios = circ.ejercicios.map((ej, i) => {
-    if (circTipo === 'velocidad') return renderEjercicioVelocidad(ej, i);
+    if (circTipo === 'velocidad') return renderEjercicioVelocidad(ej, i, 'velocidad');
+    if (circTipo === 'caminata') return renderEjercicioVelocidad(ej, i, 'caminata');
     if (circTipo === 'hiit') return renderEjercicioHIIT(ej, i);
     return renderEjercicio(ej, i);
   }).join('');
@@ -827,7 +830,7 @@ function applyModificationsToRutina() {
     const circTipo = circ.tipo || 'normal';
     const base = { tipo: circTipo, grupoMuscular: circ.grupoMuscular };
 
-    if (circTipo === 'velocidad') {
+    if (circTipo === 'velocidad' || circTipo === 'caminata') {
       return { ...base, ejercicios: circ.ejercicios.map((ej) => ({
         nombre: ej.nombre, velocidad: ej.velocidad, tiempo: ej.tiempo, descanso: ej.descanso, cantidadPasadas: ej.cantidadPasadas,
       })) };
@@ -838,7 +841,8 @@ function applyModificationsToRutina() {
       })) };
     }
     return { ...base, ejercicios: circ.ejercicios.map((ej) => ({
-      nombre: ej.nombre, repsObjetivo: ej.repsObjetivo, pesoKg: ej.pesoObjetivoKg,
+      nombre: ej.nombre,
+      series: ej.vueltas.map((v) => ({ reps: v.repsReal, pesoKg: v.pesoRealKg })),
     })) };
   });
   saveRutina(rutina);
@@ -1514,17 +1518,18 @@ export function mount(params) {
         showExitWorkoutModal();
         break;
 
-      // ── Velocidad timer actions ──
+      // ── Velocidad/Caminata timer actions ──
       case 'start-vel-timer': {
         const ejIdx = parseInt(btn.dataset.ej);
         const pasadaIdx = parseInt(btn.dataset.pasada);
-        startVelocidadTimer(ejIdx, pasadaIdx, params);
+        const circTipoTimer = state.resultados[state.circuitoActual]?.tipo || 'velocidad';
+        startVelocidadTimer(ejIdx, pasadaIdx, params, circTipoTimer);
         break;
       }
 
       case 'skip-vel-timer': {
         const circ2 = state.resultados[state.circuitoActual];
-        if (activeTimer && activeTimer.type === 'velocidad') {
+        if (activeTimer && (activeTimer.type === 'velocidad' || activeTimer.type === 'caminata')) {
           const ej = circ2.ejercicios[activeTimer.ejIdx];
           if (activeTimer.phase === 'run' && ej) {
             ej.pasadas[activeTimer.pasadaIdx].completada = true;

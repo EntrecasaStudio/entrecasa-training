@@ -6,12 +6,16 @@ import { downloadAllData, uploadAllData, startRealtimeSync } from '@js/services/
 import { navigate } from '@/router.js';
 import { showToast } from '@js/components/toast.js';
 import { iconLg } from '@js/icons.js';
+import { mountLoginKettlebell, cleanupLoginKettlebell } from '@js/helpers/splash-3d.js';
 
 export function render() {
   return `
     <div class="login-screen">
       <div class="login-hero">
-        <div class="login-icon">${iconLg('kettlebell', 64)}</div>
+        <div class="login-icon">
+          <div class="login-kb-card" id="login-kb-container">${iconLg('kettlebell', 64)}</div>
+          <div class="login-kb-glow"></div>
+        </div>
         <h1 class="login-title">Mi Entrenamiento</h1>
         <p class="login-subtitle">Tu plan de entrenamiento sincronizado en todos tus dispositivos</p>
       </div>
@@ -31,6 +35,9 @@ export function render() {
 
 export function mount() {
   const app = document.getElementById('app');
+
+  // Mount 3D kettlebell (async, fire-and-forget)
+  mountLoginKettlebell();
 
   const handleClick = async (e) => {
     const btn = e.target.closest('[data-action]');
@@ -79,5 +86,8 @@ export function mount() {
   };
 
   app.addEventListener('click', handleClick);
-  return () => app.removeEventListener('click', handleClick);
+  return () => {
+    app.removeEventListener('click', handleClick);
+    cleanupLoginKettlebell();
+  };
 }

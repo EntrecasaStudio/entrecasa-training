@@ -39,11 +39,23 @@ const GRUPO_A_CATEGORIAS = {
 };
 
 function crearEjercicioVacio() {
-  return { id: generateId(), nombre: '', repsObjetivo: 10, pesoKg: 0 };
+  return {
+    id: generateId(),
+    nombre: '',
+    series: [
+      { reps: 8, pesoKg: 8 },
+      { reps: 8, pesoKg: 8 },
+      { reps: 8, pesoKg: 8 },
+    ],
+  };
 }
 
 function crearEjercicioVelocidad() {
   return { id: generateId(), nombre: '', velocidad: 12, tiempo: 30, descanso: 60, cantidadPasadas: 6 };
+}
+
+function crearEjercicioCaminata() {
+  return { id: generateId(), nombre: '', velocidad: 5, tiempo: 120, descanso: 30, cantidadPasadas: 4 };
 }
 
 function crearEjercicioHIIT() {
@@ -52,6 +64,7 @@ function crearEjercicioHIIT() {
 
 function crearEjercicioPorTipo(tipo) {
   if (tipo === 'velocidad') return crearEjercicioVelocidad();
+  if (tipo === 'caminata') return crearEjercicioCaminata();
   if (tipo === 'hiit') return crearEjercicioHIIT();
   return crearEjercicioVacio();
 }
@@ -71,6 +84,7 @@ let activePicker = null; // { circIdx, ejIdx } or null
 let pickerQuery = '';
 let activeGrupoDropdown = null; // circIdx or null
 let isDirty = false;
+let expandedFormEjs = new Set(); // tracks 'circIdx-ejIdx' keys for expanded series
 
 function renderPicker(circIdx, ejIdx) {
   const circ = rutina.circuitos[circIdx];
@@ -87,7 +101,7 @@ function renderPicker(circIdx, ejIdx) {
     <button class="ej-picker-option" data-action="select-ejercicio"
             data-circ="${circIdx}" data-ej="${ejIdx}" data-nombre="${e.nombre}">
       <span class="ej-picker-option-name">${e.nombre}</span>
-      <span class="ej-item-type ${e.tipo}">${e.tipo === 'maquina' ? 'Máquina' : 'Funcional'}</span>
+      <span class="ej-item-type ${e.tipo}">${e.tipo === 'maquina' ? 'M' : 'F'}</span>
       <span class="ej-picker-info" data-action="show-ejercicio-detail" data-nombre="${e.nombre}" title="Ver detalle">${icon.info}</span>
     </button>
   `,
@@ -118,7 +132,7 @@ function renderPicker(circIdx, ejIdx) {
 }
 
 function renderEjFields(ej, circIdx, ejIdx, circTipo) {
-  if (circTipo === 'velocidad') {
+  if (circTipo === 'velocidad' || circTipo === 'caminata') {
     return `
       <div class="field field-sm">
         <label class="input-label">Vel</label>
@@ -163,23 +177,40 @@ function renderEjFields(ej, circIdx, ejIdx, circTipo) {
     `;
   }
 
-  // Normal
-  const ejMeta = ej.nombre ? getEjercicioMeta(ej.nombre) : {};
-  const kgField = ejMeta.usaPeso ? `
-    <div class="field field-sm">
-      <label class="input-label">Kg</label>
-      <input type="number" class="input" inputmode="decimal" min="0" step="0.5"
-             value="${ej.pesoKg}" data-field="pesoKg" data-circ="${circIdx}" data-ej="${ejIdx}">
+  // Normal — collapsible series section
+  const series = ej.series || [{ reps: ej.repsObjetivo || 8, pesoKg: ej.pesoKg || 0 }];
+  const ejKey = `${circIdx}-${ejIdx}`;
+  const isExpanded = expandedFormEjs.has(ejKey);
+  const summaryText = `${series.length} series · ${series[0].reps} reps · ${series[0].pesoKg}kg`;
+
+  const seriesRows = series.map((s, sIdx) => `
+    <div class="ej-serie-row">
+      <span class="ej-serie-label">S${sIdx + 1}</span>
+      <div class="field field-sm">
+        <label class="input-label">Reps</label>
+        <input type="number" class="input" inputmode="numeric" min="${MIN_REPS}" max="${MAX_REPS}"
+               value="${s.reps}" data-field="serie-reps" data-circ="${circIdx}" data-ej="${ejIdx}" data-serie="${sIdx}">
+      </div>
+      <div class="field field-sm">
+        <label class="input-label">Kg</label>
+        <input type="number" class="input" inputmode="decimal" min="0" step="0.5"
+               value="${s.pesoKg}" data-field="serie-peso" data-circ="${circIdx}" data-ej="${ejIdx}" data-serie="${sIdx}">
+      </div>
+      ${series.length > 1 ? `<button class="btn-remove-sm" data-action="remove-form-serie" data-circ="${circIdx}" data-ej="${ejIdx}" data-serie="${sIdx}" title="Quitar serie">${icon.close}</button>` : '<span class="btn-remove-sm-placeholder"></span>'}
     </div>
-  ` : '';
+  `).join('');
 
   return `
-    <div class="field field-sm">
-      <label class="input-label">Reps</label>
-      <input type="number" class="input" inputmode="numeric" min="${MIN_REPS}" max="${MAX_REPS}"
-             value="${ej.repsObjetivo}" data-field="repsObjetivo" data-circ="${circIdx}" data-ej="${ejIdx}">
+    <div class="ej-series-section">
+      <button class="ej-series-toggle" data-action="toggle-form-series" data-circ="${circIdx}" data-ej="${ejIdx}">
+        ${summaryText}
+        <span class="ej-series-chevron ${isExpanded ? 'expanded' : ''}">${icon.chevronDown}</span>
+      </button>
+      <div class="ej-series-content" ${isExpanded ? '' : 'style="display:none"'}>
+        ${seriesRows}
+        <button class="ej-series-add-btn" data-action="add-form-serie" data-circ="${circIdx}" data-ej="${ejIdx}">+ Serie</button>
+      </div>
     </div>
-    ${kgField}
   `;
 }
 
@@ -190,7 +221,9 @@ function renderEjercicio(ej, circIdx, ejIdx, totalEj, circTipo = 'normal') {
   const triggerClass = ej.nombre ? 'ej-picker-trigger has-value' : 'ej-picker-trigger';
   const canMoveUp = ejIdx > 0;
   const canMoveDown = ejIdx < totalEj - 1;
-  const fieldsModifier = circTipo !== 'normal' ? ` ejercicio-form-fields--${circTipo}` : '';
+  const fieldsModifier = circTipo === 'caminata'
+    ? ' ejercicio-form-fields--velocidad'
+    : circTipo !== 'normal' ? ` ejercicio-form-fields--${circTipo}` : '';
 
   const ejActions = ej.nombre ? `
     <div class="ej-picker-actions">
@@ -254,16 +287,17 @@ function renderCircuito(circ, idx) {
   const canMoveCircUp = idx > 0;
   const canMoveCircDown = idx < rutina.circuitos.length - 1;
 
-  const circuitTypeToggle = `
+  const hasCardio = grupos.includes('Cardio');
+  const circuitTypeToggle = hasCardio ? `
     <div class="ej-type-toggle circuit-tipo-toggle">
-      <button class="ej-type-btn ${circTipo === 'normal' ? 'active' : ''}"
-              data-action="set-circuit-tipo" data-circ="${idx}" data-tipo="normal">Normal</button>
       <button class="ej-type-btn ${circTipo === 'velocidad' ? 'active' : ''}"
               data-action="set-circuit-tipo" data-circ="${idx}" data-tipo="velocidad">Velocidad</button>
+      <button class="ej-type-btn ${circTipo === 'caminata' ? 'active' : ''}"
+              data-action="set-circuit-tipo" data-circ="${idx}" data-tipo="caminata">Caminata</button>
       <button class="ej-type-btn ${circTipo === 'hiit' ? 'active' : ''}"
               data-action="set-circuit-tipo" data-circ="${idx}" data-tipo="hiit">HIIT</button>
     </div>
-  `;
+  ` : '';
 
   return `
     <div class="card circuito-form-card circuito-color-${colorSlug}" data-circuito-idx="${idx}">
@@ -397,14 +431,21 @@ function syncFromInputs() {
     const ci = parseInt(row.dataset.circ);
     const ei = parseInt(row.dataset.ej);
     if (!rutina.circuitos[ci] || !rutina.circuitos[ci].ejercicios[ei]) return;
+    const ej = rutina.circuitos[ci].ejercicios[ei];
 
     row.querySelectorAll('[data-field]').forEach((input) => {
       const field = input.dataset.field;
       const val = input.value;
       if (INT_FIELDS.includes(field)) {
-        rutina.circuitos[ci].ejercicios[ei][field] = parseInt(val) || 0;
+        ej[field] = parseInt(val) || 0;
       } else if (field === 'pesoKg') {
-        rutina.circuitos[ci].ejercicios[ei].pesoKg = parseFloat(val) || 0;
+        ej.pesoKg = parseFloat(val) || 0;
+      } else if (field === 'serie-reps') {
+        const sIdx = parseInt(input.dataset.serie);
+        if (ej.series && ej.series[sIdx]) ej.series[sIdx].reps = parseInt(val) || 0;
+      } else if (field === 'serie-peso') {
+        const sIdx = parseInt(input.dataset.serie);
+        if (ej.series && ej.series[sIdx]) ej.series[sIdx].pesoKg = parseFloat(val) || 0;
       }
     });
   });
@@ -421,11 +462,14 @@ function validate() {
         return `Circuito ${i + 1}: el ejercicio ${j + 1} necesita un nombre.`;
       }
       if (circTipo === 'normal') {
-        const reps = ej.repsObjetivo;
-        if (reps < MIN_REPS || reps > MAX_REPS) {
-          return `Circuito ${i + 1}, ejercicio ${j + 1}: las repeticiones deben ser entre ${MIN_REPS} y ${MAX_REPS}.`;
+        const series = ej.series || [];
+        if (series.length === 0) return `Circuito ${i + 1}, ej ${j + 1}: necesita al menos 1 serie.`;
+        for (const s of series) {
+          if (s.reps < MIN_REPS || s.reps > MAX_REPS) {
+            return `Circuito ${i + 1}, ejercicio ${j + 1}: las repeticiones deben ser entre ${MIN_REPS} y ${MAX_REPS}.`;
+          }
         }
-      } else if (circTipo === 'velocidad') {
+      } else if (circTipo === 'velocidad' || circTipo === 'caminata') {
         if ((ej.velocidad || 0) <= 0) return `Circuito ${i + 1}, ej ${j + 1}: velocidad debe ser > 0.`;
         if ((ej.cantidadPasadas || 0) <= 0) return `Circuito ${i + 1}, ej ${j + 1}: cantidad de pasadas debe ser > 0.`;
       } else if (circTipo === 'hiit') {
@@ -563,7 +607,9 @@ function showExitEditModal() {
         close();
         break;
       case 'discard':
-        close(() => navigate(returnTo));
+        overlay.remove();
+        isDirty = false;
+        navigate(returnTo);
         break;
     }
   });
@@ -604,10 +650,6 @@ export function mount(params) {
           rutina.circuitos[circIdx].tipo = newTipo;
           // Reset exercises to match new type
           rutina.circuitos[circIdx].ejercicios = [crearEjercicioPorTipo(newTipo), crearEjercicioPorTipo(newTipo)];
-          const currentGrupos = normalizeGrupos(rutina.circuitos[circIdx]);
-          if (newTipo !== 'normal' && currentGrupos.length === 1 && currentGrupos[0] === 'Pecho') {
-            rutina.circuitos[circIdx].grupoMuscular = ['Cardio'];
-          }
           isDirty = true;
           activePicker = null;
         }
@@ -629,6 +671,11 @@ export function mount(params) {
         if (!grupos.includes(grupo)) {
           rutina.circuitos[circIdx].grupoMuscular = [...grupos, grupo];
         }
+        // Auto-switch to velocidad when Cardio is added and tipo is normal
+        if (grupo === 'Cardio' && (rutina.circuitos[circIdx].tipo || 'normal') === 'normal') {
+          rutina.circuitos[circIdx].tipo = 'velocidad';
+          rutina.circuitos[circIdx].ejercicios = [crearEjercicioPorTipo('velocidad'), crearEjercicioPorTipo('velocidad')];
+        }
         isDirty = true;
         activeGrupoDropdown = null;
         if (activePicker && activePicker.circIdx === circIdx) {
@@ -646,6 +693,11 @@ export function mount(params) {
         const newGrupos = grupos.filter((g) => g !== grupo);
         if (newGrupos.length > 0) {
           rutina.circuitos[circIdx].grupoMuscular = newGrupos;
+          // Reset to normal when Cardio is removed and tipo is not normal
+          if (grupo === 'Cardio' && (rutina.circuitos[circIdx].tipo || 'normal') !== 'normal') {
+            rutina.circuitos[circIdx].tipo = 'normal';
+            rutina.circuitos[circIdx].ejercicios = [crearEjercicioPorTipo('normal'), crearEjercicioPorTipo('normal')];
+          }
           isDirty = true;
           if (activePicker && activePicker.circIdx === circIdx) {
             activePicker = null;
@@ -694,6 +746,51 @@ export function mount(params) {
           isDirty = true;
           activePicker = null;
           rutina.circuitos[circIdx].ejercicios.splice(ejIdx, 1);
+          reRender();
+        }
+        break;
+      }
+
+      case 'toggle-form-series': {
+        const ejIdx = parseInt(btn.dataset.ej);
+        const ejKey = `${circIdx}-${ejIdx}`;
+        if (expandedFormEjs.has(ejKey)) {
+          expandedFormEjs.delete(ejKey);
+        } else {
+          expandedFormEjs.add(ejKey);
+        }
+        const content = btn.closest('.ej-series-section')?.querySelector('.ej-series-content');
+        if (content) {
+          content.style.display = expandedFormEjs.has(ejKey) ? '' : 'none';
+          const chevron = btn.querySelector('.ej-series-chevron');
+          if (chevron) chevron.classList.toggle('expanded', expandedFormEjs.has(ejKey));
+        }
+        break;
+      }
+
+      case 'add-form-serie': {
+        const ejIdx = parseInt(btn.dataset.ej);
+        syncFromInputs();
+        const ej = rutina.circuitos[circIdx].ejercicios[ejIdx];
+        if (ej && ej.series) {
+          const last = ej.series[ej.series.length - 1];
+          ej.series.push({ reps: last.reps, pesoKg: last.pesoKg });
+          isDirty = true;
+          // Ensure expanded
+          expandedFormEjs.add(`${circIdx}-${ejIdx}`);
+          reRender();
+        }
+        break;
+      }
+
+      case 'remove-form-serie': {
+        const ejIdx = parseInt(btn.dataset.ej);
+        const sIdx = parseInt(btn.dataset.serie);
+        syncFromInputs();
+        const ej = rutina.circuitos[circIdx].ejercicios[ejIdx];
+        if (ej && ej.series && ej.series.length > 1) {
+          ej.series.splice(sIdx, 1);
+          isDirty = true;
           reRender();
         }
         break;
@@ -873,7 +970,7 @@ export function mount(params) {
                 <button class="ej-picker-option" data-action="select-ejercicio"
                         data-circ="${circIdx}" data-ej="${ejIdx}" data-nombre="${r.nombre}">
                   <span class="ej-picker-option-name">${r.nombre}</span>
-                  <span class="ej-item-type ${r.tipo}">${r.tipo === 'maquina' ? 'Máquina' : 'Funcional'}</span>
+                  <span class="ej-item-type ${r.tipo}">${r.tipo === 'maquina' ? 'M' : 'F'}</span>
                   <span class="ej-picker-info" data-action="show-ejercicio-detail" data-nombre="${r.nombre}" title="Ver detalle">${icon.info}</span>
                 </button>
               `,
