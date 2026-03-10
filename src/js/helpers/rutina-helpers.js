@@ -251,7 +251,15 @@ export function showDayAssignmentModal(usuario, dia, tipoActual, onDone, { date,
     });
     const rutinaSection = overlay.querySelector('.day-assign-rutina-section');
     if (rutinaSection) {
-      rutinaSection.style.display = selectedMode === 'rutina' ? '' : 'none';
+      if (selectedMode === 'rutina') {
+        // Show: expand section
+        rutinaSection.classList.remove('day-assign-section-hidden');
+        rutinaSection.classList.add('day-assign-section-visible');
+      } else {
+        // Hide: collapse section
+        rutinaSection.classList.remove('day-assign-section-visible');
+        rutinaSection.classList.add('day-assign-section-hidden');
+      }
     }
   }
 
@@ -287,7 +295,7 @@ export function showDayAssignmentModal(usuario, dia, tipoActual, onDone, { date,
               <span class="day-assign-btn-icon">${icon.moon}</span> Descanso
             </button>
           </div>
-          <div class="day-assign-rutina-section" ${selectedMode === 'rutina' ? '' : 'style="display:none"'}>
+          <div class="day-assign-rutina-section ${selectedMode === 'rutina' ? 'day-assign-section-visible' : 'day-assign-section-hidden'}">
             <div class="ej-type-toggle day-assign-tipo-toggle">
               <button class="ej-type-btn ${currentTipo === 'gimnasio' ? 'active' : ''}" data-assign-tipo="gimnasio">
                 Gimnasio <span class="day-assign-tipo-count">(${gimCount})</span>

@@ -1247,6 +1247,7 @@
 .ejercicio-form-row {
   margin-bottom: var(--space-md);
   padding-bottom: var(--space-md);
+  padding-left: calc(24px + var(--space-sm));
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -1455,11 +1456,20 @@
   gap: 4px;
 }
 
+.ej-picker-field {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
 .ej-picker-trigger {
   flex: 1;
   min-width: 0;
   min-height: var(--touch-min);
   padding: var(--space-sm) var(--space-md);
+  padding-right: 36px;
   text-align: left;
   font-size: var(--text-sm);
   font-weight: var(--fw-normal);
@@ -1471,6 +1481,36 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.ej-picker-inline-info {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  transition: background-color 0.15s, color 0.15s;
+  z-index: 1;
+}
+.ej-picker-inline-info:active {
+  background: color-mix(in srgb, var(--color-surface) 70%, var(--color-accent));
+  color: var(--color-accent);
+}
+.ej-picker-inline-info svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ej-picker-remove-btn:disabled {
+  opacity: 0.2;
+  pointer-events: none;
 }
 
 .ej-picker-trigger.has-value {
@@ -3530,7 +3570,7 @@
 
 .ej-serie-row {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: var(--space-xs);
 }
 
@@ -3541,6 +3581,8 @@
   color: var(--color-text-muted);
   flex-shrink: 0;
   text-align: center;
+  /* Center with the input (not the label+input) */
+  line-height: var(--touch-comfortable);
 }
 
 .ej-serie-row .field {
@@ -3567,6 +3609,8 @@
   flex-shrink: 0;
   border-radius: var(--radius-full);
   transition: background 0.15s, color 0.15s;
+  /* Center with the input at flex-end */
+  margin-bottom: calc((var(--touch-comfortable) - 24px) / 2);
 }
 .btn-remove-sm:active {
   background: rgba(239, 68, 68, 0.15);
@@ -3580,6 +3624,7 @@
 .btn-remove-sm-placeholder {
   width: 24px;
   flex-shrink: 0;
+  margin-bottom: calc((var(--touch-comfortable) - 24px) / 2);
 }
 
 .ej-series-add-btn {

@@ -2,7 +2,7 @@ import { getRutinaById, getRutinas, saveRutina, getUsuarioActivo, getEjercicioMe
 import { generateId } from '@/id.js';
 import { navigate } from '@/router.js';
 import { icon } from '@js/icons.js';
-import { buscarEjerciciosPorCategorias, addEjercicioCustom } from '@js/ejercicios-catalogo.js';
+import { buscarEjerciciosPorCategorias, addEjercicioCustom, CATEGORIAS } from '@js/ejercicios-catalogo.js';
 import { showModal } from '@js/components/modal.js';
 import { showToast } from '@js/components/toast.js';
 import { showExerciseDetail } from '@js/helpers/ejercicio-detail.js';
@@ -88,7 +88,8 @@ let expandedFormEjs = new Set(); // tracks 'circIdx-ejIdx' keys for expanded ser
 
 function renderPicker(circIdx, ejIdx) {
   const circ = rutina.circuitos[circIdx];
-  const categorias = [...new Set(normalizeGrupos(circ).flatMap((g) => GRUPO_A_CATEGORIAS[g] || [g]))];
+  const gruposCats = normalizeGrupos(circ).flatMap((g) => GRUPO_A_CATEGORIAS[g] || [g]);
+  const categorias = gruposCats.length > 0 ? [...new Set(gruposCats)] : [...CATEGORIAS];
   const resultados = buscarEjerciciosPorCategorias(categorias, pickerQuery);
   const q = pickerQuery.trim().toLowerCase();
 
@@ -225,21 +226,23 @@ function renderEjercicio(ej, circIdx, ejIdx, totalEj, circTipo = 'normal') {
     ? ' ejercicio-form-fields--velocidad'
     : circTipo !== 'normal' ? ` ejercicio-form-fields--${circTipo}` : '';
 
-  const ejActions = ej.nombre ? `
-    <div class="ej-picker-actions">
-      <button class="ej-picker-action-btn" data-action="ej-info" data-circ="${circIdx}" data-ej="${ejIdx}" title="Ver detalle">${icon.info}</button>
-      <button class="ej-picker-action-btn" data-action="clear-ejercicio" data-circ="${circIdx}" data-ej="${ejIdx}" title="Limpiar">${icon.close}</button>
-    </div>` : '';
+  // Info icon inside the field, X button outside
+  const infoInside = ej.nombre ? `<span class="ej-picker-inline-info" data-action="ej-info" data-circ="${circIdx}" data-ej="${ejIdx}" title="Ver detalle">${icon.info}</span>` : '';
+  const canRemove = totalEj > MIN_EJERCICIOS;
+  const removeBtn = `<button class="ej-picker-action-btn ej-picker-remove-btn" data-action="remove-ejercicio" data-circ="${circIdx}" data-ej="${ejIdx}" title="Eliminar ejercicio"${canRemove ? '' : ' disabled'}>${icon.close}</button>`;
 
   return `
     <div class="ejercicio-form-row" data-circ="${circIdx}" data-ej="${ejIdx}">
       <div class="ej-picker-wrap">
         <div class="ej-picker-row">
-          <button class="${triggerClass}" data-action="open-picker"
-                  data-circ="${circIdx}" data-ej="${ejIdx}">
-            ${ej.nombre || 'Seleccionar ejercicio...'}
-          </button>
-          ${ejActions}
+          <div class="ej-picker-field">
+            <button class="${triggerClass}" data-action="open-picker"
+                    data-circ="${circIdx}" data-ej="${ejIdx}">
+              ${ej.nombre || 'Seleccionar ejercicio...'}
+            </button>
+            ${infoInside}
+          </div>
+          ${removeBtn}
         </div>
         ${isPickerOpen ? renderPicker(circIdx, ejIdx) : ''}
       </div>
@@ -251,8 +254,6 @@ function renderEjercicio(ej, circIdx, ejIdx, totalEj, circTipo = 'normal') {
                   ${canMoveDown ? '' : 'disabled'} title="Mover abajo">${icon.chevronDown || '▼'}</button>
         </div>
         ${renderEjFields(ej, circIdx, ejIdx, circTipo)}
-        <button class="btn-remove" data-action="remove-ejercicio" data-circ="${circIdx}" data-ej="${ejIdx}"
-                title="Eliminar ejercicio">${icon.close}</button>
       </div>
     </div>
   `;
@@ -741,13 +742,20 @@ export function mount(params) {
 
       case 'remove-ejercicio': {
         const ejIdx = parseInt(btn.dataset.ej);
+        syncFromInputs();
+        isDirty = true;
+        activePicker = null;
         if (rutina.circuitos[circIdx].ejercicios.length > MIN_EJERCICIOS) {
-          syncFromInputs();
-          isDirty = true;
-          activePicker = null;
           rutina.circuitos[circIdx].ejercicios.splice(ejIdx, 1);
-          reRender();
+        } else {
+          // Can't remove — clear the exercise instead
+          const ej = rutina.circuitos[circIdx].ejercicios[ejIdx];
+          if (ej) {
+            ej.nombre = '';
+            ej.series = [{ reps: 8, pesoKg: 8 }, { reps: 8, pesoKg: 8 }, { reps: 8, pesoKg: 8 }];
+          }
         }
+        reRender();
         break;
       }
 
@@ -824,8 +832,8 @@ export function mount(params) {
         const nombre = btn.dataset.nombre;
         const circ = rutina.circuitos[circIdx];
         // Use first category in mapping as default for custom exercise
-        const categorias = [...new Set(normalizeGrupos(circ).flatMap((g) => GRUPO_A_CATEGORIAS[g] || [g]))];
-        const categoria = categorias[0];
+        const gruposCatsC = normalizeGrupos(circ).flatMap((g) => GRUPO_A_CATEGORIAS[g] || [g]);
+        const categoria = gruposCatsC.length > 0 ? gruposCatsC[0] : 'Core';
         syncFromInputs();
         isDirty = true;
         addEjercicioCustom(nombre, categoria);
@@ -949,6 +957,11 @@ export function mount(params) {
   };
 
   const handleInput = (e) => {
+    // Track dirty on any field input (not just change/blur)
+    if (e.target.matches('[data-field]') || e.target.matches('#rutina-nombre')) {
+      isDirty = true;
+    }
+
     if (e.target.matches('.ej-picker-search')) {
       pickerQuery = e.target.value;
       // Re-render just the picker list without full reRender (for performance)
@@ -956,7 +969,8 @@ export function mount(params) {
       if (panel && activePicker) {
         const { circIdx, ejIdx } = activePicker;
         const circ = rutina.circuitos[circIdx];
-        const categorias = [...new Set(normalizeGrupos(circ).flatMap((g) => GRUPO_A_CATEGORIAS[g] || [g]))];
+        const gruposCats = normalizeGrupos(circ).flatMap((g) => GRUPO_A_CATEGORIAS[g] || [g]);
+        const categorias = gruposCats.length > 0 ? [...new Set(gruposCats)] : [...CATEGORIAS];
         const resultados = buscarEjerciciosPorCategorias(categorias, pickerQuery);
         const q = pickerQuery.trim().toLowerCase();
         const exactMatch = q && resultados.some((r) => r.nombre.toLowerCase() === q);

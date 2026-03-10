@@ -418,6 +418,21 @@ select.input {
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.25s ease, margin-top 0.3s ease;
+}
+
+.day-assign-section-visible {
+  max-height: 400px;
+  opacity: 1;
+  margin-top: 0;
+}
+
+.day-assign-section-hidden {
+  max-height: 0;
+  opacity: 0;
+  margin-top: calc(-1 * var(--space-sm));
+  pointer-events: none;
 }
 
 /* ── FAB ─────────────────────────────────── */
