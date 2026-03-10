@@ -75,7 +75,9 @@ function renderCircuito(circ, circIdx, prevCirc, records) {
       // Velocidad/Caminata exercise detail
       if (circTipo === 'velocidad' || circTipo === 'caminata') {
         const completadas = (ej.pasadas || []).filter((p) => p.completada).length;
-        const total = ej.cantidadPasadas || ej.pasadas?.length || 0;
+        const total = circ.cantidadPasadas ?? ej.cantidadPasadas ?? ej.pasadas?.length ?? 0;
+        const vel = circ.velocidad ?? ej.velocidad ?? 0;
+        const tiempo = circ.tiempo ?? ej.tiempo ?? 0;
         const badgeLabel = circTipo === 'caminata' ? 'Caminata' : 'Velocidad';
         return `
           <div class="ejercicio-detalle-row">
@@ -83,7 +85,7 @@ function renderCircuito(circ, circIdx, prevCirc, records) {
             <div class="ejercicio-detalle-values">
               <div class="ejercicio-detalle-col">
                 <div class="ejercicio-detalle-col-label">Pasadas</div>
-                <div class="ejercicio-detalle-col-value">${completadas}/${total} &middot; ${ej.velocidad}km/h &middot; ${ej.tiempo}s</div>
+                <div class="ejercicio-detalle-col-value">${completadas}/${total} &middot; ${vel}km/h &middot; ${tiempo}s</div>
               </div>
             </div>
           </div>
@@ -93,14 +95,16 @@ function renderCircuito(circ, circIdx, prevCirc, records) {
       // HIIT exercise detail
       if (circTipo === 'hiit') {
         const completadas = (ej.roundResults || []).filter((r) => r.completada).length;
-        const total = ej.rounds || ej.roundResults?.length || 0;
+        const total = circ.rounds ?? ej.rounds ?? ej.roundResults?.length ?? 0;
+        const workT = circ.workTime ?? ej.workTime ?? 0;
+        const restT = circ.restTime ?? ej.restTime ?? 0;
         return `
           <div class="ejercicio-detalle-row">
             <div class="ejercicio-detalle-name">${ej.nombre} <span class="detalle-type-badge hiit">HIIT</span></div>
             <div class="ejercicio-detalle-values">
               <div class="ejercicio-detalle-col">
                 <div class="ejercicio-detalle-col-label">Rondas</div>
-                <div class="ejercicio-detalle-col-value">${completadas}/${total} &middot; ${ej.workTime}s work / ${ej.restTime}s rest</div>
+                <div class="ejercicio-detalle-col-value">${completadas}/${total} &middot; ${workT}s work / ${restT}s rest</div>
               </div>
             </div>
           </div>

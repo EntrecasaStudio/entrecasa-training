@@ -82,30 +82,39 @@ function initState(rutinaId) {
       const circTipo = circ.tipo || 'normal';
 
       if (circTipo === 'velocidad' || circTipo === 'caminata') {
+        // Read params from circuit level (new), fall back to first exercise (old routines)
+        const vel = circ.velocidad ?? circ.ejercicios[0]?.velocidad ?? 12;
+        const tiempo = circ.tiempo ?? circ.ejercicios[0]?.tiempo ?? 30;
+        const descanso = circ.descanso ?? circ.ejercicios[0]?.descanso ?? 60;
+        const cantPasadas = circ.cantidadPasadas ?? circ.ejercicios[0]?.cantidadPasadas ?? 6;
         return {
           tipo: circTipo,
           grupoMuscular: circ.grupoMuscular,
+          velocidad: vel,
+          tiempo,
+          descanso,
+          cantidadPasadas: cantPasadas,
           ejercicios: circ.ejercicios.map((ej) => ({
             nombre: ej.nombre,
-            velocidad: ej.velocidad,
-            tiempo: ej.tiempo,
-            descanso: ej.descanso,
-            cantidadPasadas: ej.cantidadPasadas,
-            pasadas: Array.from({ length: ej.cantidadPasadas }, () => ({ completada: false, tiempoReal: ej.tiempo })),
+            pasadas: Array.from({ length: cantPasadas }, () => ({ completada: false, tiempoReal: tiempo })),
           })),
         };
       }
 
       if (circTipo === 'hiit') {
+        // Read params from circuit level (new), fall back to first exercise (old routines)
+        const workTime = circ.workTime ?? circ.ejercicios[0]?.workTime ?? 40;
+        const restTime = circ.restTime ?? circ.ejercicios[0]?.restTime ?? 20;
+        const rounds = circ.rounds ?? circ.ejercicios[0]?.rounds ?? 3;
         return {
           tipo: 'hiit',
           grupoMuscular: circ.grupoMuscular,
+          workTime,
+          restTime,
+          rounds,
           ejercicios: circ.ejercicios.map((ej) => ({
             nombre: ej.nombre,
-            workTime: ej.workTime,
-            restTime: ej.restTime,
-            rounds: ej.rounds,
-            roundResults: Array.from({ length: ej.rounds }, () => ({ completada: false })),
+            roundResults: Array.from({ length: rounds }, () => ({ completada: false })),
           })),
         };
       }
@@ -327,9 +336,9 @@ function renderEjercicio(ej, ejIdx) {
 }
 
 // ── Velocidad/Caminata exercise rendering ────
-function renderEjercicioVelocidad(ej, ejIdx, tipo = 'velocidad') {
+function renderEjercicioVelocidad(ej, ejIdx, circ, tipo = 'velocidad') {
   const completadas = ej.pasadas.filter((p) => p.completada).length;
-  const total = ej.cantidadPasadas;
+  const total = circ.cantidadPasadas;
   const allDone = completadas === total;
 
   const isTimerActive = activeTimer && (activeTimer.type === 'velocidad' || activeTimer.type === 'caminata') && activeTimer.ejIdx === ejIdx;
@@ -345,7 +354,7 @@ function renderEjercicioVelocidad(ej, ejIdx, tipo = 'velocidad') {
       <div class="${cls}">
         <button class="workout-vuelta-check" data-action="toggle-pasada" data-ej="${ejIdx}" data-pasada="${pIdx}">${checkIcon}</button>
         <span class="workout-vuelta-label">P${pIdx + 1}</span>
-        <span class="workout-pasada-info">${ej.velocidad} km/h &middot; ${ej.tiempo}s</span>
+        <span class="workout-pasada-info">${circ.velocidad} km/h &middot; ${circ.tiempo}s</span>
         ${p.completada ? `<span class="workout-pasada-done-label">${icon.check}</span>` : ''}
       </div>
     `;
@@ -375,7 +384,7 @@ function renderEjercicioVelocidad(ej, ejIdx, tipo = 'velocidad') {
         <span class="workout-circuit-type-badge ${tipo}">${tipo === 'caminata' ? 'Caminata' : 'Velocidad'}</span>
       </div>
       <div class="workout-ejercicio-target">
-        ${total} pasadas &middot; ${ej.velocidad} km/h &middot; ${ej.tiempo}s / ${ej.descanso}s desc
+        ${total} pasadas &middot; ${circ.velocidad} km/h &middot; ${circ.tiempo}s / ${circ.descanso}s desc
       </div>
       <div class="workout-pasada-progress">${completadas}/${total} completadas ${allDone ? icon.check : ''}</div>
       ${timerHtml}
@@ -391,9 +400,9 @@ function renderEjercicioVelocidad(ej, ejIdx, tipo = 'velocidad') {
 }
 
 // ── HIIT exercise rendering ─────────────────
-function renderEjercicioHIIT(ej, ejIdx) {
+function renderEjercicioHIIT(ej, ejIdx, circ) {
   const completadas = ej.roundResults.filter((r) => r.completada).length;
-  const total = ej.rounds;
+  const total = circ.rounds;
   const allDone = completadas === total;
 
   const isTimerActive = activeTimer && activeTimer.type === 'hiit' && activeTimer.ejIdx === ejIdx;
@@ -408,7 +417,7 @@ function renderEjercicioHIIT(ej, ejIdx) {
       <div class="${cls}">
         <button class="workout-vuelta-check" data-action="toggle-hiit-round" data-ej="${ejIdx}" data-round="${rIdx}">${checkIcon}</button>
         <span class="workout-vuelta-label">R${rIdx + 1}</span>
-        <span class="workout-pasada-info">${ej.workTime}s work / ${ej.restTime}s rest</span>
+        <span class="workout-pasada-info">${circ.workTime}s work / ${circ.restTime}s rest</span>
       </div>
     `;
   }).join('');
@@ -437,7 +446,7 @@ function renderEjercicioHIIT(ej, ejIdx) {
         <span class="workout-circuit-type-badge hiit">HIIT</span>
       </div>
       <div class="workout-ejercicio-target">
-        ${total} rondas &middot; ${ej.workTime}s work / ${ej.restTime}s rest
+        ${total} rondas &middot; ${circ.workTime}s work / ${circ.restTime}s rest
       </div>
       <div class="workout-pasada-progress">${completadas}/${total} rondas ${allDone ? icon.check : ''}</div>
       ${timerHtml}
@@ -459,7 +468,7 @@ function startVelocidadTimer(ejIdx, pasadaIdx, params, timerType = 'velocidad') 
   if (!ej) return;
 
   clearActiveTimer();
-  activeTimer = { type: timerType, ejIdx, phase: 'run', remaining: ej.tiempo, pasadaIdx };
+  activeTimer = { type: timerType, ejIdx, phase: 'run', remaining: circ.tiempo, pasadaIdx };
 
   activeTimerInterval = setInterval(() => {
     activeTimer.remaining--;
@@ -481,10 +490,10 @@ function startVelocidadTimer(ejIdx, pasadaIdx, params, timerType = 'velocidad') 
 
         // Check if there are more pasadas
         const nextPasada = pasadaIdx + 1;
-        if (nextPasada < ej.cantidadPasadas && ej.descanso > 0) {
+        if (nextPasada < circ.cantidadPasadas && circ.descanso > 0) {
           // Start rest phase
           activeTimer.phase = 'rest';
-          activeTimer.remaining = ej.descanso;
+          activeTimer.remaining = circ.descanso;
           activeTimer.pasadaIdx = nextPasada;
           reRenderWorkout(params);
         } else {
@@ -497,7 +506,7 @@ function startVelocidadTimer(ejIdx, pasadaIdx, params, timerType = 'velocidad') 
         playFinishBeep();
         haptic.warning();
         activeTimer.phase = 'run';
-        activeTimer.remaining = ej.tiempo;
+        activeTimer.remaining = circ.tiempo;
         reRenderWorkout(params);
       }
     }
@@ -517,7 +526,7 @@ function startHIITTimer(ejIdx, params) {
   if (roundIdx < 0) return;
 
   clearActiveTimer();
-  activeTimer = { type: 'hiit', ejIdx, phase: 'work', remaining: ej.workTime, roundIdx };
+  activeTimer = { type: 'hiit', ejIdx, phase: 'work', remaining: circ.workTime, roundIdx };
 
   activeTimerInterval = setInterval(() => {
     activeTimer.remaining--;
@@ -538,16 +547,16 @@ function startHIITTimer(ejIdx, params) {
         saveWorkoutActivo(state);
 
         const nextRound = activeTimer.roundIdx + 1;
-        if (nextRound < ej.rounds && ej.restTime > 0) {
+        if (nextRound < circ.rounds && circ.restTime > 0) {
           // Start rest
           activeTimer.phase = 'rest';
-          activeTimer.remaining = ej.restTime;
+          activeTimer.remaining = circ.restTime;
           activeTimer.roundIdx = nextRound;
           reRenderWorkout(params);
-        } else if (nextRound < ej.rounds) {
+        } else if (nextRound < circ.rounds) {
           // No rest, start next work
           activeTimer.phase = 'work';
-          activeTimer.remaining = ej.workTime;
+          activeTimer.remaining = circ.workTime;
           activeTimer.roundIdx = nextRound;
           reRenderWorkout(params);
         } else {
@@ -560,7 +569,7 @@ function startHIITTimer(ejIdx, params) {
         playFinishBeep();
         haptic.warning();
         activeTimer.phase = 'work';
-        activeTimer.remaining = ej.workTime;
+        activeTimer.remaining = circ.workTime;
         reRenderWorkout(params);
       }
     }
@@ -623,9 +632,9 @@ export function render(params) {
 
   // Branch exercise rendering by circuit type
   const ejercicios = circ.ejercicios.map((ej, i) => {
-    if (circTipo === 'velocidad') return renderEjercicioVelocidad(ej, i, 'velocidad');
-    if (circTipo === 'caminata') return renderEjercicioVelocidad(ej, i, 'caminata');
-    if (circTipo === 'hiit') return renderEjercicioHIIT(ej, i);
+    if (circTipo === 'velocidad') return renderEjercicioVelocidad(ej, i, circ, 'velocidad');
+    if (circTipo === 'caminata') return renderEjercicioVelocidad(ej, i, circ, 'caminata');
+    if (circTipo === 'hiit') return renderEjercicioHIIT(ej, i, circ);
     return renderEjercicio(ej, i);
   }).join('');
 
@@ -831,14 +840,16 @@ function applyModificationsToRutina() {
     const base = { tipo: circTipo, grupoMuscular: circ.grupoMuscular };
 
     if (circTipo === 'velocidad' || circTipo === 'caminata') {
-      return { ...base, ejercicios: circ.ejercicios.map((ej) => ({
-        nombre: ej.nombre, velocidad: ej.velocidad, tiempo: ej.tiempo, descanso: ej.descanso, cantidadPasadas: ej.cantidadPasadas,
-      })) };
+      return { ...base,
+        velocidad: circ.velocidad, tiempo: circ.tiempo, descanso: circ.descanso, cantidadPasadas: circ.cantidadPasadas,
+        ejercicios: circ.ejercicios.map((ej) => ({ nombre: ej.nombre })),
+      };
     }
     if (circTipo === 'hiit') {
-      return { ...base, ejercicios: circ.ejercicios.map((ej) => ({
-        nombre: ej.nombre, workTime: ej.workTime, restTime: ej.restTime, rounds: ej.rounds,
-      })) };
+      return { ...base,
+        workTime: circ.workTime, restTime: circ.restTime, rounds: circ.rounds,
+        ejercicios: circ.ejercicios.map((ej) => ({ nombre: ej.nombre })),
+      };
     }
     return { ...base, ejercicios: circ.ejercicios.map((ej) => ({
       nombre: ej.nombre,
@@ -902,12 +913,11 @@ function finishWorkout() {
             copia.circuitos = state.resultados.map((circ) => ({
               grupoMuscular: circ.grupoMuscular,
               tipo: circ.tipo || 'normal',
-              ...(circ.tipo === 'velocidad' ? { velocidad: circ.velocidad, tiempo: circ.tiempo, descanso: circ.descanso } : {}),
-              ...(circ.tipo === 'hiit' ? { workTime: circ.workTime, restTime: circ.restTime } : {}),
+              ...((circ.tipo === 'velocidad' || circ.tipo === 'caminata') ? { velocidad: circ.velocidad, tiempo: circ.tiempo, descanso: circ.descanso, cantidadPasadas: circ.cantidadPasadas } : {}),
+              ...(circ.tipo === 'hiit' ? { workTime: circ.workTime, restTime: circ.restTime, rounds: circ.rounds } : {}),
               ejercicios: circ.ejercicios.map((ej) => ({
                 nombre: ej.nombre,
-                repsObjetivo: ej.repsObjetivo,
-                pesoKg: ej.pesoObjetivoKg,
+                ...(circ.tipo === 'normal' ? { series: ej.vueltas?.map((v) => ({ reps: v.repsReal, pesoKg: v.pesoRealKg })) || [] } : {}),
               })),
             }));
             saveRutina(copia);
@@ -1595,8 +1605,8 @@ export function mount(params) {
         const circ6 = state.resultados[state.circuitoActual];
         const ej6 = circ6?.ejercicios[ejIdx6];
         if (ej6?.pasadas) {
-          ej6.pasadas.push({ completada: false, tiempoReal: ej6.tiempo });
-          ej6.cantidadPasadas = ej6.pasadas.length;
+          ej6.pasadas.push({ completada: false, tiempoReal: circ6.tiempo });
+          circ6.cantidadPasadas = Math.max(circ6.cantidadPasadas || 0, ej6.pasadas.length);
           state.modified = true;
           saveWorkoutActivo(state);
           haptic.light();
@@ -1611,7 +1621,7 @@ export function mount(params) {
         const ej7 = circ7?.ejercicios[ejIdx7];
         if (ej7?.roundResults) {
           ej7.roundResults.push({ completada: false });
-          ej7.rounds = ej7.roundResults.length;
+          circ7.rounds = Math.max(circ7.rounds || 0, ej7.roundResults.length);
           state.modified = true;
           saveWorkoutActivo(state);
           haptic.light();

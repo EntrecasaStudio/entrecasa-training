@@ -50,32 +50,41 @@ function crearEjercicioVacio() {
   };
 }
 
-function crearEjercicioVelocidad() {
-  return { id: generateId(), nombre: '', velocidad: 12, tiempo: 30, descanso: 60, cantidadPasadas: 6 };
-}
-
-function crearEjercicioCaminata() {
-  return { id: generateId(), nombre: '', velocidad: 5, tiempo: 120, descanso: 30, cantidadPasadas: 4 };
-}
-
-function crearEjercicioHIIT() {
-  return { id: generateId(), nombre: '', workTime: 40, restTime: 20, rounds: 3 };
+// HIIT/velocidad/caminata exercises are now just name selectors
+// Params (workTime, restTime, rounds, velocidad, etc.) live at circuit level
+function crearEjercicioSimple() {
+  return { id: generateId(), nombre: '' };
 }
 
 function crearEjercicioPorTipo(tipo) {
-  if (tipo === 'velocidad') return crearEjercicioVelocidad();
-  if (tipo === 'caminata') return crearEjercicioCaminata();
-  if (tipo === 'hiit') return crearEjercicioHIIT();
+  if (tipo === 'velocidad' || tipo === 'caminata' || tipo === 'hiit') return crearEjercicioSimple();
   return crearEjercicioVacio();
 }
 
 function crearCircuitoVacio(tipo = 'normal') {
-  return {
+  const circ = {
     id: generateId(),
     tipo,
     grupoMuscular: [],
     ejercicios: [crearEjercicioPorTipo(tipo), crearEjercicioPorTipo(tipo)],
   };
+  // Circuit-level params for non-normal types
+  if (tipo === 'hiit') {
+    circ.workTime = 40;
+    circ.restTime = 20;
+    circ.rounds = 3;
+  } else if (tipo === 'velocidad') {
+    circ.velocidad = 12;
+    circ.tiempo = 30;
+    circ.descanso = 60;
+    circ.cantidadPasadas = 6;
+  } else if (tipo === 'caminata') {
+    circ.velocidad = 5;
+    circ.tiempo = 120;
+    circ.descanso = 30;
+    circ.cantidadPasadas = 4;
+  }
+  return circ;
 }
 
 // State local to this view
@@ -132,50 +141,63 @@ function renderPicker(circIdx, ejIdx) {
   `;
 }
 
-function renderEjFields(ej, circIdx, ejIdx, circTipo) {
-  if (circTipo === 'velocidad' || circTipo === 'caminata') {
+// Circuit-level params section (for HIIT / velocidad / caminata)
+function renderCircuitParams(circ, idx) {
+  const tipo = circ.tipo || 'normal';
+  if (tipo === 'velocidad' || tipo === 'caminata') {
     return `
-      <div class="field field-sm">
-        <label class="input-label">Vel</label>
-        <input type="number" class="input" inputmode="numeric" min="1"
-               value="${ej.velocidad}" data-field="velocidad" data-circ="${circIdx}" data-ej="${ejIdx}">
-      </div>
-      <div class="field field-sm">
-        <label class="input-label">Seg</label>
-        <input type="number" class="input" inputmode="numeric" min="1"
-               value="${ej.tiempo}" data-field="tiempo" data-circ="${circIdx}" data-ej="${ejIdx}">
-      </div>
-      <div class="field field-sm">
-        <label class="input-label">Desc</label>
-        <input type="number" class="input" inputmode="numeric" min="0"
-               value="${ej.descanso}" data-field="descanso" data-circ="${circIdx}" data-ej="${ejIdx}">
-      </div>
-      <div class="field field-sm">
-        <label class="input-label">Pas</label>
-        <input type="number" class="input" inputmode="numeric" min="1"
-               value="${ej.cantidadPasadas}" data-field="cantidadPasadas" data-circ="${circIdx}" data-ej="${ejIdx}">
+      <div class="circuit-params">
+        <div class="field field-sm">
+          <label class="input-label">Vel</label>
+          <input type="number" class="input" inputmode="numeric" min="1"
+                 value="${circ.velocidad ?? 12}" data-circ-field="velocidad" data-circ="${idx}">
+        </div>
+        <div class="field field-sm">
+          <label class="input-label">Seg</label>
+          <input type="number" class="input" inputmode="numeric" min="1"
+                 value="${circ.tiempo ?? 30}" data-circ-field="tiempo" data-circ="${idx}">
+        </div>
+        <div class="field field-sm">
+          <label class="input-label">Desc</label>
+          <input type="number" class="input" inputmode="numeric" min="0"
+                 value="${circ.descanso ?? 60}" data-circ-field="descanso" data-circ="${idx}">
+        </div>
+        <div class="field field-sm">
+          <label class="input-label">Pasadas</label>
+          <input type="number" class="input" inputmode="numeric" min="1"
+                 value="${circ.cantidadPasadas ?? 6}" data-circ-field="cantidadPasadas" data-circ="${idx}">
+        </div>
       </div>
     `;
   }
-
-  if (circTipo === 'hiit') {
+  if (tipo === 'hiit') {
     return `
-      <div class="field field-sm">
-        <label class="input-label">Work</label>
-        <input type="number" class="input" inputmode="numeric" min="1"
-               value="${ej.workTime}" data-field="workTime" data-circ="${circIdx}" data-ej="${ejIdx}">
-      </div>
-      <div class="field field-sm">
-        <label class="input-label">Rest</label>
-        <input type="number" class="input" inputmode="numeric" min="0"
-               value="${ej.restTime}" data-field="restTime" data-circ="${circIdx}" data-ej="${ejIdx}">
-      </div>
-      <div class="field field-sm">
-        <label class="input-label">Rondas</label>
-        <input type="number" class="input" inputmode="numeric" min="1"
-               value="${ej.rounds}" data-field="rounds" data-circ="${circIdx}" data-ej="${ejIdx}">
+      <div class="circuit-params">
+        <div class="field field-sm">
+          <label class="input-label">Work</label>
+          <input type="number" class="input" inputmode="numeric" min="1"
+                 value="${circ.workTime ?? 40}" data-circ-field="workTime" data-circ="${idx}">
+        </div>
+        <div class="field field-sm">
+          <label class="input-label">Rest</label>
+          <input type="number" class="input" inputmode="numeric" min="0"
+                 value="${circ.restTime ?? 20}" data-circ-field="restTime" data-circ="${idx}">
+        </div>
+        <div class="field field-sm">
+          <label class="input-label">Rondas</label>
+          <input type="number" class="input" inputmode="numeric" min="1"
+                 value="${circ.rounds ?? 3}" data-circ-field="rounds" data-circ="${idx}">
+        </div>
       </div>
     `;
+  }
+  return '';
+}
+
+function renderEjFields(ej, circIdx, ejIdx, circTipo) {
+  // Non-normal types: fields are at circuit level, nothing here
+  if (circTipo === 'velocidad' || circTipo === 'caminata' || circTipo === 'hiit') {
+    return '';
   }
 
   // Normal — collapsible series section
@@ -204,8 +226,8 @@ function renderEjFields(ej, circIdx, ejIdx, circTipo) {
   return `
     <div class="ej-series-section">
       <button class="ej-series-toggle" data-action="toggle-form-series" data-circ="${circIdx}" data-ej="${ejIdx}">
-        ${summaryText}
         <span class="ej-series-chevron ${isExpanded ? 'expanded' : ''}">${icon.chevronDown}</span>
+        ${summaryText}
       </button>
       <div class="ej-series-content" ${isExpanded ? '' : 'style="display:none"'}>
         ${seriesRows}
@@ -220,21 +242,25 @@ function renderEjercicio(ej, circIdx, ejIdx, totalEj, circTipo = 'normal') {
     activePicker && activePicker.circIdx === circIdx && activePicker.ejIdx === ejIdx;
 
   const triggerClass = ej.nombre ? 'ej-picker-trigger has-value' : 'ej-picker-trigger';
-  const canMoveUp = ejIdx > 0;
-  const canMoveDown = ejIdx < totalEj - 1;
-  const fieldsModifier = circTipo === 'caminata'
-    ? ' ejercicio-form-fields--velocidad'
-    : circTipo !== 'normal' ? ` ejercicio-form-fields--${circTipo}` : '';
 
   // Info icon inside the field, X button outside
   const infoInside = ej.nombre ? `<span class="ej-picker-inline-info" data-action="ej-info" data-circ="${circIdx}" data-ej="${ejIdx}" title="Ver detalle">${icon.info}</span>` : '';
   const canRemove = totalEj > MIN_EJERCICIOS;
   const removeBtn = `<button class="ej-picker-action-btn ej-picker-remove-btn" data-action="remove-ejercicio" data-circ="${circIdx}" data-ej="${ejIdx}" title="Eliminar ejercicio"${canRemove ? '' : ' disabled'}>${icon.close}</button>`;
 
+  // Drag handle for reordering exercises
+  const dragHandle = totalEj > 1
+    ? `<span class="drag-handle drag-handle-ej" data-circ="${circIdx}" data-ej="${ejIdx}">${icon.grip}</span>`
+    : '';
+
+  const ejFields = renderEjFields(ej, circIdx, ejIdx, circTipo);
+  const fieldsSection = ejFields ? `<div class="ejercicio-form-fields">${ejFields}</div>` : '';
+
   return `
     <div class="ejercicio-form-row" data-circ="${circIdx}" data-ej="${ejIdx}">
       <div class="ej-picker-wrap">
         <div class="ej-picker-row">
+          ${dragHandle}
           <div class="ej-picker-field">
             <button class="${triggerClass}" data-action="open-picker"
                     data-circ="${circIdx}" data-ej="${ejIdx}">
@@ -246,15 +272,7 @@ function renderEjercicio(ej, circIdx, ejIdx, totalEj, circTipo = 'normal') {
         </div>
         ${isPickerOpen ? renderPicker(circIdx, ejIdx) : ''}
       </div>
-      <div class="ejercicio-form-fields${fieldsModifier}">
-        <div class="ej-reorder">
-          <button class="btn-reorder" data-action="move-ejercicio-up" data-circ="${circIdx}" data-ej="${ejIdx}"
-                  ${canMoveUp ? '' : 'disabled'} title="Mover arriba">${icon.chevronUp || '▲'}</button>
-          <button class="btn-reorder" data-action="move-ejercicio-down" data-circ="${circIdx}" data-ej="${ejIdx}"
-                  ${canMoveDown ? '' : 'disabled'} title="Mover abajo">${icon.chevronDown || '▼'}</button>
-        </div>
-        ${renderEjFields(ej, circIdx, ejIdx, circTipo)}
-      </div>
+      ${fieldsSection}
     </div>
   `;
 }
@@ -285,9 +303,6 @@ function renderCircuito(circ, idx) {
   const ejercicios = circ.ejercicios.map((ej, ejIdx) => renderEjercicio(ej, idx, ejIdx, totalEj, circTipo)).join('');
   const canAdd = circ.ejercicios.length < MAX_EJERCICIOS;
 
-  const canMoveCircUp = idx > 0;
-  const canMoveCircDown = idx < rutina.circuitos.length - 1;
-
   const hasCardio = grupos.includes('Cardio');
   const circuitTypeToggle = hasCardio ? `
     <div class="ej-type-toggle circuit-tipo-toggle">
@@ -300,25 +315,29 @@ function renderCircuito(circ, idx) {
     </div>
   ` : '';
 
+  // Circuit-level params (shown after type toggle, before exercises)
+  const circuitParams = hasCardio ? renderCircuitParams(circ, idx) : '';
+
+  // Drag handle for circuit reordering
+  const circDragHandle = rutina.circuitos.length > 1
+    ? `<span class="drag-handle drag-handle-circ" data-circ="${idx}">${icon.grip}</span>`
+    : '';
+
   return `
     <div class="card circuito-form-card circuito-color-${colorSlug}" data-circuito-idx="${idx}">
       <div class="circuito-form-header">
+        ${circDragHandle}
         <span class="circuito-form-number circuito-num-${colorSlug}">${idx + 1}</span>
         <div class="circuito-grupo-tags">
           ${tagsHtml}
           ${addBtn}
           ${dropdownHtml}
         </div>
-        <div class="circuito-reorder" style="${rutina.circuitos.length <= 1 ? 'visibility:hidden' : ''}">
-          <button class="btn-reorder" data-action="move-circuito-up" data-circ="${idx}"
-                  ${canMoveCircUp ? '' : 'disabled'} title="Mover arriba">${icon.chevronUp}</button>
-          <button class="btn-reorder" data-action="move-circuito-down" data-circ="${idx}"
-                  ${canMoveCircDown ? '' : 'disabled'} title="Mover abajo">${icon.chevronDown}</button>
-        </div>
         <button class="btn-remove" data-action="remove-circuito" data-circ="${idx}"
                 title="Eliminar circuito" style="${rutina.circuitos.length <= 1 ? 'visibility:hidden' : ''}">${icon.trash}</button>
       </div>
       ${circuitTypeToggle}
+      ${circuitParams}
       <div class="ejercicios-list">
         ${ejercicios}
       </div>
@@ -338,6 +357,8 @@ export function render(params) {
     const existing = getRutinaById(params.id);
     if (existing) {
       rutina = JSON.parse(JSON.stringify(existing));
+      // Migrate old per-exercise params to circuit level (backward compat)
+      migrateCircuitParams(rutina);
     } else {
       navigate('/');
       return '';
@@ -362,6 +383,30 @@ export function render(params) {
   return renderForm(isEdit);
 }
 
+/** Migrate old routines: move per-exercise params to circuit level */
+function migrateCircuitParams(rut) {
+  for (const circ of rut.circuitos) {
+    const tipo = circ.tipo || 'normal';
+    if (tipo === 'hiit' && circ.workTime == null) {
+      const first = circ.ejercicios[0];
+      if (first) {
+        circ.workTime = first.workTime ?? 40;
+        circ.restTime = first.restTime ?? 20;
+        circ.rounds = first.rounds ?? 3;
+      }
+    }
+    if ((tipo === 'velocidad' || tipo === 'caminata') && circ.velocidad == null) {
+      const first = circ.ejercicios[0];
+      if (first) {
+        circ.velocidad = first.velocidad ?? 12;
+        circ.tiempo = first.tiempo ?? 30;
+        circ.descanso = first.descanso ?? 60;
+        circ.cantidadPasadas = first.cantidadPasadas ?? 6;
+      }
+    }
+  }
+}
+
 function renderForm(isEdit) {
   const circuitos = rutina.circuitos.map((c, i) => renderCircuito(c, i)).join('');
 
@@ -380,8 +425,8 @@ function renderForm(isEdit) {
     <div class="form-section">
       <label class="input-label">Tipo</label>
       <div class="ej-type-toggle">
-        <button class="ej-type-btn ${rutina.tipo !== 'cross' ? 'active' : ''}" data-action="set-tipo" data-tipo="gimnasio">🏋️ Gimnasio</button>
-        <button class="ej-type-btn ${rutina.tipo === 'cross' ? 'active' : ''}" data-action="set-tipo" data-tipo="cross">🏃 Cross</button>
+        <button class="ej-type-btn ${rutina.tipo !== 'cross' ? 'active' : ''}" data-action="set-tipo" data-tipo="gimnasio">Gimnasio</button>
+        <button class="ej-type-btn ${rutina.tipo === 'cross' ? 'active' : ''}" data-action="set-tipo" data-tipo="cross">Cross</button>
       </div>
     </div>
 
@@ -401,13 +446,14 @@ function renderForm(isEdit) {
 }
 
 function reRender() {
-  const app = document.getElementById('app');
+  // Target the view wrapper so #view-container and nav-bar stay intact
+  const el = document.querySelector('.other-view') || document.getElementById('app');
   const isEdit = !!getRutinaById(rutina.id);
-  app.innerHTML = renderForm(isEdit);
+  el.innerHTML = renderForm(isEdit);
 
   // Focus picker search if open and scroll into view
   if (activePicker) {
-    const panel = app.querySelector('.ej-picker-panel');
+    const panel = el.querySelector('.ej-picker-panel');
     if (panel) {
       panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       const searchInput = panel.querySelector('.ej-picker-search');
@@ -424,8 +470,8 @@ function syncFromInputs() {
   const nameInput = document.getElementById('rutina-nombre');
   if (nameInput) rutina.nombre = nameInput.value.trim();
 
-  // Integer fields (all types)
-  const INT_FIELDS = ['repsObjetivo', 'velocidad', 'tiempo', 'descanso', 'cantidadPasadas', 'workTime', 'restTime', 'rounds'];
+  // Integer fields (normal exercise types only now)
+  const INT_FIELDS = ['repsObjetivo'];
 
   // Sync all exercise numeric fields (nombre is handled by picker)
   document.querySelectorAll('.ejercicio-form-row').forEach((row) => {
@@ -450,6 +496,15 @@ function syncFromInputs() {
       }
     });
   });
+
+  // Sync circuit-level params (HIIT, velocidad, caminata)
+  document.querySelectorAll('[data-circ-field]').forEach((input) => {
+    const ci = parseInt(input.dataset.circ);
+    const field = input.dataset.circField;
+    if (rutina.circuitos[ci]) {
+      rutina.circuitos[ci][field] = parseInt(input.value) || 0;
+    }
+  });
 }
 
 function validate() {
@@ -457,6 +512,16 @@ function validate() {
   for (let i = 0; i < rutina.circuitos.length; i++) {
     const circ = rutina.circuitos[i];
     const circTipo = circ.tipo || 'normal';
+
+    // Validate circuit-level params
+    if (circTipo === 'velocidad' || circTipo === 'caminata') {
+      if ((circ.velocidad || 0) <= 0) return `Circuito ${i + 1}: velocidad debe ser > 0.`;
+      if ((circ.cantidadPasadas || 0) <= 0) return `Circuito ${i + 1}: cantidad de pasadas debe ser > 0.`;
+    } else if (circTipo === 'hiit') {
+      if ((circ.workTime || 0) <= 0) return `Circuito ${i + 1}: tiempo de trabajo debe ser > 0.`;
+      if ((circ.rounds || 0) <= 0) return `Circuito ${i + 1}: rondas debe ser > 0.`;
+    }
+
     for (let j = 0; j < circ.ejercicios.length; j++) {
       const ej = circ.ejercicios[j];
       if (!ej.nombre.trim()) {
@@ -470,12 +535,6 @@ function validate() {
             return `Circuito ${i + 1}, ejercicio ${j + 1}: las repeticiones deben ser entre ${MIN_REPS} y ${MAX_REPS}.`;
           }
         }
-      } else if (circTipo === 'velocidad' || circTipo === 'caminata') {
-        if ((ej.velocidad || 0) <= 0) return `Circuito ${i + 1}, ej ${j + 1}: velocidad debe ser > 0.`;
-        if ((ej.cantidadPasadas || 0) <= 0) return `Circuito ${i + 1}, ej ${j + 1}: cantidad de pasadas debe ser > 0.`;
-      } else if (circTipo === 'hiit') {
-        if ((ej.workTime || 0) <= 0) return `Circuito ${i + 1}, ej ${j + 1}: tiempo de trabajo debe ser > 0.`;
-        if ((ej.rounds || 0) <= 0) return `Circuito ${i + 1}, ej ${j + 1}: rondas debe ser > 0.`;
       }
     }
   }
@@ -608,12 +667,136 @@ function showExitEditModal() {
         close();
         break;
       case 'discard':
-        overlay.remove();
-        isDirty = false;
-        navigate(returnTo);
+        close(() => {
+          isDirty = false;
+          showToast('Cambios descartados');
+          navigate(returnTo);
+        });
         break;
     }
   });
+}
+
+// ── Drag & Drop for reordering ─────────────────────
+
+function initDragHandlers(app) {
+  let dragState = null;
+
+  const handleTouchStart = (e) => {
+    const handle = e.target.closest('.drag-handle');
+    if (!handle) return;
+
+    const isCirc = handle.classList.contains('drag-handle-circ');
+    const row = isCirc
+      ? handle.closest('.circuito-form-card')
+      : handle.closest('.ejercicio-form-row');
+    if (!row) return;
+
+    syncFromInputs();
+
+    const rect = row.getBoundingClientRect();
+    const touch = e.touches[0];
+    const parent = row.parentElement;
+    const siblings = [...parent.children].filter((c) =>
+      isCirc ? c.classList.contains('circuito-form-card') : c.classList.contains('ejercicio-form-row')
+    );
+    const startIdx = siblings.indexOf(row);
+    if (startIdx < 0) return;
+
+    dragState = {
+      type: isCirc ? 'circuito' : 'ejercicio',
+      circIdx: parseInt(handle.dataset.circ),
+      startIdx,
+      currentIdx: startIdx,
+      el: row,
+      parent,
+      siblings,
+      startY: touch.clientY,
+      rowH: rect.height,
+      scrollStart: parent.closest('.other-view')?.scrollTop || window.scrollY,
+    };
+
+    row.classList.add('drag-active');
+    // Add placeholder gap for all OTHER siblings
+    siblings.forEach((s, i) => {
+      if (i !== startIdx) s.style.transition = 'transform 0.2s ease';
+    });
+
+    e.preventDefault();
+  };
+
+  const handleTouchMove = (e) => {
+    if (!dragState) return;
+    e.preventDefault();
+
+    const touch = e.touches[0];
+    const dy = touch.clientY - dragState.startY;
+    dragState.el.style.transform = `translateY(${dy}px)`;
+    dragState.el.style.zIndex = '100';
+    dragState.el.style.position = 'relative';
+
+    // Determine new index based on movement
+    const halfH = dragState.rowH / 2;
+    let newIdx = dragState.startIdx + Math.round(dy / dragState.rowH);
+    newIdx = Math.max(0, Math.min(newIdx, dragState.siblings.length - 1));
+
+    if (newIdx !== dragState.currentIdx) {
+      dragState.currentIdx = newIdx;
+      // Shift siblings visually
+      dragState.siblings.forEach((s, i) => {
+        if (s === dragState.el) return;
+        if (dragState.startIdx < newIdx) {
+          // Dragging down: items between start and new move up
+          s.style.transform = (i > dragState.startIdx && i <= newIdx) ? `translateY(-${dragState.rowH}px)` : '';
+        } else {
+          // Dragging up: items between new and start move down
+          s.style.transform = (i >= newIdx && i < dragState.startIdx) ? `translateY(${dragState.rowH}px)` : '';
+        }
+      });
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!dragState) return;
+
+    const { type, circIdx, startIdx, currentIdx, el, siblings } = dragState;
+
+    // Reset styles
+    el.classList.remove('drag-active');
+    el.style.transform = '';
+    el.style.zIndex = '';
+    el.style.position = '';
+    siblings.forEach((s) => {
+      s.style.transform = '';
+      s.style.transition = '';
+    });
+
+    if (startIdx !== currentIdx) {
+      isDirty = true;
+      if (type === 'circuito') {
+        const [moved] = rutina.circuitos.splice(startIdx, 1);
+        rutina.circuitos.splice(currentIdx, 0, moved);
+      } else {
+        const arr = rutina.circuitos[circIdx].ejercicios;
+        const [moved] = arr.splice(startIdx, 1);
+        arr.splice(currentIdx, 0, moved);
+      }
+      activePicker = null;
+      reRender();
+    }
+
+    dragState = null;
+  };
+
+  app.addEventListener('touchstart', handleTouchStart, { passive: false });
+  app.addEventListener('touchmove', handleTouchMove, { passive: false });
+  app.addEventListener('touchend', handleTouchEnd);
+
+  return () => {
+    app.removeEventListener('touchstart', handleTouchStart);
+    app.removeEventListener('touchmove', handleTouchMove);
+    app.removeEventListener('touchend', handleTouchEnd);
+  };
 }
 
 export function mount(params) {
@@ -651,6 +834,22 @@ export function mount(params) {
           rutina.circuitos[circIdx].tipo = newTipo;
           // Reset exercises to match new type
           rutina.circuitos[circIdx].ejercicios = [crearEjercicioPorTipo(newTipo), crearEjercicioPorTipo(newTipo)];
+          // Set circuit-level params
+          if (newTipo === 'hiit') {
+            rutina.circuitos[circIdx].workTime = 40;
+            rutina.circuitos[circIdx].restTime = 20;
+            rutina.circuitos[circIdx].rounds = 3;
+          } else if (newTipo === 'velocidad') {
+            rutina.circuitos[circIdx].velocidad = 12;
+            rutina.circuitos[circIdx].tiempo = 30;
+            rutina.circuitos[circIdx].descanso = 60;
+            rutina.circuitos[circIdx].cantidadPasadas = 6;
+          } else if (newTipo === 'caminata') {
+            rutina.circuitos[circIdx].velocidad = 5;
+            rutina.circuitos[circIdx].tiempo = 120;
+            rutina.circuitos[circIdx].descanso = 30;
+            rutina.circuitos[circIdx].cantidadPasadas = 4;
+          }
           isDirty = true;
           activePicker = null;
         }
@@ -676,6 +875,10 @@ export function mount(params) {
         if (grupo === 'Cardio' && (rutina.circuitos[circIdx].tipo || 'normal') === 'normal') {
           rutina.circuitos[circIdx].tipo = 'velocidad';
           rutina.circuitos[circIdx].ejercicios = [crearEjercicioPorTipo('velocidad'), crearEjercicioPorTipo('velocidad')];
+          rutina.circuitos[circIdx].velocidad = 12;
+          rutina.circuitos[circIdx].tiempo = 30;
+          rutina.circuitos[circIdx].descanso = 60;
+          rutina.circuitos[circIdx].cantidadPasadas = 6;
         }
         isDirty = true;
         activeGrupoDropdown = null;
@@ -752,7 +955,7 @@ export function mount(params) {
           const ej = rutina.circuitos[circIdx].ejercicios[ejIdx];
           if (ej) {
             ej.nombre = '';
-            ej.series = [{ reps: 8, pesoKg: 8 }, { reps: 8, pesoKg: 8 }, { reps: 8, pesoKg: 8 }];
+            if (ej.series) ej.series = [{ reps: 8, pesoKg: 8 }, { reps: 8, pesoKg: 8 }, { reps: 8, pesoKg: 8 }];
           }
         }
         reRender();
@@ -870,95 +1073,55 @@ export function mount(params) {
         break;
       }
 
-      case 'move-ejercicio-up': {
-        const ejIdx = parseInt(btn.dataset.ej);
-        if (ejIdx > 0) {
-          syncFromInputs();
-          isDirty = true;
-          const arr = rutina.circuitos[circIdx].ejercicios;
-          [arr[ejIdx - 1], arr[ejIdx]] = [arr[ejIdx], arr[ejIdx - 1]];
-          activePicker = null;
-          reRender();
-        }
-        break;
-      }
-
-      case 'move-ejercicio-down': {
-        const ejIdx = parseInt(btn.dataset.ej);
-        const arr = rutina.circuitos[circIdx].ejercicios;
-        if (ejIdx < arr.length - 1) {
-          syncFromInputs();
-          isDirty = true;
-          [arr[ejIdx], arr[ejIdx + 1]] = [arr[ejIdx + 1], arr[ejIdx]];
-          activePicker = null;
-          reRender();
-        }
-        break;
-      }
-
-      case 'move-circuito-up': {
-        if (circIdx > 0) {
-          syncFromInputs();
-          isDirty = true;
-          activePicker = null;
-          [rutina.circuitos[circIdx - 1], rutina.circuitos[circIdx]] = [rutina.circuitos[circIdx], rutina.circuitos[circIdx - 1]];
-          reRender();
-        }
-        break;
-      }
-
-      case 'move-circuito-down': {
-        if (circIdx < rutina.circuitos.length - 1) {
-          syncFromInputs();
-          isDirty = true;
-          activePicker = null;
-          [rutina.circuitos[circIdx], rutina.circuitos[circIdx + 1]] = [rutina.circuitos[circIdx + 1], rutina.circuitos[circIdx]];
-          reRender();
-        }
-        break;
-      }
-
       case 'show-ejercicio-detail': {
         showExerciseDetail(btn.dataset.nombre);
         break;
       }
 
-      case 'save':
+      case 'save': {
+        // Show loading state on button
+        const saveBtn = btn;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="btn-spinner"></span> Guardando...';
+
         syncFromInputs();
-        {
-          const error = validate();
-          if (error) {
-            showToast(error, 'error');
-            return;
+        const error = validate();
+        if (error) {
+          showToast(error, 'error');
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = 'Guardar Rutina';
+          return;
+        }
+        const isEditing = !!getRutinaById(rutina.id);
+        if (isEditing && isDirty) {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = 'Guardar Rutina';
+          showSaveOptionsModal();
+        } else {
+          // New rutina — assign next numero
+          if (!rutina.numero) {
+            rutina.numero = getNextNumero(rutina.tipo);
           }
-          const isEditing = !!getRutinaById(rutina.id);
-          if (isEditing && isDirty) {
-            showSaveOptionsModal();
-          } else {
-            // New rutina — assign next numero
-            if (!rutina.numero) {
-              rutina.numero = getNextNumero(rutina.tipo);
-            }
-            saveRutina(rutina);
-            isDirty = false;
-            showToast('Rutina guardada');
-            navigate(returnTo);
-          }
+          saveRutina(rutina);
+          isDirty = false;
+          showToast('Rutina guardada');
+          navigate(returnTo);
         }
         break;
+      }
     }
   };
 
   const handleChange = (e) => {
     // Mark dirty on any numeric field change
-    if (e.target.matches('[data-field]')) {
+    if (e.target.matches('[data-field]') || e.target.matches('[data-circ-field]')) {
       isDirty = true;
     }
   };
 
   const handleInput = (e) => {
     // Track dirty on any field input (not just change/blur)
-    if (e.target.matches('[data-field]') || e.target.matches('#rutina-nombre')) {
+    if (e.target.matches('[data-field]') || e.target.matches('#rutina-nombre') || e.target.matches('[data-circ-field]')) {
       isDirty = true;
     }
 
@@ -1015,10 +1178,14 @@ export function mount(params) {
   app.addEventListener('change', handleChange);
   app.addEventListener('input', handleInput);
 
+  // Init drag & drop
+  const cleanupDrag = initDragHandlers(app);
+
   return () => {
     app.removeEventListener('click', handleClick);
     app.removeEventListener('change', handleChange);
     app.removeEventListener('input', handleInput);
+    cleanupDrag();
     rutina = null;
     activePicker = null;
     pickerQuery = '';

@@ -1230,13 +1230,6 @@
   border-radius: var(--radius-full);
 }
 
-.circuito-reorder {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex-shrink: 0;
-}
-
 .circuito-form-number {
   font-size: var(--text-sm);
   font-weight: var(--fw-bold);
@@ -1247,7 +1240,7 @@
 .ejercicio-form-row {
   margin-bottom: var(--space-md);
   padding-bottom: var(--space-md);
-  padding-left: calc(24px + var(--space-sm));
+  padding-left: var(--space-xs);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -1262,6 +1255,7 @@
   gap: var(--space-sm);
   align-items: end;
   margin-top: var(--space-sm);
+  padding-left: 28px; /* align with name field past drag handle */
 }
 
 .ejercicio-form-fields .field-sm {
@@ -1269,54 +1263,53 @@
   flex-shrink: 0;
 }
 
-.ej-reorder {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex-shrink: 0;
-  align-self: center;
-}
-
-.btn-reorder {
-  width: 28px;
-  height: 20px;
+/* ── Drag handles ──────── */
+.drag-handle {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 24px;
+  flex-shrink: 0;
   color: var(--color-text-muted);
-  border-radius: 3px;
-  padding: 0;
+  opacity: 0.5;
+  cursor: grab;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
-
-.btn-reorder svg {
-  width: 14px;
-  height: 14px;
-}
-
-.btn-reorder:active {
-  background-color: var(--color-surface-alt);
-  color: var(--color-accent);
-}
-
-.btn-reorder:disabled {
-  opacity: 0.2;
-  pointer-events: none;
-}
-
-.ejercicio-form-fields .btn-remove {
-  width: var(--touch-min);
-  height: var(--touch-min);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-danger);
-  border-radius: var(--radius-sm);
-  flex-shrink: 0;
-}
-
-.ejercicio-form-fields .btn-remove svg {
+.drag-handle svg {
   width: 18px;
   height: 18px;
+}
+.drag-handle:active {
+  opacity: 0.8;
+  cursor: grabbing;
+}
+.drag-handle-circ {
+  margin-right: var(--space-xs);
+}
+
+.drag-active {
+  opacity: 0.85;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  z-index: 100;
+}
+
+/* ── Circuit-level params ──────── */
+.circuit-params {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: end;
+  margin-bottom: var(--space-md);
+  padding: var(--space-sm) var(--space-sm) 0;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-sm);
+}
+.circuit-params .field-sm {
+  flex: 1;
+  min-width: 0;
 }
 
 .circuito-form-header .btn-remove svg {
@@ -1324,8 +1317,20 @@
   height: 18px;
 }
 
-.ejercicio-form-fields .btn-remove:active {
-  background-color: color-mix(in srgb, var(--color-danger) 15%, transparent);
+/* ── Save button spinner ──────── */
+.btn-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btn-spin 0.6s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ── Week strip (form day picker) ──────── */
@@ -3469,21 +3474,7 @@
   font-weight: var(--fw-medium);
 }
 
-/* ── Velocidad form fields (4 small inputs) ── */
-.ejercicio-form-fields--velocidad {
-  display: grid;
-  grid-template-columns: auto 1fr 1fr 1fr 1fr auto;
-  gap: var(--space-xs);
-  align-items: end;
-}
-
-/* ── HIIT form fields (3 small inputs) ─────── */
-.ejercicio-form-fields--hiit {
-  display: grid;
-  grid-template-columns: auto 1fr 1fr 1fr auto;
-  gap: var(--space-xs);
-  align-items: end;
-}
+/* (Velocidad/HIIT fields are now at circuit level via .circuit-params) */
 
 /* ── Cardio tag color ──────────────────────── */
 .circuito-color-cardio {
@@ -3536,7 +3527,7 @@
 .ej-series-toggle {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-sm);
   width: 100%;
   padding: 6px 0;
   border: none;
@@ -3548,14 +3539,14 @@
 }
 
 .ej-series-chevron {
-  margin-left: auto;
   transition: transform 0.2s;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 .ej-series-chevron svg {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
 }
 .ej-series-chevron.expanded {
   transform: rotate(180deg);
