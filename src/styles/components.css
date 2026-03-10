@@ -776,7 +776,8 @@ select.input {
   transition: opacity 0.3s ease, transform 0.3s ease;
   pointer-events: none;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-  white-space: nowrap;
+  max-width: calc(100vw - var(--space-lg) * 2);
+  text-align: center;
 }
 
 .toast-visible {

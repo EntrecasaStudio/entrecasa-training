@@ -61,26 +61,37 @@ function getMetaText(rutina) {
 
 // ── Card renderers ───────────────────────────
 
+function capitalizeFirst(str) {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function getTipoPrefix(rutina) {
+  return rutina.tipo === 'cross' ? 'C' : 'G';
+}
+
 function renderCompactCard(rutina) {
-  const displayName = getDisplayName(rutina);
+  const displayName = capitalizeFirst(getDisplayName(rutina));
   const meta = getMetaText(rutina);
-  const num = formatNumero(rutina.numero);
-  const metaParts = [num, meta].filter(Boolean).join(' · ');
+  const prefix = getTipoPrefix(rutina);
+  const num = rutina.numero ? `${prefix}${formatNumero(rutina.numero)}` : '';
   const delay = cardCounter++ * 40;
 
   return `
     <div class="rutina-compact animate-in" style="animation-delay:${delay}ms" data-rutina-id="${rutina.id}" data-action="preview" data-id="${rutina.id}" style="cursor:pointer">
       <div class="rutina-compact-main">
+        ${num ? `<div class="rutina-compact-code">${num}</div>` : ''}
         <div class="rutina-compact-name">${displayName}</div>
-        ${metaParts ? `<div class="rutina-compact-meta">${metaParts}</div>` : ''}
+        ${meta ? `<div class="rutina-compact-meta">${meta}</div>` : ''}
       </div>
     </div>
   `;
 }
 
 function renderRutinaCard(rutina) {
-  const displayName = getDisplayName(rutina);
-  const num = formatNumero(rutina.numero);
+  const displayName = capitalizeFirst(getDisplayName(rutina));
+  const prefix = getTipoPrefix(rutina);
+  const num = rutina.numero ? `${prefix}${formatNumero(rutina.numero)}` : '';
   const { numCirc, numEj } = getRoutineStats(rutina);
 
   const volantaParts = [num, `${numCirc}c · ${numEj}ej`].filter(Boolean);
@@ -100,7 +111,7 @@ function renderRutinaCard(rutina) {
           <div class="rutina-card-name">${displayName}</div>
           ${lastDone ? `<div class="rutina-card-last">${lastDone}</div>` : ''}
         </div>
-        <div class="rutina-card-illustration">${getCompositeMuscleSvg(grupos, 80)}</div>
+        <div class="rutina-card-illustration">${getCompositeMuscleSvg(grupos, 88)}</div>
       </div>
     </div>
   `;

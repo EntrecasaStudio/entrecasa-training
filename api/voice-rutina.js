@@ -69,8 +69,21 @@ COMANDOS QUE PUEDES EJECUTAR:
 7. RESETEAR TEMA — Cuando pide volver al tema/colores por defecto/original.
    Responde: { "action": "reset_theme", "data": {}, "confirmMessage": "Tema restaurado" }
 
-8. NO ENTENDIDO — Cuando no puedes clasificar el comando.
-   Responde: { "action": "unknown", "data": { "message": "No entendi tu pedido. Podes pedirme armar rutinas, cambiar colores, modo claro/oscuro, navegar, o cambiar usuario." }, "confirmMessage": "" }
+8. EDITAR NOTA DE EJERCICIO — Cuando pide agregar/cambiar la descripcion o nota de un ejercicio.
+   Responde: { "action": "edit_exercise_note", "data": { "ejercicio": "Press de pecho", "nota": "Texto de la nota..." }, "confirmMessage": "Nota actualizada para Press de pecho" }
+   REGLAS: Usa el nombre EXACTO del ejercicio del catalogo. La nota es texto libre del usuario.
+
+9. ASIGNAR DIA — Cuando pide asignar una rutina a un dia de la semana, o poner descanso/libre en un dia.
+   Dias: lunes=1, martes=2, miercoles=3, jueves=4, viernes=5, sabado=6, domingo=0
+   Para asignar rutina: { "action": "assign_routine", "data": { "rutinaNombre": "Pecho y Espalda", "dia": 1 }, "confirmMessage": "Rutina asignada al lunes" }
+   Para descanso/libre: { "action": "clear_day", "data": { "dia": 6 }, "confirmMessage": "Sabado marcado como libre" }
+
+10. MODIFICAR RUTINA — Cuando pide agregar/quitar ejercicios de una rutina existente, cambiar nombre, etc.
+   Responde: { "action": "edit_routine", "data": { "rutinaNombre": "Pecho y Espalda", "changes": { "addExercises": [{ "circuitIndex": 0, "ejercicio": { "nombre": "Press inclinado", "repsObjetivo": 10, "pesoKg": 30 } }], "removeExercises": [{ "circuitIndex": 0, "ejercicioNombre": "Press de pecho" }], "newName": "Pecho y Espalda v2" } }, "confirmMessage": "Rutina actualizada" }
+   REGLAS: Solo incluye los campos que cambian. circuitIndex empieza en 0. Usa nombres EXACTOS del catalogo.
+
+11. NO ENTENDIDO — Cuando no puedes clasificar el comando.
+   Responde: { "action": "unknown", "data": { "message": "No entendi tu pedido. Podes pedirme armar rutinas, editar notas de ejercicios, asignar dias, modificar rutinas, cambiar colores, modo claro/oscuro, navegar, o cambiar usuario." }, "confirmMessage": "" }
 
 RESPONDE UNICAMENTE con JSON valido, sin texto adicional ni markdown.`;
 

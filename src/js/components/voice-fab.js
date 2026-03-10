@@ -1,7 +1,7 @@
 import { icon } from '@js/icons.js';
 import { isVoiceSupported, createRecognition } from '@js/services/voice-recognition.js';
 import { processVoiceCommand } from '@js/services/claude-api.js';
-import { getUsuarioActivo, setUsuarioActivo, getRutinas, assignRutinaADia } from '@/store.js';
+import { getUsuarioActivo, setUsuarioActivo, getRutinas, getRutinaById, saveRutina, assignRutinaADia, clearRutinaDelDia, setPlanDia, saveNotaEjercicio } from '@/store.js';
 import { showVoicePreview } from '@js/components/voice-preview.js';
 import { showToast } from '@js/components/toast.js';
 import { navigate } from '@/router.js';
@@ -226,6 +226,18 @@ function dispatchAction(result) {
       handleAssignRoutine(data, confirmMessage);
       break;
 
+    case 'clear_day':
+      handleClearDay(data, confirmMessage);
+      break;
+
+    case 'edit_exercise_note':
+      handleEditExerciseNote(data, confirmMessage);
+      break;
+
+    case 'edit_routine':
+      handleEditRoutine(data, confirmMessage);
+      break;
+
     case 'unknown':
     default:
       showToast(data?.message || confirmMessage || 'No entendi tu pedido', 'error');
@@ -254,6 +266,77 @@ function handleAssignRoutine(data, confirmMessage) {
 
   assignRutinaADia(target.id, data.dia, usuario);
   navigate('/');
+  if (confirmMessage) showToast(confirmMessage);
+}
+
+function handleClearDay(data, confirmMessage) {
+  if (data?.dia === undefined) {
+    showToast('No pude identificar el dia', 'error');
+    return;
+  }
+  const usuario = getUsuarioActivo();
+  clearRutinaDelDia(data.dia, usuario);
+  setPlanDia(usuario, data.dia, null);
+  navigate('/');
+  if (confirmMessage) showToast(confirmMessage);
+}
+
+function handleEditExerciseNote(data, confirmMessage) {
+  if (!data?.ejercicio || !data?.nota) {
+    showToast('Faltan datos para la nota', 'error');
+    return;
+  }
+  saveNotaEjercicio(data.ejercicio, data.nota);
+  if (confirmMessage) showToast(confirmMessage);
+}
+
+function handleEditRoutine(data, confirmMessage) {
+  if (!data?.rutinaNombre) {
+    showToast('No pude identificar la rutina', 'error');
+    return;
+  }
+
+  const usuario = getUsuarioActivo();
+  const rutinas = getRutinas().filter((r) => r.usuario === usuario);
+  const target = rutinas.find((r) =>
+    r.nombre.toLowerCase().includes(data.rutinaNombre.toLowerCase()),
+  );
+
+  if (!target) {
+    showToast(`No encontré la rutina "${data.rutinaNombre}"`, 'error');
+    return;
+  }
+
+  const changes = data.changes || {};
+
+  // Rename
+  if (changes.newName) {
+    target.nombre = changes.newName;
+  }
+
+  // Add exercises
+  if (changes.addExercises) {
+    for (const add of changes.addExercises) {
+      const idx = add.circuitIndex ?? 0;
+      if (target.circuitos[idx]) {
+        target.circuitos[idx].ejercicios.push(add.ejercicio);
+      }
+    }
+  }
+
+  // Remove exercises
+  if (changes.removeExercises) {
+    for (const rem of changes.removeExercises) {
+      const idx = rem.circuitIndex ?? 0;
+      if (target.circuitos[idx]) {
+        target.circuitos[idx].ejercicios = target.circuitos[idx].ejercicios.filter(
+          (e) => e.nombre.toLowerCase() !== rem.ejercicioNombre.toLowerCase(),
+        );
+      }
+    }
+  }
+
+  saveRutina(target);
   if (confirmMessage) showToast(confirmMessage);
 }
 
