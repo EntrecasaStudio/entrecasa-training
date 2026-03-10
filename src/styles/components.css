@@ -281,7 +281,7 @@ select.input {
 .day-assign-body {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: 0;
 }
 
 /* Status toggle (Rutina / Libre / Descanso) */
@@ -419,19 +419,21 @@ select.input {
   flex-direction: column;
   gap: var(--space-xs);
   overflow: hidden;
-  transition: max-height 0.3s ease, opacity 0.25s ease, margin-top 0.3s ease;
+  transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1),
+              opacity 0.25s ease,
+              padding-top 0.35s cubic-bezier(0.4,0,0.2,1);
 }
 
 .day-assign-section-visible {
-  max-height: 400px;
+  max-height: 420px;
   opacity: 1;
-  margin-top: 0;
+  padding-top: var(--space-sm);
 }
 
 .day-assign-section-hidden {
   max-height: 0;
   opacity: 0;
-  margin-top: calc(-1 * var(--space-sm));
+  padding-top: 0;
   pointer-events: none;
 }
 

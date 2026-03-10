@@ -2212,9 +2212,10 @@
 .ej-item-peso {
   display: inline-flex;
   align-items: center;
-  color: var(--color-text-muted);
-  opacity: 0.5;
+  color: #FFCD00;
+  opacity: 0.7;
   flex-shrink: 0;
+  margin-right: 4px;
 }
 
 .ej-item-peso svg {

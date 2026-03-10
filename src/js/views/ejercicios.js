@@ -82,7 +82,7 @@ function renderCategorySection(cat, ejercicios, collapsed, lastUsedMap = {}) {
             const hasNota = getNotaEjercicio(e.nombre) ? `<span class="ej-item-note">${icon.edit}</span>` : '';
             const ejMeta = getEjercicioMeta(e.nombre);
             const ejLabel = ejMeta.displayName || e.nombre;
-            const pesoIcon = last && last.peso > 0 ? `<span class="ej-item-peso">${icon.kettlebell}</span>` : '';
+            const pesoIcon = ejMeta.usaPeso ? `<span class="ej-item-peso">${icon.kettlebell}</span>` : '';
             return `
               <div class="ej-item" data-action="show-detail" data-nombre="${e.nombre}">
                 <span class="ej-item-name">${ejLabel}${lastInfo}${hasNota}</span>
