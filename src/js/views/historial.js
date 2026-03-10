@@ -122,6 +122,8 @@ export function mount(params) {
   let swipeTarget = null;
   let swipeDeltaX = 0;
   let swipeActive = false;
+  let swipeBlocked = false;
+  let wasSwiped = false;
 
   function closeAllSwipes(except) {
     app.querySelectorAll('.sesion-swipe-content').forEach((el) => {
@@ -147,6 +149,7 @@ export function mount(params) {
     swipeTarget = content;
     swipeDeltaX = 0;
     swipeActive = false;
+    wasSwiped = content.closest('.sesion-swipe-container')?.classList.contains('swiped') || false;
     const touch = e.touches[0];
     swipeStartX = touch.clientX;
     swipeStartY = touch.clientY;
@@ -159,12 +162,18 @@ export function mount(params) {
     const dx = touch.clientX - swipeStartX;
     const dy = touch.clientY - swipeStartY;
 
-    if (!swipeActive) {
-      if (Math.abs(dy) > 10) { swipeTarget = null; return; }
-      if (Math.abs(dx) > 10) { swipeActive = true; closeAllSwipes(swipeTarget); }
-      else return;
+    // 15px dead zone to avoid accidental swipe on tap
+    if (!swipeActive && (Math.abs(dx) > 15 || Math.abs(dy) > 15)) {
+      if (Math.abs(dy) > Math.abs(dx)) {
+        swipeTarget.style.transition = '';
+        swipeTarget = null;
+        return;
+      }
+      swipeActive = true;
+      closeAllSwipes(swipeTarget);
     }
 
+    if (!swipeActive) return;
     e.preventDefault();
     swipeDeltaX = Math.max(-140, Math.min(0, dx));
     swipeTarget.style.transform = `translateX(${swipeDeltaX}px)`;
@@ -180,7 +189,16 @@ export function mount(params) {
       swipeTarget.style.transform = '';
       swipeTarget.closest('.sesion-swipe-container')?.classList.remove('swiped');
     }
+
+    // Block the subsequent click event if swipe was active or card was already swiped open
+    if (swipeActive || wasSwiped) {
+      swipeBlocked = true;
+      setTimeout(() => { swipeBlocked = false; }, 300);
+    }
+
     swipeTarget = null;
+    swipeActive = false;
+    wasSwiped = false;
   };
 
   const handleClick = (e) => {
@@ -191,7 +209,9 @@ export function mount(params) {
 
     switch (action) {
       case 'detail':
-        if (!swipeActive) navigate(`/sesion/${id}`);
+        if (swipeBlocked) return;
+        closeAllSwipes();
+        navigate(`/sesion/${id}`);
         break;
 
       case 'edit-sesion':

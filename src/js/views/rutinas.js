@@ -300,6 +300,9 @@ export function mount() {
         navigate('/rutina/nueva');
         break;
       case 'preview':
+        if (swipeBlocked) return;
+        // Close any open swipes on tap
+        closeAllSwipes();
         showPreview(id);
         break;
       case 'edit':
@@ -368,6 +371,8 @@ export function mount() {
   let swipeTarget = null;
   let swipeDeltaX = 0;
   let swipeActive = false;
+  let swipeBlocked = false; // blocks click after swipe gesture
+  let wasSwiped = false; // tracks if target was already swiped open on touch start
 
   function closeAllSwipes(except) {
     document.querySelectorAll('.rutina-swipe-content.swiped').forEach((el) => {
@@ -386,6 +391,7 @@ export function mount() {
     swipeStartY = e.touches[0].clientY;
     swipeDeltaX = 0;
     swipeActive = false;
+    wasSwiped = content.classList.contains('swiped');
     swipeTarget.style.transition = 'none';
   };
 
@@ -394,10 +400,11 @@ export function mount() {
     const dx = e.touches[0].clientX - swipeStartX;
     const dy = e.touches[0].clientY - swipeStartY;
 
-    // Determine direction on first meaningful move
-    if (!swipeActive && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+    // Determine direction on first meaningful move (15px dead zone)
+    if (!swipeActive && (Math.abs(dx) > 15 || Math.abs(dy) > 15)) {
       if (Math.abs(dy) > Math.abs(dx)) {
         // Vertical scroll — abort swipe
+        swipeTarget.style.transition = '';
         swipeTarget = null;
         return;
       }
@@ -425,8 +432,16 @@ export function mount() {
       swipeTarget.style.transform = '';
       swipeTarget.classList.remove('swiped');
     }
+
+    // Block the subsequent click event if swipe was active or card was already swiped open
+    if (swipeActive || wasSwiped) {
+      swipeBlocked = true;
+      setTimeout(() => { swipeBlocked = false; }, 300);
+    }
+
     swipeTarget = null;
     swipeActive = false;
+    wasSwiped = false;
   };
 
   app.addEventListener('touchstart', handleTouchStart, { passive: true });
