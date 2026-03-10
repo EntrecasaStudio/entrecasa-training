@@ -1,6 +1,6 @@
 import { getPersonalRecords, getUsuarioActivo } from '@/store.js';
 import { icon } from '@js/icons.js';
-import { renderMiniChart } from '@js/helpers/mini-chart.js';
+import { renderMiniChart, renderLineChart } from '@js/helpers/mini-chart.js';
 import {
   getWeeklyStreak,
   getSessionsThisWeek,
@@ -86,7 +86,7 @@ function renderExerciseCards(usuario) {
       const sign = ex.mejora > 0 ? '+' : '';
 
       return `
-      <div class="exercise-progress-card animate-in" style="animation-delay:${400 + i * 60}ms">
+      <div class="exercise-progress-card exercise-progress-card--chart animate-in" style="animation-delay:${400 + i * 60}ms">
         <div class="exercise-progress-info">
           <div class="exercise-progress-name">${ex.nombre}</div>
           <div class="exercise-progress-detail">
@@ -94,7 +94,7 @@ function renderExerciseCards(usuario) {
             ${ex.mejora !== 0 ? `<span class="exercise-progress-trend ${cls}">${arrow} ${sign}${ex.mejora} kg</span>` : ''}
           </div>
         </div>
-        <canvas class="exercise-sparkline" data-exercise="${ex.nombre}" width="120" height="48"></canvas>
+        <canvas class="exercise-line-chart" data-exercise="${ex.nombre}"></canvas>
       </div>
     `;
     })
@@ -161,12 +161,12 @@ export function mount() {
   const usuario = getUsuarioActivo();
   const app = document.getElementById('app');
 
-  // Render sparklines for each exercise card
-  document.querySelectorAll('.exercise-sparkline').forEach((canvas) => {
+  // Render line charts for each exercise card
+  document.querySelectorAll('.exercise-line-chart').forEach((canvas) => {
     const nombre = canvas.dataset.exercise;
     const data = getExerciseProgressData(usuario, nombre);
     if (data.length >= 2) {
-      renderMiniChart(
+      renderLineChart(
         canvas,
         data.map((d) => d.peso),
         { labels: data.map((d) => d.fecha) },

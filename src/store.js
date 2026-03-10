@@ -6,6 +6,7 @@ const KEYS = {
   workoutActivo: 'gym_workout_activo',
   usuario: 'gym_usuario',
   planSemanal: 'gym_plan_semanal',
+  dayOverrides: 'gym_day_overrides',
 };
 
 // ── Data version (for router cache staleness) ──
@@ -104,6 +105,12 @@ export function updateSesion(sesion) {
   }
 }
 
+export function deleteSesion(id) {
+  const sesiones = read(KEYS.sesiones) || [];
+  write(KEYS.sesiones, sesiones.filter((s) => s.id !== id));
+  bumpVersion();
+}
+
 // ── Usuario activo ──────────────────────────
 
 export function getUsuarioActivo() {
@@ -198,6 +205,35 @@ export function clearRutinaDelDia(dia, _usuario) {
   bumpVersion();
 }
 
+// ── Day-specific overrides ──────────────────
+
+export function getDayOverrides(usuario) {
+  const all = read(KEYS.dayOverrides) || {};
+  return all[usuario] || {};
+}
+
+export function getDayOverride(usuario, dateStr) {
+  const overrides = getDayOverrides(usuario);
+  return overrides[dateStr] || null;
+}
+
+export function setDayOverride(usuario, dateStr, override) {
+  const all = read(KEYS.dayOverrides) || {};
+  if (!all[usuario]) all[usuario] = {};
+  all[usuario][dateStr] = override;
+  write(KEYS.dayOverrides, all);
+  bumpVersion();
+}
+
+export function clearDayOverride(usuario, dateStr) {
+  const all = read(KEYS.dayOverrides) || {};
+  if (all[usuario]) {
+    delete all[usuario][dateStr];
+    write(KEYS.dayOverrides, all);
+    bumpVersion();
+  }
+}
+
 // ── Scheduling ──────────────────────────────
 
 const DIAS_NOMBRES = {
@@ -264,6 +300,7 @@ export function saveWorkoutActivo(data) {
 
 export function clearWorkoutActivo() {
   localStorage.removeItem(KEYS.workoutActivo);
+  bumpVersion();
 }
 
 // ── Vueltas helpers (backward-compatible) ───

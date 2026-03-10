@@ -7,6 +7,7 @@ import {
   getPlanSemanal,
   setPlanDia,
   clearRutinaDelDia,
+  clearDayOverride,
 } from '@/store.js';
 import { navigate } from '@/router.js';
 import { icon, iconLg } from '@js/icons.js';
@@ -460,6 +461,10 @@ function refreshCalendarSection() {
 export function mount() {
   const app = document.getElementById('app');
 
+  let lastTapDate = null;
+  let lastTapTime = 0;
+  const DOUBLE_TAP_DELAY = 350;
+
   const handleClick = (e) => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
@@ -482,10 +487,26 @@ export function mount() {
       case 'cal-select-day': {
         const dateStr = btn.dataset.calDate;
         if (!dateStr) break;
+        const now = Date.now();
         const [y, m, d] = dateStr.split('-').map(Number);
         selectedDate = new Date(y, m - 1, d);
         calYear = selectedDate.getFullYear();
         calMonth = selectedDate.getMonth();
+
+        // Double-tap detection → open day assignment modal
+        if (lastTapDate === dateStr && (now - lastTapTime) < DOUBLE_TAP_DELAY) {
+          lastTapDate = null;
+          lastTapTime = 0;
+          const usuario = getUsuarioActivo();
+          const dow = selectedDate.getDay();
+          const plan = getPlanSemanal(usuario);
+          const tipoActual = plan[dow] || null;
+          showDayAssignmentModal(usuario, dow, tipoActual, () => refreshCalendarSection(), { date: selectedDate, dateOverride: !calExpanded });
+        } else {
+          lastTapDate = dateStr;
+          lastTapTime = now;
+        }
+
         refreshCalendarSection();
         break;
       }
@@ -534,15 +555,20 @@ export function mount() {
         const dia = Number(btn.dataset.day);
         const plan = getPlanSemanal(usuario);
         const current = plan[dia] || 'gimnasio';
-        showDayAssignmentModal(usuario, dia, current, () => refreshCalendarSection());
+        showDayAssignmentModal(usuario, dia, current, () => refreshCalendarSection(), { date: selectedDate, dateOverride: !calExpanded });
         break;
       }
 
       case 'cal-remove-routine': {
         const usuario = getUsuarioActivo();
         const dia = Number(btn.dataset.day);
-        clearRutinaDelDia(dia, usuario);
-        setPlanDia(usuario, dia, null);
+        if (!calExpanded) {
+          const dateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
+          clearDayOverride(usuario, dateStr);
+        } else {
+          clearRutinaDelDia(dia, usuario);
+          setPlanDia(usuario, dia, null);
+        }
         refreshCalendarSection();
         break;
       }
@@ -550,8 +576,7 @@ export function mount() {
       case 'cal-assign-training': {
         const usuario = getUsuarioActivo();
         const dia = Number(btn.dataset.day);
-        setPlanDia(usuario, dia, 'gimnasio');
-        showDayAssignmentModal(usuario, dia, 'gimnasio', () => refreshCalendarSection());
+        showDayAssignmentModal(usuario, dia, 'gimnasio', () => refreshCalendarSection(), { date: selectedDate, dateOverride: !calExpanded });
         break;
       }
 

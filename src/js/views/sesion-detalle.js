@@ -1,4 +1,4 @@
-import { getSesionById, getSesionesByRutina, getPersonalRecords, calcVolumenSesion, getUsuarioActivo, getEjVueltas, getEjBestRound, updateSesion } from '@/store.js';
+import { getSesionById, getSesionesByRutina, getPersonalRecords, calcVolumenSesion, getUsuarioActivo, getEjVueltas, getEjBestRound, updateSesion, deleteSesion } from '@/store.js';
 import { navigate } from '@/router.js';
 import { icon } from '@js/icons.js';
 
@@ -35,19 +35,12 @@ function findPreviousSession(sesion) {
 function renderStatsStrip(sesion) {
   const volumen = Math.round(calcVolumenSesion(sesion));
   const totalEj = sesion.circuitos.reduce((sum, c) => sum + c.ejercicios.length, 0);
-
-  const calHtml = sesion.calorias
-    ? `<div class="detalle-stat-divider"></div>
-       <div class="detalle-stat">
-         <div class="detalle-stat-value">${sesion.calorias}</div>
-         <div class="detalle-stat-label">kcal</div>
-       </div>`
-    : '';
+  const calValue = sesion.calorias || 0;
 
   return `
     <div class="detalle-stats-strip animate-in">
       <div class="detalle-stat">
-        <div class="detalle-stat-value">${sesion.duracionMin}</div>
+        <div class="detalle-stat-value detalle-stat-editable" data-edit-field="duracionMin" data-sesion-id="${sesion.id}">${sesion.duracionMin}</div>
         <div class="detalle-stat-label">min</div>
       </div>
       <div class="detalle-stat-divider"></div>
@@ -65,7 +58,11 @@ function renderStatsStrip(sesion) {
         <div class="detalle-stat-value">${sesion.circuitos.length}</div>
         <div class="detalle-stat-label">circuitos</div>
       </div>
-      ${calHtml}
+      <div class="detalle-stat-divider"></div>
+      <div class="detalle-stat">
+        <div class="detalle-stat-value detalle-stat-editable" data-edit-field="calorias" data-sesion-id="${sesion.id}">${calValue}</div>
+        <div class="detalle-stat-label">kcal</div>
+      </div>
     </div>
   `;
 }
@@ -200,6 +197,40 @@ export function mount() {
   const handleClick = (e) => {
     if (e.target.closest('[data-action="back"]')) {
       navigate('/historial');
+      return;
+    }
+
+    // Inline editing for duration / calories
+    const editable = e.target.closest('.detalle-stat-editable');
+    if (editable && !editable.querySelector('input')) {
+      const field = editable.dataset.editField;
+      const sesionId = editable.dataset.sesionId;
+      const currentValue = editable.textContent.trim();
+
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.className = 'detalle-stat-inline-input';
+      input.value = currentValue;
+      input.inputMode = 'numeric';
+      editable.textContent = '';
+      editable.appendChild(input);
+      input.focus();
+      input.select();
+
+      const save = () => {
+        const newVal = parseInt(input.value, 10) || 0;
+        const sesion = getSesionById(sesionId);
+        if (sesion) {
+          sesion[field] = newVal;
+          updateSesion(sesion);
+        }
+        editable.textContent = String(newVal);
+      };
+
+      input.addEventListener('blur', save, { once: true });
+      input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') input.blur();
+      });
     }
   };
 

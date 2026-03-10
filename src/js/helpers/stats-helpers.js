@@ -1,4 +1,4 @@
-import { getSesiones, calcVolumenSesion, getEjBestRound, getPlanSemanal, getRutinas } from '@/store.js';
+import { getSesiones, calcVolumenSesion, getEjBestRound, getPlanSemanal, getRutinas, getDayOverride, getRutinaById } from '@/store.js';
 
 /**
  * Weekly streak: consecutive weeks (Mon-Sun) with at least 1 session.
@@ -214,6 +214,16 @@ export function getMonthActivity(usuario, year, month) {
  * @returns {{ tipo: string, routine: object|null } | null}
  */
 export function getPlannedRoutineForDate(usuario, date) {
+  // Check date-specific override first
+  const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  const override = getDayOverride(usuario, dateStr);
+  if (override) {
+    if (!override.tipo) return null; // explicit rest day override
+    const routine = override.rutinaId ? getRutinaById(override.rutinaId) : null;
+    return { tipo: override.tipo, routine: routine || null };
+  }
+
+  // Fall back to weekly pattern
   const dayOfWeek = date.getDay(); // 0=Sun ... 6=Sat
   const plan = getPlanSemanal(usuario);
   const tipo = plan[dayOfWeek];
@@ -239,8 +249,15 @@ export function getMonthPlannedDays(usuario, year, month) {
   const totalDays = new Date(year, month + 1, 0).getDate();
   const result = new Map();
   for (let d = 1; d <= totalDays; d++) {
-    const dow = new Date(year, month, d).getDay();
-    if (plan[dow]) result.set(d, plan[dow]);
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const override = getDayOverride(usuario, dateStr);
+    if (override) {
+      if (override.tipo) result.set(d, override.tipo);
+      // else: explicit rest override — don't add to result
+    } else {
+      const dow = new Date(year, month, d).getDay();
+      if (plan[dow]) result.set(d, plan[dow]);
+    }
   }
   return result;
 }

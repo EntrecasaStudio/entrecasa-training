@@ -1,6 +1,7 @@
-import { getSesiones, getUsuarioActivo, calcVolumenSesion } from '@/store.js';
+import { getSesiones, getUsuarioActivo, calcVolumenSesion, deleteSesion } from '@/store.js';
 import { navigate } from '@/router.js';
-import { iconLg } from '@js/icons.js';
+import { icon, iconLg } from '@js/icons.js';
+import { showModal } from '@js/components/modal.js';
 
 function formatDate(isoStr) {
   const d = new Date(isoStr);
@@ -49,17 +50,25 @@ function renderSesionCard(sesion) {
     .join('');
 
   return `
-    <div class="card sesion-card animate-in" style="animation-delay:${delay}ms" data-action="detail" data-id="${sesion.id}">
-      <div class="sesion-card-top">
-        <div class="sesion-card-date">${formatDate(sesion.fecha)}</div>
-        <div class="sesion-card-tags">${tags}</div>
+    <div class="sesion-swipe-container animate-in" style="animation-delay:${delay}ms" data-sesion-id="${sesion.id}">
+      <div class="sesion-swipe-actions">
+        <button class="sesion-swipe-btn sesion-swipe-edit" data-action="edit-sesion" data-id="${sesion.id}">${icon.edit}</button>
+        <button class="sesion-swipe-btn sesion-swipe-delete" data-action="delete-sesion" data-id="${sesion.id}">${icon.trash}</button>
       </div>
-      <div class="sesion-card-name">${sesion.rutinaNombre}</div>
-      <div class="sesion-card-stats">
-        <span><span class="sesion-card-stat-value">${sesion.duracionMin}</span> min</span>
-        <span><span class="sesion-card-stat-value">${volumen.toLocaleString()}</span> kg vol</span>
-        <span><span class="sesion-card-stat-value">${totalEjercicios}</span> ej</span>
-        <span><span class="sesion-card-stat-value">${sesion.circuitos.length}</span> circ</span>
+      <div class="sesion-swipe-content">
+        <div class="card sesion-card" data-action="detail" data-id="${sesion.id}">
+          <div class="sesion-card-top">
+            <div class="sesion-card-date">${formatDate(sesion.fecha)}</div>
+            <div class="sesion-card-tags">${tags}</div>
+          </div>
+          <div class="sesion-card-name">${sesion.rutinaNombre}</div>
+          <div class="sesion-card-stats">
+            <span><span class="sesion-card-stat-value">${sesion.duracionMin}</span> min</span>
+            <span><span class="sesion-card-stat-value">${volumen.toLocaleString()}</span> kg vol</span>
+            <span><span class="sesion-card-stat-value">${totalEjercicios}</span> ej</span>
+            <span><span class="sesion-card-stat-value">${sesion.circuitos.length}</span> circ</span>
+          </div>
+        </div>
       </div>
     </div>
   `;
@@ -104,19 +113,115 @@ export function render() {
   `;
 }
 
-export function mount() {
+export function mount(params) {
   const app = document.getElementById('app');
 
+  // ── Swipe state ──
+  let swipeStartX = 0;
+  let swipeStartY = 0;
+  let swipeTarget = null;
+  let swipeDeltaX = 0;
+  let swipeActive = false;
+
+  function closeAllSwipes(except) {
+    app.querySelectorAll('.sesion-swipe-content').forEach((el) => {
+      if (el !== except) {
+        el.style.transition = 'transform 0.2s ease';
+        el.style.transform = '';
+        el.closest('.sesion-swipe-container')?.classList.remove('swiped');
+      }
+    });
+  }
+
+  function rerender() {
+    const container = document.getElementById('app');
+    if (container) {
+      container.innerHTML = render();
+      mount(params);
+    }
+  }
+
+  const handleTouchStart = (e) => {
+    const content = e.target.closest('.sesion-swipe-content');
+    if (!content) return;
+    swipeTarget = content;
+    swipeDeltaX = 0;
+    swipeActive = false;
+    const touch = e.touches[0];
+    swipeStartX = touch.clientX;
+    swipeStartY = touch.clientY;
+    content.style.transition = 'none';
+  };
+
+  const handleTouchMove = (e) => {
+    if (!swipeTarget) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - swipeStartX;
+    const dy = touch.clientY - swipeStartY;
+
+    if (!swipeActive) {
+      if (Math.abs(dy) > 10) { swipeTarget = null; return; }
+      if (Math.abs(dx) > 10) { swipeActive = true; closeAllSwipes(swipeTarget); }
+      else return;
+    }
+
+    e.preventDefault();
+    swipeDeltaX = Math.max(-140, Math.min(0, dx));
+    swipeTarget.style.transform = `translateX(${swipeDeltaX}px)`;
+  };
+
+  const handleTouchEnd = () => {
+    if (!swipeTarget) return;
+    swipeTarget.style.transition = 'transform 0.2s ease';
+    if (swipeDeltaX < -60) {
+      swipeTarget.style.transform = 'translateX(-140px)';
+      swipeTarget.closest('.sesion-swipe-container')?.classList.add('swiped');
+    } else {
+      swipeTarget.style.transform = '';
+      swipeTarget.closest('.sesion-swipe-container')?.classList.remove('swiped');
+    }
+    swipeTarget = null;
+  };
+
   const handleClick = (e) => {
-    const card = e.target.closest('[data-action="detail"]');
-    if (card) {
-      navigate(`/sesion/${card.dataset.id}`);
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const id = btn.dataset.id;
+
+    switch (action) {
+      case 'detail':
+        if (!swipeActive) navigate(`/sesion/${id}`);
+        break;
+
+      case 'edit-sesion':
+        navigate(`/sesion/${id}`);
+        break;
+
+      case 'delete-sesion':
+        showModal({
+          title: 'Eliminar sesion',
+          body: 'Esta accion no se puede deshacer.',
+          confirmText: 'Eliminar',
+          danger: true,
+          onConfirm: () => {
+            deleteSesion(id);
+            rerender();
+          },
+        });
+        break;
     }
   };
 
   app.addEventListener('click', handleClick);
+  app.addEventListener('touchstart', handleTouchStart, { passive: true });
+  app.addEventListener('touchmove', handleTouchMove, { passive: false });
+  app.addEventListener('touchend', handleTouchEnd, { passive: true });
 
   return () => {
     app.removeEventListener('click', handleClick);
+    app.removeEventListener('touchstart', handleTouchStart);
+    app.removeEventListener('touchmove', handleTouchMove);
+    app.removeEventListener('touchend', handleTouchEnd);
   };
 }
