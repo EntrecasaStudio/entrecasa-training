@@ -9,6 +9,10 @@ let _loginCleanup = null;
 let _cachedGltfScene = null;
 let _sharedDracoLoader = null;
 
+// Track when splash 3D is ready so hideSplash can wait for it
+let _splashReadyResolve = null;
+export const splashReady = new Promise((resolve) => { _splashReadyResolve = resolve; });
+
 function updateProgress(pct) {
   const bar = document.getElementById('splash-progress-bar');
   if (bar) bar.style.width = `${Math.min(pct, 100)}%`;
@@ -26,7 +30,7 @@ async function setupKettlebell3D(container, size, onProgress) {
   renderer.setPixelRatio(dpr);
   renderer.setClearColor(0x000000, 0);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.2;
+  renderer.toneMappingExposure = 1.4;
 
   const scene = new THREE.Scene();
 
@@ -35,12 +39,16 @@ async function setupKettlebell3D(container, size, onProgress) {
   camera.position.set(0, 10, 30);
   camera.lookAt(0, 7, 0);
 
-  // Lighting — simplified (2 lights instead of 4)
-  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+  // Lighting — warm gold tones to complement yellow kettlebell
+  scene.add(new THREE.AmbientLight(0xfff5e0, 0.8));
 
-  const keyLight = new THREE.DirectionalLight(0xffe8cc, 2.0);
+  const keyLight = new THREE.DirectionalLight(0xffdd44, 2.2);
   keyLight.position.set(3, 12, 8);
   scene.add(keyLight);
+
+  const rimLight = new THREE.DirectionalLight(0xffe066, 0.6);
+  rimLight.position.set(-4, 6, -6);
+  scene.add(rimLight);
 
   // Load or reuse cached model
   let model;
@@ -79,6 +87,17 @@ async function setupKettlebell3D(container, size, onProgress) {
     _cachedGltfScene = gltf.scene;
     model = _cachedGltfScene.clone();
   }
+
+  // Recolor model to golden yellow
+  const kbColor = new THREE.Color(0xffcd00);
+  model.traverse((child) => {
+    if (child.isMesh && child.material) {
+      const mat = child.material.clone();
+      mat.color.set(kbColor);
+      if (mat.metalness !== undefined) { mat.metalness = 0.6; mat.roughness = 0.3; }
+      child.material = mat;
+    }
+  });
 
   // Center the model
   const box = new THREE.Box3().setFromObject(model);
@@ -128,16 +147,19 @@ async function setupKettlebell3D(container, size, onProgress) {
 
 export async function mountSplash3D() {
   const container = document.querySelector('.splash-neumorph');
-  if (!container) return;
+  if (!container) { _splashReadyResolve(); return; }
 
   updateProgress(10);
 
   try {
     _splashCleanup = await setupKettlebell3D(container, 120, updateProgress);
+    // Give the animation at least 1 frame to render
+    await new Promise((r) => requestAnimationFrame(r));
   } catch (err) {
     console.warn('[splash-3d] Failed to load kettlebell:', err.message);
     updateProgress(100);
   }
+  _splashReadyResolve();
 }
 
 export function cleanupSplash3D() {

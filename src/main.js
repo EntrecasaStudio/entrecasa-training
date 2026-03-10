@@ -21,7 +21,9 @@ import { initPullToRefresh } from '@js/helpers/pull-to-refresh.js';
 import { mountOfflineBanner } from '@js/components/offline-banner.js';
 
 // ── Splash 3D kettlebell (loaded immediately) ──────────────
-import('@js/helpers/splash-3d.js').then(({ mountSplash3D }) => mountSplash3D()).catch(() => {});
+const splashStart = Date.now();
+const MIN_SPLASH_MS = 1800; // minimum time to show splash so kettlebell is visible
+const splashReadyP = import('@js/helpers/splash-3d.js').then(({ mountSplash3D }) => mountSplash3D()).catch(() => {});
 
 // Seed initial rutinas from Notion data (only if empty)
 seedIfEmpty();
@@ -72,7 +74,14 @@ initPullToRefresh(async () => {
 
 let authResolved = false;
 
-function hideSplash() {
+async function hideSplash() {
+  // Wait for 3D kettlebell to render + minimum display time
+  await splashReadyP;
+  const elapsed = Date.now() - splashStart;
+  if (elapsed < MIN_SPLASH_MS) {
+    await new Promise((r) => setTimeout(r, MIN_SPLASH_MS - elapsed));
+  }
+
   // Clean up 3D kettlebell renderer
   import('@js/helpers/splash-3d.js').then(({ cleanupSplash3D }) => cleanupSplash3D()).catch(() => {});
   const splash = document.getElementById('splash');

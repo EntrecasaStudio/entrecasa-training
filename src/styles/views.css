@@ -1120,25 +1120,26 @@
   transition: border-color 200ms ease;
 }
 
-/* ── Circuit color coding ────────────────── */
+/* ── Circuit color coding — unified yellow ── */
 
-.circuito-color-pecho { border-left-color: var(--color-tag-pecho); }
-.circuito-color-espalda { border-left-color: var(--color-tag-espalda); }
-.circuito-color-piernas { border-left-color: var(--color-tag-piernas); }
-.circuito-color-core { border-left-color: var(--color-tag-core); }
-.circuito-color-brazos { border-left-color: var(--color-tag-brazos); }
-.circuito-color-gluteos { border-left-color: var(--color-tag-gluteos); }
-.circuito-color-hombros { border-left-color: var(--color-tag-hombros); }
-.circuito-color-none { border-left-color: var(--color-border); }
+.circuito-color-pecho,
+.circuito-color-espalda,
+.circuito-color-piernas,
+.circuito-color-core,
+.circuito-color-brazos,
+.circuito-color-gluteos,
+.circuito-color-hombros,
+.circuito-color-cardio,
+.circuito-color-none { border-left-color: #FFCD00; }
 
-.circuito-num-pecho { color: var(--color-tag-pecho); }
-.circuito-num-espalda { color: var(--color-tag-espalda); }
-.circuito-num-piernas { color: var(--color-tag-piernas); }
-.circuito-num-core { color: var(--color-tag-core); }
-.circuito-num-brazos { color: var(--color-tag-brazos); }
-.circuito-num-gluteos { color: var(--color-tag-gluteos); }
-.circuito-num-hombros { color: var(--color-tag-hombros); }
-.circuito-num-none { color: var(--color-text-muted); }
+.circuito-num-pecho,
+.circuito-num-espalda,
+.circuito-num-piernas,
+.circuito-num-core,
+.circuito-num-brazos,
+.circuito-num-gluteos,
+.circuito-num-hombros,
+.circuito-num-none { color: #FFCD00; }
 
 .circuito-select-pecho { border-color: color-mix(in srgb, var(--color-tag-pecho) 40%, var(--color-border)); color: var(--color-tag-pecho); }
 .circuito-select-espalda { border-color: color-mix(in srgb, var(--color-tag-espalda) 40%, var(--color-border)); color: var(--color-tag-espalda); }
@@ -1233,7 +1234,7 @@
 .circuito-form-number {
   font-size: var(--text-sm);
   font-weight: var(--fw-bold);
-  color: var(--color-text-muted);
+  color: #FFCD00;
   min-width: 24px;
 }
 
@@ -1894,14 +1895,7 @@
   border-radius: 3px;
 }
 
-.preview-circuit-color-core .preview-circuit-bar { background: var(--color-tag-core); }
-.preview-circuit-color-piernas .preview-circuit-bar { background: var(--color-tag-piernas); }
-.preview-circuit-color-pecho .preview-circuit-bar { background: var(--color-tag-pecho); }
-.preview-circuit-color-espalda .preview-circuit-bar { background: var(--color-tag-espalda); }
-.preview-circuit-color-brazos .preview-circuit-bar { background: var(--color-tag-brazos); }
-.preview-circuit-color-gluteos .preview-circuit-bar { background: var(--color-tag-gluteos); }
-.preview-circuit-color-hombros .preview-circuit-bar { background: var(--color-tag-hombros); }
-.preview-circuit-color-cardio .preview-circuit-bar { background: var(--color-tag-cardio); }
+.preview-circuit-bar { background: #FFCD00; }
 
 .preview-circuit-content {
   flex: 1;
@@ -1918,7 +1912,7 @@
 .preview-circuit-num {
   font-size: var(--text-xs);
   font-weight: var(--fw-bold);
-  color: var(--color-text-muted);
+  color: #FFCD00;
   min-width: 16px;
 }
 
@@ -3478,10 +3472,10 @@
 
 /* ── Cardio tag color ──────────────────────── */
 .circuito-color-cardio {
-  border-left-color: var(--color-tag-cardio);
+  border-left-color: #FFCD00;
 }
 .circuito-num-cardio {
-  color: var(--color-tag-cardio);
+  color: #FFCD00;
 }
 .circuito-select-cardio {
   border-color: color-mix(in srgb, var(--color-tag-cardio) 40%, var(--color-border));

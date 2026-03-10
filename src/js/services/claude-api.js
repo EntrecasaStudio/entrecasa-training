@@ -17,15 +17,32 @@ function getApiUrl() {
  * Returns a structured command response.
  * @param {string} message - The user's voice transcript
  * @param {string} usuario - Active user name (Lean/Nat)
+ * @param {Array} [rutinas] - User's existing routines for context
  * @returns {Promise<{ action: string, data: Object, confirmMessage: string }>}
  */
-export async function processVoiceCommand(message, usuario) {
+export async function processVoiceCommand(message, usuario, rutinas) {
   const url = getApiUrl();
+
+  const body = { message, usuario };
+
+  // Send routine summaries so Claude can reference existing routines
+  if (rutinas && rutinas.length > 0) {
+    body.rutinas = rutinas.map((r) => ({
+      nombre: r.nombre,
+      tipo: r.tipo || 'gimnasio',
+      circuitos: (r.circuitos || []).map((c, i) => ({
+        indice: i,
+        grupoMuscular: c.grupoMuscular,
+        tipo: c.tipo || 'normal',
+        ejercicios: (c.ejercicios || []).map((e) => e.nombre),
+      })),
+    }));
+  }
 
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message, usuario }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {

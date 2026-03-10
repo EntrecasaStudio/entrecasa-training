@@ -31,10 +31,20 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { message, usuario = 'Lean' } = req.body || {};
+  const { message, usuario = 'Lean', rutinas: userRutinas } = req.body || {};
   if (!message || !message.trim()) {
     res.status(400).json({ error: 'Message is required' });
     return;
+  }
+
+  // Build context about existing routines
+  let rutinasContext = '';
+  if (userRutinas && userRutinas.length > 0) {
+    rutinasContext = `\n\nRUTINAS DEL USUARIO (${usuario}):\n${userRutinas.map((r) =>
+      `- "${r.nombre}" (${r.tipo}): ${r.circuitos.map((c, i) =>
+        `C${i}[${[].concat(c.grupoMuscular || []).join('+')}${c.tipo !== 'normal' ? ' ' + c.tipo : ''}: ${c.ejercicios.join(', ')}]`
+      ).join(' | ')}`
+    ).join('\n')}\nUsa estos nombres EXACTOS de rutinas y ejercicios cuando el usuario se refiera a ellos. Haz fuzzy match si el usuario dice nombres parecidos.`;
   }
 
   const systemPrompt = `Eres el asistente de voz de una app de entrenamiento. Interpretas lo que dice el usuario y respondes con un JSON estructurado.
@@ -78,13 +88,13 @@ COMANDOS QUE PUEDES EJECUTAR:
    Para asignar rutina: { "action": "assign_routine", "data": { "rutinaNombre": "Pecho y Espalda", "dia": 1 }, "confirmMessage": "Rutina asignada al lunes" }
    Para descanso/libre: { "action": "clear_day", "data": { "dia": 6 }, "confirmMessage": "Sabado marcado como libre" }
 
-10. MODIFICAR RUTINA — Cuando pide agregar/quitar ejercicios de una rutina existente, cambiar nombre, etc.
-   Responde: { "action": "edit_routine", "data": { "rutinaNombre": "Pecho y Espalda", "changes": { "addExercises": [{ "circuitIndex": 0, "ejercicio": { "nombre": "Press inclinado", "repsObjetivo": 10, "pesoKg": 30 } }], "removeExercises": [{ "circuitIndex": 0, "ejercicioNombre": "Press de pecho" }], "newName": "Pecho y Espalda v2" } }, "confirmMessage": "Rutina actualizada" }
-   REGLAS: Solo incluye los campos que cambian. circuitIndex empieza en 0. Usa nombres EXACTOS del catalogo.
+10. MODIFICAR RUTINA — Cuando pide agregar/quitar ejercicios, cambiar nombre, cambiar grupo muscular, mover ejercicios entre circuitos, agregar/quitar circuitos, cambiar reps/peso, cambiar tipo de circuito (normal/hiit/velocidad/caminata), etc.
+   Responde: { "action": "edit_routine", "data": { "rutinaNombre": "Pecho y Espalda", "changes": { "addExercises": [{ "circuitIndex": 0, "ejercicio": { "nombre": "Press inclinado", "repsObjetivo": 10, "pesoKg": 30 } }], "removeExercises": [{ "circuitIndex": 0, "ejercicioNombre": "Press de pecho" }], "newName": "Pecho y Espalda v2", "addCircuits": [{ "grupoMuscular": "Brazos", "ejercicios": [{ "nombre": "Curl de biceps", "repsObjetivo": 12, "pesoKg": 15 }] }], "removeCircuits": [1], "updateCircuits": [{ "circuitIndex": 0, "grupoMuscular": "Pecho", "tipo": "hiit" }], "updateExercises": [{ "circuitIndex": 0, "ejercicioNombre": "Press de pecho", "repsObjetivo": 8, "pesoKg": 50 }] } }, "confirmMessage": "Rutina actualizada" }
+   REGLAS: Solo incluye los campos que cambian. circuitIndex empieza en 0. Usa nombres EXACTOS del catalogo. addCircuits agrega circuitos nuevos al final. removeCircuits indica indices de circuitos a borrar. updateCircuits cambia propiedades de circuitos existentes. updateExercises cambia reps/peso de ejercicios existentes.
 
 11. NO ENTENDIDO — Cuando no puedes clasificar el comando.
    Responde: { "action": "unknown", "data": { "message": "No entendi tu pedido. Podes pedirme armar rutinas, editar notas de ejercicios, asignar dias, modificar rutinas, cambiar colores, modo claro/oscuro, navegar, o cambiar usuario." }, "confirmMessage": "" }
-
+${rutinasContext}
 RESPONDE UNICAMENTE con JSON valido, sin texto adicional ni markdown.`;
 
   const payload = {

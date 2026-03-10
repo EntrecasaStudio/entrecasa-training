@@ -160,7 +160,8 @@ async function sendTranscript() {
 
   try {
     const usuario = getUsuarioActivo();
-    const result = await processVoiceCommand(text, usuario);
+    const rutinas = getRutinas().filter((r) => r.usuario === usuario);
+    const result = await processVoiceCommand(text, usuario, rutinas);
 
     state = 'idle';
     updateFAB();
@@ -314,12 +315,36 @@ function handleEditRoutine(data, confirmMessage) {
     target.nombre = changes.newName;
   }
 
+  // Remove circuits (process in reverse to preserve indices)
+  if (changes.removeCircuits) {
+    const indices = [...changes.removeCircuits].sort((a, b) => b - a);
+    for (const idx of indices) {
+      if (target.circuitos[idx]) {
+        target.circuitos.splice(idx, 1);
+      }
+    }
+  }
+
+  // Update circuit properties (grupo muscular, tipo)
+  if (changes.updateCircuits) {
+    for (const upd of changes.updateCircuits) {
+      const circ = target.circuitos[upd.circuitIndex];
+      if (!circ) continue;
+      if (upd.grupoMuscular) circ.grupoMuscular = upd.grupoMuscular;
+      if (upd.tipo) circ.tipo = upd.tipo;
+    }
+  }
+
   // Add exercises
   if (changes.addExercises) {
     for (const add of changes.addExercises) {
       const idx = add.circuitIndex ?? 0;
       if (target.circuitos[idx]) {
-        target.circuitos[idx].ejercicios.push(add.ejercicio);
+        const ej = add.ejercicio || { nombre: add.ejercicioNombre };
+        if (!ej.repsObjetivo) ej.repsObjetivo = 10;
+        if (!ej.pesoKg) ej.pesoKg = 0;
+        if (!ej.id) ej.id = crypto.randomUUID();
+        target.circuitos[idx].ejercicios.push(ej);
       }
     }
   }
@@ -333,6 +358,38 @@ function handleEditRoutine(data, confirmMessage) {
           (e) => e.nombre.toLowerCase() !== rem.ejercicioNombre.toLowerCase(),
         );
       }
+    }
+  }
+
+  // Update exercise properties (reps, weight)
+  if (changes.updateExercises) {
+    for (const upd of changes.updateExercises) {
+      const circ = target.circuitos[upd.circuitIndex ?? 0];
+      if (!circ) continue;
+      const ej = circ.ejercicios.find(
+        (e) => e.nombre.toLowerCase() === upd.ejercicioNombre.toLowerCase(),
+      );
+      if (!ej) continue;
+      if (upd.repsObjetivo !== undefined) ej.repsObjetivo = upd.repsObjetivo;
+      if (upd.pesoKg !== undefined) ej.pesoKg = upd.pesoKg;
+    }
+  }
+
+  // Add new circuits
+  if (changes.addCircuits) {
+    for (const newCirc of changes.addCircuits) {
+      const circ = {
+        id: crypto.randomUUID(),
+        grupoMuscular: newCirc.grupoMuscular || 'Core',
+        tipo: newCirc.tipo || 'normal',
+        ejercicios: (newCirc.ejercicios || []).map((e) => ({
+          id: crypto.randomUUID(),
+          nombre: e.nombre,
+          repsObjetivo: e.repsObjetivo || 10,
+          pesoKg: e.pesoKg || 0,
+        })),
+      };
+      target.circuitos.push(circ);
     }
   }
 
