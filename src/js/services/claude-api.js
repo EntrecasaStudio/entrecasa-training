@@ -23,7 +23,14 @@ function getApiUrl() {
 export async function processVoiceCommand(message, usuario, rutinas) {
   const url = getApiUrl();
 
-  const body = { message, usuario };
+  // Send current date so Claude knows "mañana", "hoy", etc.
+  const now = new Date();
+  const dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  const body = {
+    message,
+    usuario,
+    hoy: `${dias[now.getDay()]} ${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`,
+  };
 
   // Send routine summaries so Claude can reference existing routines
   if (rutinas && rutinas.length > 0) {

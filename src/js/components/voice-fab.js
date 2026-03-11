@@ -239,6 +239,10 @@ function dispatchAction(result) {
       handleEditRoutine(data, confirmMessage);
       break;
 
+    case 'suggest_routines':
+      handleSuggestRoutines(data, confirmMessage);
+      break;
+
     case 'unknown':
     default:
       showToast(data?.message || confirmMessage || 'No entendi tu pedido', 'error');
@@ -289,6 +293,87 @@ function handleEditExerciseNote(data, confirmMessage) {
   }
   saveNotaEjercicio(data.ejercicio, data.nota);
   if (confirmMessage) showToast(confirmMessage);
+}
+
+function handleSuggestRoutines(data, confirmMessage) {
+  const suggestions = data?.suggestions || [];
+  const dia = data?.dia;
+
+  if (suggestions.length === 0) {
+    showToast(confirmMessage || 'No encontré rutinas que coincidan', 'error');
+    return;
+  }
+
+  const usuario = getUsuarioActivo();
+  const rutinas = getRutinas().filter((r) => r.usuario === usuario);
+
+  // Build options from suggestions
+  const matched = suggestions
+    .map((name) => rutinas.find((r) => r.nombre.toLowerCase() === name.toLowerCase()))
+    .filter(Boolean);
+
+  if (matched.length === 0) {
+    showToast('No encontré las rutinas sugeridas', 'error');
+    return;
+  }
+
+  const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const titleDia = dia !== null && dia !== undefined ? ` para el ${dias[dia]}` : '';
+
+  // Build selection modal
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box" role="dialog" aria-modal="true">
+      <div class="modal-title">Elegí una rutina${titleDia}</div>
+      <div class="modal-body" style="text-align:left;margin-bottom:var(--space-sm)">
+        ${confirmMessage || ''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-xs);margin-bottom:var(--space-md)">
+        ${matched.map((r) => {
+          const grupos = [...new Set((r.circuitos || []).map((c) => [].concat(c.grupoMuscular || []).join('+')))].join(', ');
+          const ejCount = (r.circuitos || []).reduce((sum, c) => sum + (c.ejercicios || []).length, 0);
+          return `<button class="day-assign-option" data-pick-rutina="${r.id}" style="text-align:left">
+            <span class="day-assign-option-name" style="font-weight:600">${r.nombre}</span>
+            <span class="day-assign-option-code">${ejCount} ej · ${grupos}</span>
+          </button>`;
+        }).join('')}
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-sm" data-modal-cancel>Cancelar</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const close = () => {
+    overlay.classList.add('modal-closing');
+    overlay.addEventListener('animationend', () => overlay.remove(), { once: true });
+    setTimeout(() => overlay.remove(), 400);
+  };
+
+  overlay.addEventListener('click', (e) => {
+    const pickBtn = e.target.closest('[data-pick-rutina]');
+    if (pickBtn) {
+      const rutinaId = pickBtn.dataset.pickRutina;
+      if (dia !== null && dia !== undefined) {
+        assignRutinaADia(rutinaId, dia, usuario);
+        const picked = matched.find((r) => r.id === rutinaId);
+        showToast(`${picked?.nombre || 'Rutina'} asignada al ${dias[dia]}`);
+        navigate('/');
+      } else {
+        // No specific day — just show preview
+        const picked = matched.find((r) => r.id === rutinaId);
+        showToast(`Seleccionaste: ${picked?.nombre || 'Rutina'}`);
+      }
+      close();
+      return;
+    }
+    if (e.target.matches('[data-modal-cancel]') || e.target === overlay) {
+      close();
+    }
+  });
 }
 
 function handleEditRoutine(data, confirmMessage) {

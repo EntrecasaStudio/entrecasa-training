@@ -31,7 +31,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { message, usuario = 'Lean', rutinas: userRutinas } = req.body || {};
+  const { message, usuario = 'Lean', rutinas: userRutinas, hoy } = req.body || {};
   if (!message || !message.trim()) {
     res.status(400).json({ error: 'Message is required' });
     return;
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
   }
 
   const systemPrompt = `Eres el asistente de voz de una app de entrenamiento. Interpretas lo que dice el usuario y respondes con un JSON estructurado.
-
+${hoy ? `\nHOY ES: ${hoy}. Usa esta info para resolver "mañana", "pasado mañana", "el viernes", etc. a su numero de dia correcto.\n` : ''}
 COMANDOS QUE PUEDES EJECUTAR:
 
 1. CREAR RUTINA — Cuando el usuario pide armar/crear una rutina de ejercicios.
@@ -83,16 +83,22 @@ COMANDOS QUE PUEDES EJECUTAR:
    Responde: { "action": "edit_exercise_note", "data": { "ejercicio": "Press de pecho", "nota": "Texto de la nota..." }, "confirmMessage": "Nota actualizada para Press de pecho" }
    REGLAS: Usa el nombre EXACTO del ejercicio del catalogo. La nota es texto libre del usuario.
 
-9. ASIGNAR DIA — Cuando pide asignar una rutina a un dia de la semana, o poner descanso/libre en un dia.
+9. ASIGNAR/REEMPLAZAR DIA — Cuando pide asignar, cambiar o reemplazar la rutina de un dia de la semana, o poner descanso/libre.
    Dias: lunes=1, martes=2, miercoles=3, jueves=4, viernes=5, sabado=6, domingo=0
-   Para asignar rutina: { "action": "assign_routine", "data": { "rutinaNombre": "Pecho y Espalda", "dia": 1 }, "confirmMessage": "Rutina asignada al lunes" }
+   Si el usuario menciona una rutina ESPECIFICA por nombre: { "action": "assign_routine", "data": { "rutinaNombre": "Pecho y Espalda", "dia": 1 }, "confirmMessage": "Rutina asignada al lunes" }
    Para descanso/libre: { "action": "clear_day", "data": { "dia": 6 }, "confirmMessage": "Sabado marcado como libre" }
+   Si el usuario pide opciones, o describe criterios sin nombrar una rutina exacta (ej: "cambiá la de mañana por una de espalda y biceps", "poneme otra rutina que tenga piernas"): usa SUGGEST_ROUTINES (ver comando 12).
 
 10. MODIFICAR RUTINA — Cuando pide agregar/quitar ejercicios, cambiar nombre, cambiar grupo muscular, mover ejercicios entre circuitos, agregar/quitar circuitos, cambiar reps/peso, cambiar tipo de circuito (normal/hiit/velocidad/caminata), etc.
    Responde: { "action": "edit_routine", "data": { "rutinaNombre": "Pecho y Espalda", "changes": { "addExercises": [{ "circuitIndex": 0, "ejercicio": { "nombre": "Press inclinado", "repsObjetivo": 10, "pesoKg": 30 } }], "removeExercises": [{ "circuitIndex": 0, "ejercicioNombre": "Press de pecho" }], "newName": "Pecho y Espalda v2", "addCircuits": [{ "grupoMuscular": "Brazos", "ejercicios": [{ "nombre": "Curl de biceps", "repsObjetivo": 12, "pesoKg": 15 }] }], "removeCircuits": [1], "updateCircuits": [{ "circuitIndex": 0, "grupoMuscular": "Pecho", "tipo": "hiit" }], "updateExercises": [{ "circuitIndex": 0, "ejercicioNombre": "Press de pecho", "repsObjetivo": 8, "pesoKg": 50 }] } }, "confirmMessage": "Rutina actualizada" }
    REGLAS: Solo incluye los campos que cambian. circuitIndex empieza en 0. Si no se especifica circuitIndex (omitirlo), aplica a TODOS los circuitos que contengan ese ejercicio. Usa nombres EXACTOS del catalogo. addCircuits agrega circuitos nuevos al final. removeCircuits indica indices de circuitos a borrar. updateCircuits cambia propiedades de circuitos existentes. updateExercises cambia reps/peso de ejercicios existentes — si el usuario dice "en todas las series" o similar, omiti circuitIndex para aplicar a todos.
 
-11. NO ENTENDIDO — Cuando no puedes clasificar el comando.
+12. SUGERIR RUTINAS — Cuando el usuario quiere cambiar/reemplazar la rutina de un dia y describe criterios en vez de nombrar una rutina exacta (ej: "poneme una de espalda", "cambiá mañana por una que tenga biceps", "qué rutinas tengo de piernas?").
+   Busca en las RUTINAS DEL USUARIO cuáles coinciden con los criterios (por grupo muscular de los circuitos o por nombre).
+   Responde: { "action": "suggest_routines", "data": { "dia": 2, "suggestions": ["Espalda y Biceps", "Pull Day"] }, "confirmMessage": "Encontré 2 rutinas que coinciden" }
+   REGLAS: dia es el dia de la semana target (puede ser null si solo pregunta sin querer asignar). suggestions es un array de nombres EXACTOS de rutinas del usuario que coincidan. Maximo 5 sugerencias. Si no hay ninguna, devuelve suggestions vacío y un confirmMessage explicando que no hay rutinas que coincidan.
+
+13. NO ENTENDIDO — Cuando no puedes clasificar el comando.
    Responde: { "action": "unknown", "data": { "message": "No entendi tu pedido. Podes pedirme armar rutinas, editar notas de ejercicios, asignar dias, modificar rutinas, cambiar colores, modo claro/oscuro, navegar, o cambiar usuario." }, "confirmMessage": "" }
 ${rutinasContext}
 RESPONDE UNICAMENTE con JSON valido, sin texto adicional ni markdown.`;
