@@ -1063,7 +1063,7 @@ function transitionCircuit(container, params, direction) {
 
 // ── Muscle group chooser modal ────────────
 
-const GRUPOS_MUSCULARES = ['Pecho', 'Espalda', 'Piernas', 'Core', 'Brazos', 'Hombros', 'Glúteos'];
+const GRUPOS_MUSCULARES = ['Pecho', 'Espalda', 'Piernas', 'Core', 'Brazos', 'Hombros', 'Glúteos', 'Cardio'];
 
 function showMuscleGroupChooser(onSelect) {
   const existing = document.getElementById('muscle-group-modal');

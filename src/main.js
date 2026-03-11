@@ -12,10 +12,10 @@ import { seedIfEmpty } from './seed.js';
 import { mountNavBar } from '@js/components/nav-bar.js';
 import { mountVoiceFab } from '@js/components/voice-fab.js';
 import { mountAvatarMenu, updateAvatarMenu } from '@js/components/avatar-menu.js';
-import { loadSavedTheme } from '@js/services/theme-manager.js';
+import { loadSavedTheme, applyUserAccent } from '@js/services/theme-manager.js';
 import { onAuth, auth } from '@js/services/firebase.js';
 import { startRealtimeSync, stopRealtimeSync, downloadAllData, uploadAllData } from '@js/services/sync.js';
-import { setUsuarioActivo } from './store.js';
+import { setUsuarioActivo, getUsuarioActivo } from './store.js';
 import { initSwipeBack } from '@js/helpers/swipe-back.js';
 import { initPullToRefresh } from '@js/helpers/pull-to-refresh.js';
 import { mountOfflineBanner } from '@js/components/offline-banner.js';
@@ -28,8 +28,9 @@ const splashReadyP = import('@js/helpers/splash-3d.js').then(({ mountSplash3D })
 // Seed initial rutinas from Notion data (only if empty)
 seedIfEmpty();
 
-// Load saved theme customizations
+// Load saved theme customizations + per-user accent
 loadSavedTheme();
+applyUserAccent(getUsuarioActivo());
 
 // Register service worker with update detection
 if ('serviceWorker' in navigator) {
@@ -113,9 +114,11 @@ onAuth(async (user) => {
         console.warn('[app] Initial sync failed:', err.message);
       }
       startRealtimeSync(() => {
-        // Remote data changed — refresh current view
+        // Remote data changed — refresh current view (but not during active edits/workouts)
         const hash = window.location.hash || '#/';
-        navigate(hash.replace('#', '') || '/');
+        const path = hash.replace('#', '') || '/';
+        if (path.includes('/editar/') || path.includes('/nueva') || path.startsWith('/entrenamiento')) return;
+        navigate(path);
       });
     } else if (!auth) {
       // No Firebase — keep stored user or default to 'Lean'
@@ -145,7 +148,9 @@ onAuth(async (user) => {
     }
     startRealtimeSync(() => {
       const hash = window.location.hash || '#/';
-      navigate(hash.replace('#', '') || '/');
+      const path = hash.replace('#', '') || '/';
+      if (path.includes('/editar/') || path.includes('/nueva') || path.startsWith('/entrenamiento')) return;
+      navigate(path);
     });
     updateAvatarMenu();
     navigate('/');

@@ -62,11 +62,14 @@ function crearEjercicioPorTipo(tipo) {
 }
 
 function crearCircuitoVacio(tipo = 'normal') {
+  const isCardio = tipo === 'velocidad' || tipo === 'caminata' || tipo === 'hiit';
   const circ = {
     id: generateId(),
     tipo,
     grupoMuscular: [],
-    ejercicios: [crearEjercicioPorTipo(tipo), crearEjercicioPorTipo(tipo)],
+    ejercicios: isCardio
+      ? [crearEjercicioPorTipo(tipo)]
+      : [crearEjercicioPorTipo(tipo), crearEjercicioPorTipo(tipo)],
   };
   // Circuit-level params for non-normal types
   if (tipo === 'hiit') {
@@ -245,7 +248,8 @@ function renderEjercicio(ej, circIdx, ejIdx, totalEj, circTipo = 'normal') {
 
   // Info icon inside the field, X button outside
   const infoInside = ej.nombre ? `<span class="ej-picker-inline-info" data-action="ej-info" data-circ="${circIdx}" data-ej="${ejIdx}" title="Ver detalle">${icon.info}</span>` : '';
-  const canRemove = totalEj > MIN_EJERCICIOS;
+  const isCardioCirc = circTipo === 'velocidad' || circTipo === 'caminata' || circTipo === 'hiit';
+  const canRemove = totalEj > (isCardioCirc ? 1 : MIN_EJERCICIOS);
   const removeBtn = `<button class="ej-picker-action-btn ej-picker-remove-btn" data-action="remove-ejercicio" data-circ="${circIdx}" data-ej="${ejIdx}" title="Eliminar ejercicio"${canRemove ? '' : ' disabled'}>${icon.close}</button>`;
 
   // Drag handle for reordering exercises
@@ -879,7 +883,7 @@ export function mount(params) {
         // Auto-switch to velocidad when Cardio is added and tipo is normal
         if (grupo === 'Cardio' && (rutina.circuitos[circIdx].tipo || 'normal') === 'normal') {
           rutina.circuitos[circIdx].tipo = 'velocidad';
-          rutina.circuitos[circIdx].ejercicios = [crearEjercicioPorTipo('velocidad'), crearEjercicioPorTipo('velocidad')];
+          rutina.circuitos[circIdx].ejercicios = [crearEjercicioPorTipo('velocidad')];
           rutina.circuitos[circIdx].velocidad = 12;
           rutina.circuitos[circIdx].tiempo = 30;
           rutina.circuitos[circIdx].descanso = 60;
@@ -953,7 +957,9 @@ export function mount(params) {
         syncFromInputs();
         isDirty = true;
         activePicker = null;
-        if (rutina.circuitos[circIdx].ejercicios.length > MIN_EJERCICIOS) {
+        const circType = rutina.circuitos[circIdx].tipo || 'normal';
+        const minEj = (circType === 'velocidad' || circType === 'caminata' || circType === 'hiit') ? 1 : MIN_EJERCICIOS;
+        if (rutina.circuitos[circIdx].ejercicios.length > minEj) {
           rutina.circuitos[circIdx].ejercicios.splice(ejIdx, 1);
         } else {
           // Can't remove — clear the exercise instead

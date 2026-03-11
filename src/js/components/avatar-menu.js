@@ -7,6 +7,7 @@ import { icon } from '@js/icons.js';
 import { getUsuarioActivo, setUsuarioActivo } from '@/store.js';
 import { getCurrentUser, logout } from '@js/services/firebase.js';
 import { navigate } from '@/router.js';
+import { applyUserAccent } from '@js/services/theme-manager.js';
 
 const PROFILES = ['Lean', 'Nat'];
 
@@ -143,6 +144,7 @@ function handleDropdownClick(e) {
       closeMenu();
       if (profile === getUsuarioActivo()) return;
       setUsuarioActivo(profile);
+      applyUserAccent(profile);
       updateAvatarMenu();
       navigate('/');
       break;

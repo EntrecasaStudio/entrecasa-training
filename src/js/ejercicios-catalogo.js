@@ -14,6 +14,7 @@ export const CATEGORIAS = [
   'Espalda',
   'Hombros',
   'Brazos',
+  'Cardio',
 ];
 
 export const ejerciciosCatalogo = [
@@ -137,6 +138,16 @@ export const ejerciciosCatalogo = [
   { nombre: 'Fondos de triceps en anillas', categoria: 'Brazos', tipo: 'funcional' },
   { nombre: 'Fondos de triceps en suspension', categoria: 'Brazos', tipo: 'funcional' },
   { nombre: 'Fondos de triceps entre cajas con disco', categoria: 'Brazos', tipo: 'funcional' },
+
+  // ── Cardio ──────────────────────────────────
+  { nombre: 'Pasadas de velocidad', categoria: 'Cardio', tipo: 'funcional' },
+  { nombre: 'Corrida continua', categoria: 'Cardio', tipo: 'funcional' },
+  { nombre: 'Caminata en cinta', categoria: 'Cardio', tipo: 'funcional' },
+  { nombre: 'Bicicleta fija', categoria: 'Cardio', tipo: 'maquina' },
+  { nombre: 'Eliptico', categoria: 'Cardio', tipo: 'maquina' },
+  { nombre: 'Remo ergometro', categoria: 'Cardio', tipo: 'maquina' },
+  { nombre: 'Saltar la soga', categoria: 'Cardio', tipo: 'funcional' },
+  { nombre: 'Escalador', categoria: 'Cardio', tipo: 'funcional' },
 ];
 
 // ── Custom exercises (user-created, persisted in localStorage) ──

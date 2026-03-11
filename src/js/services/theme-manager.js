@@ -89,6 +89,20 @@ export function resetTheme() {
 }
 
 /**
+ * Apply per-user accent color.
+ * NAT → violet (#9b87f5), LEAN (default) → yellow (#FFCD00).
+ */
+const USER_ACCENTS = {
+  Nat: { '--color-accent': '#9b87f5', '--color-accent-hover': '#8570e0' },
+  Lean: { '--color-accent': '#FFCD00', '--color-accent-hover': '#E5B800' },
+};
+
+export function applyUserAccent(userName) {
+  const accent = USER_ACCENTS[userName] || USER_ACCENTS.Lean;
+  applyToDOM(accent);
+}
+
+/**
  * Load and apply saved theme on app startup.
  */
 export function loadSavedTheme() {
