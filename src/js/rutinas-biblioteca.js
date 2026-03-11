@@ -248,7 +248,7 @@ function buildRutina(numero, titulo, tipo, seed) {
 
   return {
     id: generateId(),
-    nombre: `Día ${numero} - ${titulo}`,
+    nombre: titulo,
     diaSemana: null,
     tipo,
     numero,

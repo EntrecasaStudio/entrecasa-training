@@ -417,7 +417,10 @@ function renderForm(isEdit) {
     </div>
 
     <div class="form-section">
-      <label class="input-label">Nombre de la rutina</label>
+      <div class="form-name-row">
+        <label class="input-label">Nombre de la rutina</label>
+        ${rutina.numero ? `<span class="form-routine-code">${rutina.tipo === 'cross' ? 'C' : 'G'}${formatNumero(rutina.numero)}</span>` : ''}
+      </div>
       <input type="text" class="input" id="rutina-nombre" data-field="nombre" placeholder="Ej: Pecho y espalda"
              value="${rutina.nombre}">
     </div>

@@ -16,6 +16,7 @@ import {
   renderLastDone,
   showPreview,
   showDayAssignmentModal,
+  formatNumero,
 } from '@js/helpers/rutina-helpers.js';
 import {
   getWeeklyStreak,
@@ -287,9 +288,11 @@ function renderUserDayRow(u, selectedDate, isToday, isPast, dow, isActive) {
         <span class="cal-shared-status cal-shared-status--done">&#10003; ${s.rutinaNombre}${dur}</span>
       </div>`;
   } else if (planned && planned.routine) {
+    const r = planned.routine;
+    const codePrefix = r.numero ? `<span class="cal-shared-code">${r.tipo === 'cross' ? 'C' : 'G'}${formatNumero(r.numero)}</span> ` : '';
     statusHtml = `
       <div class="cal-shared-row-info">
-        <span class="cal-shared-status" data-action="start" data-id="${planned.routine.id}" style="cursor:pointer">${planned.routine.nombre}</span>
+        <span class="cal-shared-status" data-action="start" data-id="${r.id}" style="cursor:pointer">${codePrefix}${r.nombre}</span>
         <span class="cal-shared-tipo ${planned.tipo}">${planned.tipo === 'cross' ? 'Cross' : 'Gym'}</span>
       </div>`;
   } else if (planned && !planned.routine) {

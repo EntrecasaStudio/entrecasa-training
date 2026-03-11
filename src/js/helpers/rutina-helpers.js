@@ -128,6 +128,7 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
       <div class="preview-modal-actions">
         <button class="btn-icon-action" data-preview-edit title="Editar">${icon.edit}</button>
         <button class="btn-icon-action" data-preview-duplicate title="Duplicar">${icon.copy}</button>
+        <button class="btn-icon-action" data-preview-calendar title="Asignar día">${icon.calendar}</button>
         ${from === 'home' ? `<button class="btn-icon-action" data-preview-cambiar title="Cambiar rutina">${icon.swap}</button>` : ''}
         <button class="btn-icon-action btn-icon-action--primary" data-preview-start title="Iniciar">${icon.play}</button>
       </div>
@@ -168,6 +169,9 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
           );
         });
       }
+    } else if (e.target.closest('[data-preview-calendar]')) {
+      // Open day picker for this routine
+      close(() => showRoutineDayPicker(rutina));
     } else if (e.target.closest('[data-preview-cambiar]')) {
       const d = optDia != null ? optDia : rutina.diaSemana;
       if (d != null) {
@@ -397,6 +401,61 @@ export function showDayAssignmentModal(usuario, dia, tipoActual, onDone, { date,
         updateList();
       }
       return;
+    }
+  });
+}
+
+// ── Routine day picker (from preview) ──────
+
+function showRoutineDayPicker(rutina) {
+  const usuario = getUsuarioActivo();
+  const currentDia = rutina.diaSemana;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box day-picker-modal" role="dialog" aria-modal="true">
+      <button class="ej-detail-close-x" data-picker-close>${icon.close}</button>
+      <div class="modal-title">Asignar día</div>
+      <div class="modal-body">
+        <div class="day-picker-subtitle">${getDisplayName(rutina)}</div>
+        <div class="day-picker-grid">
+          ${DIAS_ORDEN.map((d) => {
+            const isActive = currentDia === d;
+            return `<button class="day-picker-btn${isActive ? ' active' : ''}" data-picker-dia="${d}">${DIAS_LABEL[d]}</button>`;
+          }).join('')}
+          <button class="day-picker-btn day-picker-btn--clear${currentDia == null ? ' active' : ''}" data-picker-dia="none">Sin día</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = (cb) => {
+    overlay.classList.add('modal-closing');
+    let closed = false;
+    const done = () => { if (closed) return; closed = true; overlay.remove(); if (cb) cb(); };
+    overlay.addEventListener('animationend', done, { once: true });
+    setTimeout(done, 400);
+  };
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay || e.target.closest('[data-picker-close]')) {
+      close();
+      return;
+    }
+    const btn = e.target.closest('[data-picker-dia]');
+    if (btn) {
+      const val = btn.dataset.pickerDia;
+      if (val === 'none') {
+        clearRutinaDelDia(currentDia, usuario);
+      } else {
+        const dia = Number(val);
+        const tipo = rutina.tipo || 'gimnasio';
+        setPlanDia(usuario, dia, tipo);
+        assignRutinaADia(rutina.id, dia, usuario);
+      }
+      close(() => refreshCurrentTab());
     }
   });
 }

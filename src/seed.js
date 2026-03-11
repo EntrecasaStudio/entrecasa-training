@@ -190,7 +190,7 @@ function rutinasNat() {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '6'; // Bump when seed data changes (6 = shared routines dedup)
+  const CURRENT_SEED_V = '7'; // Bump when seed data changes (7 = strip 'Día X' from names)
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -215,6 +215,12 @@ export function seedIfEmpty() {
       try {
         let parsed = JSON.parse(existing);
         if (parsed.length > 0) {
+          // ── Migration v7: strip "Día X - " prefix from names ──
+          for (const r of parsed) {
+            const m = r.nombre && r.nombre.match(/^Día \d+ [-–] (.+)$/i);
+            if (m) r.nombre = m[1];
+          }
+
           // ── Dedup: remove duplicate numeros (keep first occurrence) ──
           const seenNumeros = new Set();
           parsed = parsed.filter((r) => {
