@@ -1,5 +1,6 @@
 import { icon } from '@js/icons.js';
 import { haptic } from '@js/helpers/haptics.js';
+import { navigate } from '@/router.js';
 
 const TAB_MAP = {
   entrenamiento: '#/',
@@ -8,6 +9,8 @@ const TAB_MAP = {
   ejercicios: '#/ejercicios',
   historial: '#/historial',
 };
+
+let _mainBtnRutinaId = null; // when set, center button acts as "start workout"
 
 function navHTML() {
   return `
@@ -21,7 +24,7 @@ function navHTML() {
         <span>Ejercicios</span>
       </a>
       <a href="#/" class="nav-bottom-item nav-bottom-main" data-tab="entrenamiento" aria-label="Entreno">
-        <span class="nav-bottom-main-btn" aria-hidden="true">${icon.play}</span>
+        <span class="nav-bottom-main-btn" aria-hidden="true">${icon.kettlebell}</span>
         <span>Entreno</span>
       </a>
       <a href="#/progreso" class="nav-bottom-item" data-tab="progreso" aria-label="Progreso">
@@ -49,6 +52,13 @@ export function mountNavBar() {
 
     haptic.light();
 
+    // If center button has a rutina to start, intercept and navigate to workout
+    if (item.dataset.tab === 'entrenamiento' && _mainBtnRutinaId) {
+      e.preventDefault();
+      navigate(`/workout/${_mainBtnRutinaId}`);
+      return;
+    }
+
     // Bounce animation
     item.classList.add('nav-icon-bounce');
     item.addEventListener('animationend', () => {
@@ -70,6 +80,23 @@ export function setActiveTab(tab) {
       el.removeAttribute('aria-current');
     }
   });
+  // Reset center button to kettlebell when leaving Entreno
+  if (tab !== 'entrenamiento') {
+    updateMainButton(null);
+  }
+}
+
+/**
+ * Switch center button between kettlebell (default) and play (when routine available).
+ * @param {string|null} rutinaId — if truthy, show play icon and start this workout on tap
+ */
+export function updateMainButton(rutinaId) {
+  _mainBtnRutinaId = rutinaId || null;
+  const container = document.getElementById('nav-bar');
+  if (!container) return;
+  const btn = container.querySelector('.nav-bottom-main-btn');
+  if (!btn) return;
+  btn.innerHTML = _mainBtnRutinaId ? icon.play : icon.kettlebell;
 }
 
 /** Show/hide the nav bar (hide during workout, etc.) */

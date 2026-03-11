@@ -11,6 +11,7 @@ import {
 } from '@/store.js';
 import { navigate } from '@/router.js';
 import { icon, iconLg } from '@js/icons.js';
+import { updateMainButton } from '@js/components/nav-bar.js';
 import {
   renderTags,
   renderLastDone,
@@ -439,6 +440,10 @@ export function render() {
   // Rest day message (no big CTA)
   const isSelectedToday = isSameDay(selectedDate, new Date());
   const rest = isSelectedToday && !rutinaHoy && !isMyWorkout ? renderRestDay(proximo) : '';
+
+  // Update center nav button: play when there's a workout to start/resume
+  const mainBtnId = isMyWorkout ? workoutActivo.rutinaId : (rutinaHoy ? rutinaHoy.id : null);
+  updateMainButton(mainBtnId);
 
   return `
     ${greeting}
