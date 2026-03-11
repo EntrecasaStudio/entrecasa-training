@@ -257,7 +257,7 @@ export function mount() {
         break;
       }
       case 'show-detail': {
-        showExerciseDetail(btn.dataset.nombre);
+        showExerciseDetail(btn.dataset.nombre, { onSave: rerender });
         break;
       }
       case 'new-ejercicio': {

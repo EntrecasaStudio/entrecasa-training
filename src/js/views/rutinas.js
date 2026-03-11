@@ -300,8 +300,7 @@ export function mount() {
         navigate('/rutina/nueva');
         break;
       case 'preview':
-        if (swipeBlocked) return;
-        // Close any open swipes on tap
+        if (swipeBlocked || tapHandled) return;
         closeAllSwipes();
         showPreview(id);
         break;
@@ -386,10 +385,14 @@ export function mount() {
     });
   }
 
+  let tapTarget = null; // original event target for tap detection
+  let tapHandled = false; // prevents click from double-firing after touchend tap
+
   const handleTouchStart = (e) => {
     const content = e.target.closest('.rutina-swipe-content');
     if (!content) return;
     swipeTarget = content;
+    tapTarget = e.target;
     swipeStartX = e.touches[0].clientX;
     swipeStartY = e.touches[0].clientY;
     swipeDeltaX = 0;
@@ -437,6 +440,10 @@ export function mount() {
   const handleTouchEnd = () => {
     if (!swipeTarget) return;
     swipeTarget.style.transition = '';
+
+    // Detect tap: no swipe active, card wasn't swiped, no direction locked
+    const isTap = !swipeActive && !wasSwiped && !directionLocked;
+
     if (swipeDeltaX < -40) {
       // Snap open
       swipeTarget.style.transform = 'translateX(-80px)';
@@ -453,10 +460,24 @@ export function mount() {
       setTimeout(() => { swipeBlocked = false; }, 300);
     }
 
+    // On tap, directly trigger preview (bypasses flaky mobile click events)
+    if (isTap && tapTarget) {
+      const actionEl = tapTarget.closest('[data-action="preview"]');
+      if (actionEl && actionEl.dataset.id) {
+        closeAllSwipes();
+        tapHandled = true;
+        setTimeout(() => { tapHandled = false; }, 400);
+        // Use setTimeout to avoid interference with touch event cycle
+        const id = actionEl.dataset.id;
+        setTimeout(() => showPreview(id), 0);
+      }
+    }
+
     swipeTarget = null;
     swipeActive = false;
     directionLocked = false;
     wasSwiped = false;
+    tapTarget = null;
   };
 
   app.addEventListener('touchstart', handleTouchStart, { passive: true });

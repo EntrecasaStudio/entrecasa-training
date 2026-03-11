@@ -1059,6 +1059,11 @@
   display: flex;
   gap: var(--space-md);
   align-items: flex-start;
+  touch-action: manipulation;
+}
+
+.rutina-compact {
+  touch-action: manipulation;
 }
 
 .rutina-card-info {

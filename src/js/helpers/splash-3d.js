@@ -23,9 +23,9 @@ async function setupKettlebell3D(container, size, onProgress) {
 
   if (onProgress) onProgress(30);
 
-  // Set up renderer — lightweight for fast first paint
-  const dpr = Math.min(window.devicePixelRatio || 1, 1);
-  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false, powerPreference: 'low-power' });
+  // Set up renderer — full quality
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
   renderer.setSize(size, size);
   renderer.setPixelRatio(dpr);
   renderer.setClearColor(0x000000, 0);

@@ -103,7 +103,12 @@ onAuth(async (user) => {
       // Sync with Firestore: download cloud data, upload local data
       try {
         const hadCloud = await downloadAllData();
-        if (!hadCloud) await uploadAllData();
+        if (hadCloud) {
+          // Re-run seed to apply migrations to downloaded data
+          seedIfEmpty();
+        } else {
+          await uploadAllData();
+        }
       } catch (err) {
         console.warn('[app] Initial sync failed:', err.message);
       }
@@ -134,6 +139,7 @@ onAuth(async (user) => {
     try {
       await uploadAllData();
       await downloadAllData();
+      seedIfEmpty(); // re-apply migrations to downloaded data
     } catch (err) {
       console.warn('[app] Sync after login failed:', err.message);
     }

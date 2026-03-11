@@ -14,6 +14,7 @@ const SYNC_KEYS = {
   gym_notas_ejercicios: 'notasEjercicios',
   gym_theme: 'theme',
   gym_ejercicio_meta: 'ejercicioMeta',
+  gym_day_overrides: 'dayOverrides',
 };
 
 // Debounce timers per key
@@ -221,4 +222,24 @@ export function queueSync(key) {
  */
 export function isSyncAvailable() {
   return !!getCurrentUser();
+}
+
+// ── Flush on page unload / background to prevent data loss ──
+function flushOnExit() {
+  const keys = [..._dirtyKeys];
+  if (keys.length === 0) return;
+  for (const key of Object.keys(_timers)) {
+    clearTimeout(_timers[key]);
+    delete _timers[key];
+  }
+  // Fire-and-forget uploads (browser may cut these short, but it's best-effort)
+  keys.forEach((key) => uploadKey(key));
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', flushOnExit);
+  // visibilitychange is more reliable on mobile (fires when switching apps/tabs)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushOnExit();
+  });
 }
