@@ -271,6 +271,7 @@
 .cal-day-detail {
   position: relative;
   margin-top: var(--space-md);
+  margin-bottom: var(--space-lg);
   padding: var(--space-md);
   background: linear-gradient(
     135deg,
@@ -425,9 +426,9 @@
   height: 4px;
 }
 
-/* Per-user dot colors */
+/* Per-user dot colors (hardcoded so they stay correct regardless of active accent) */
 .cal-strip-dot-user--lean.cal-strip-dot-user--done {
-  background-color: var(--color-accent);
+  background-color: #FFCD00;
 }
 
 .cal-strip-dot-user--nat.cal-strip-dot-user--done {
@@ -435,7 +436,7 @@
 }
 
 .cal-strip-dot-user--lean.cal-strip-dot-user--plan {
-  border-color: var(--color-accent);
+  border-color: #FFCD00;
 }
 
 .cal-strip-dot-user--nat.cal-strip-dot-user--plan {
@@ -453,7 +454,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-sm);
+  padding: var(--space-md);
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.025);
   transition: background 150ms ease;
@@ -463,15 +464,15 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
-/* User avatar (small circle with initial) */
+/* User avatar (circle with initial) */
 .cal-shared-avatar {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: var(--fw-bold);
   color: var(--color-bg);
   flex-shrink: 0;
@@ -479,25 +480,33 @@
 }
 
 .cal-shared-avatar--lean {
-  background-color: var(--color-accent);
+  background-color: #FFCD00;
 }
 
 .cal-shared-avatar--nat {
   background-color: #9b87f5;
 }
 
-/* Row info (status + tipo) */
+/* Row info (status + volanta + meta) */
 .cal-shared-row-info {
   flex: 1;
   min-width: 0;
   display: flex;
-  align-items: center;
-  gap: var(--space-xs);
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cal-shared-volanta {
+  font-size: var(--text-xs);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 .cal-shared-status {
-  font-size: var(--text-sm);
-  font-weight: var(--fw-medium);
+  font-size: var(--text-base);
+  font-weight: var(--fw-semibold);
   color: var(--color-text);
   white-space: nowrap;
   overflow: hidden;
@@ -511,14 +520,15 @@
 .cal-shared-status--muted {
   color: var(--color-text-muted);
   font-weight: var(--fw-regular);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
 }
 
-.cal-shared-code {
-  color: var(--color-text-muted);
+.cal-shared-meta {
   font-size: var(--text-xs);
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.3px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Tipo badge in shared row */
@@ -579,7 +589,7 @@
 }
 
 .cal-month-dot-user--done.cal-month-dot-user--lean {
-  background-color: var(--color-accent);
+  background-color: #FFCD00;
 }
 
 .cal-month-dot-user--done.cal-month-dot-user--nat {
@@ -587,7 +597,7 @@
 }
 
 .cal-month-dot-user--plan.cal-month-dot-user--lean {
-  border: 1px solid var(--color-accent);
+  border: 1px solid #FFCD00;
   width: 3px;
   height: 3px;
 }
@@ -1994,6 +2004,14 @@
 .btn-icon-action--primary:active {
   background: color-mix(in srgb, var(--color-accent) 85%, black);
   color: var(--color-bg);
+}
+
+.btn-icon-action--danger {
+  color: var(--color-danger);
+}
+
+.btn-icon-action--danger:active {
+  background: color-mix(in srgb, var(--color-danger) 15%, transparent);
 }
 
 /* 3D prerendered images */

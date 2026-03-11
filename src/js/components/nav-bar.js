@@ -21,7 +21,7 @@ function navHTML() {
         <span>Ejercicios</span>
       </a>
       <a href="#/" class="nav-bottom-item nav-bottom-main" data-tab="entrenamiento" aria-label="Entreno">
-        <span class="nav-bottom-main-btn" aria-hidden="true">${icon.kettlebell}</span>
+        <span class="nav-bottom-main-btn" aria-hidden="true">${icon.play}</span>
         <span>Entreno</span>
       </a>
       <a href="#/progreso" class="nav-bottom-item" data-tab="progreso" aria-label="Progreso">

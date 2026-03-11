@@ -2,6 +2,7 @@ import { getRutinaById, getRutinas, getUltimaSesionDeRutina, assignRutinaADia, c
 import { navigate, refreshCurrentTab } from '@/router.js';
 import { icon } from '@js/icons.js';
 import { showToastAction } from '@js/components/toast.js';
+import { showModal } from '@js/components/modal.js';
 
 // ── Helpers ──────────────────────────────────
 
@@ -126,6 +127,7 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
       <div class="modal-title">${rutina.nombre}</div>
       <div class="modal-body"><div class="preview-body">${circuitsHtml}</div></div>
       <div class="preview-modal-actions">
+        <button class="btn-icon-action btn-icon-action--danger" data-preview-delete title="Eliminar">${icon.trash}</button>
         <button class="btn-icon-action" data-preview-edit title="Editar">${icon.edit}</button>
         <button class="btn-icon-action" data-preview-duplicate title="Duplicar">${icon.copy}</button>
         <button class="btn-icon-action" data-preview-calendar title="Asignar día">${icon.calendar}</button>
@@ -172,6 +174,17 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
     } else if (e.target.closest('[data-preview-calendar]')) {
       // Open day picker for this routine
       close(() => showRoutineDayPicker(rutina));
+    } else if (e.target.closest('[data-preview-delete]')) {
+      showModal({
+        title: 'Eliminar rutina',
+        body: 'Esta accion no se puede deshacer.',
+        confirmText: 'Eliminar',
+        danger: true,
+        onConfirm: () => {
+          deleteRutina(rutinaId);
+          close(() => refreshCurrentTab());
+        },
+      });
     } else if (e.target.closest('[data-preview-cambiar]')) {
       const d = optDia != null ? optDia : rutina.diaSemana;
       if (d != null) {

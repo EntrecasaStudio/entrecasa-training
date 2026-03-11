@@ -78,17 +78,12 @@ function renderCompactCard(rutina) {
   const delay = cardCounter++ * 40;
 
   return `
-    <div class="rutina-swipe-container animate-in" style="animation-delay:${delay}ms" data-rutina-id="${rutina.id}">
-      <div class="rutina-swipe-action">
-        <button class="rutina-swipe-delete" data-action="delete" data-id="${rutina.id}">${icon.trash}</button>
-      </div>
-      <div class="rutina-swipe-content">
-        <div class="rutina-compact" data-action="preview" data-id="${rutina.id}" style="cursor:pointer">
-          <div class="rutina-compact-main">
-            ${num ? `<div class="rutina-compact-code">${num}</div>` : ''}
-            <div class="rutina-compact-name">${displayName}</div>
-            ${meta ? `<div class="rutina-compact-meta">${meta}</div>` : ''}
-          </div>
+    <div class="animate-in" style="animation-delay:${delay}ms" data-rutina-id="${rutina.id}">
+      <div class="rutina-compact" data-action="preview" data-id="${rutina.id}" style="cursor:pointer">
+        <div class="rutina-compact-main">
+          ${num ? `<div class="rutina-compact-code">${num}</div>` : ''}
+          <div class="rutina-compact-name">${displayName}</div>
+          ${meta ? `<div class="rutina-compact-meta">${meta}</div>` : ''}
         </div>
       </div>
     </div>
@@ -111,20 +106,15 @@ function renderRutinaCard(rutina) {
   const grupos = [...new Set(rutina.circuitos.flatMap((c) => normalizeGrupos(c)))];
 
   return `
-    <div class="rutina-swipe-container animate-in" style="animation-delay:${delay}ms" data-rutina-id="${rutina.id}">
-      <div class="rutina-swipe-action">
-        <button class="rutina-swipe-delete" data-action="delete" data-id="${rutina.id}">${icon.trash}</button>
-      </div>
-      <div class="rutina-swipe-content">
-        <div class="rutina-card card" data-rutina-id="${rutina.id}">
-          <div class="rutina-card-body" data-action="preview" data-id="${rutina.id}" style="cursor:pointer">
-            <div class="rutina-card-info">
-              <div class="rutina-card-volanta">${volanta}</div>
-              <div class="rutina-card-name">${displayName}</div>
-              ${lastDone ? `<div class="rutina-card-last">${lastDone}</div>` : ''}
-            </div>
-            <div class="rutina-card-illustration">${getCompositeMuscleSvg(grupos, 88)}</div>
+    <div class="animate-in" style="animation-delay:${delay}ms" data-rutina-id="${rutina.id}">
+      <div class="rutina-card card" data-rutina-id="${rutina.id}">
+        <div class="rutina-card-body" data-action="preview" data-id="${rutina.id}" style="cursor:pointer">
+          <div class="rutina-card-info">
+            <div class="rutina-card-volanta">${volanta}</div>
+            <div class="rutina-card-name">${displayName}</div>
+            ${lastDone ? `<div class="rutina-card-last">${lastDone}</div>` : ''}
           </div>
+          <div class="rutina-card-illustration">${getCompositeMuscleSvg(grupos, 88)}</div>
         </div>
       </div>
     </div>
@@ -300,8 +290,6 @@ export function mount() {
         navigate('/rutina/nueva');
         break;
       case 'preview':
-        if (swipeBlocked || tapHandled) return;
-        closeAllSwipes();
         showPreview(id);
         break;
       case 'edit':
@@ -364,131 +352,8 @@ export function mount() {
   };
   app.addEventListener('input', handleSearchInput);
 
-  // ── Swipe-to-delete touch handling ──────────
-  let swipeStartX = 0;
-  let swipeStartY = 0;
-  let swipeTarget = null;
-  let swipeDeltaX = 0;
-  let swipeActive = false;
-  let swipeBlocked = false; // blocks click after swipe gesture
-  let wasSwiped = false; // tracks if target was already swiped open on touch start
-  let directionLocked = false; // true once we decide vertical-vs-horizontal
-
-  const SWIPE_DEAD_ZONE = 30; // px — large dead zone prevents accidental swipe on tap
-
-  function closeAllSwipes(except) {
-    document.querySelectorAll('.rutina-swipe-content.swiped').forEach((el) => {
-      if (el !== except) {
-        el.style.transform = '';
-        el.classList.remove('swiped');
-      }
-    });
-  }
-
-  let tapTarget = null; // original event target for tap detection
-  let tapHandled = false; // prevents click from double-firing after touchend tap
-
-  const handleTouchStart = (e) => {
-    const content = e.target.closest('.rutina-swipe-content');
-    if (!content) return;
-    swipeTarget = content;
-    tapTarget = e.target;
-    swipeStartX = e.touches[0].clientX;
-    swipeStartY = e.touches[0].clientY;
-    swipeDeltaX = 0;
-    swipeActive = false;
-    directionLocked = false;
-    wasSwiped = content.classList.contains('swiped');
-  };
-
-  const handleTouchMove = (e) => {
-    if (!swipeTarget) return;
-    const dx = e.touches[0].clientX - swipeStartX;
-    const dy = e.touches[0].clientY - swipeStartY;
-
-    // First meaningful move — lock direction
-    if (!directionLocked) {
-      if (Math.abs(dx) < SWIPE_DEAD_ZONE && Math.abs(dy) < SWIPE_DEAD_ZONE) return;
-
-      directionLocked = true;
-
-      // Vertical scroll wins — abort swipe entirely
-      if (Math.abs(dy) >= Math.abs(dx)) {
-        swipeTarget = null;
-        return;
-      }
-
-      // Only left swipe activates (right swipe on already-swiped card is ok)
-      if (dx > 0 && !wasSwiped) {
-        swipeTarget = null;
-        return;
-      }
-
-      swipeActive = true;
-      swipeTarget.style.transition = 'none';
-      closeAllSwipes(swipeTarget);
-    }
-
-    if (!swipeActive) return;
-    e.preventDefault();
-
-    // Only allow left swipe (negative dx), cap at -80
-    swipeDeltaX = Math.max(-80, Math.min(0, dx));
-    swipeTarget.style.transform = `translateX(${swipeDeltaX}px)`;
-  };
-
-  const handleTouchEnd = () => {
-    if (!swipeTarget) return;
-    swipeTarget.style.transition = '';
-
-    // Detect tap: no swipe active, card wasn't swiped, no direction locked
-    const isTap = !swipeActive && !wasSwiped && !directionLocked;
-
-    if (swipeDeltaX < -40) {
-      // Snap open
-      swipeTarget.style.transform = 'translateX(-80px)';
-      swipeTarget.classList.add('swiped');
-    } else {
-      // Snap closed
-      swipeTarget.style.transform = '';
-      swipeTarget.classList.remove('swiped');
-    }
-
-    // Block the subsequent click event if swipe was active or card was already swiped open
-    if (swipeActive || wasSwiped) {
-      swipeBlocked = true;
-      setTimeout(() => { swipeBlocked = false; }, 300);
-    }
-
-    // On tap, directly trigger preview (bypasses flaky mobile click events)
-    if (isTap && tapTarget) {
-      const actionEl = tapTarget.closest('[data-action="preview"]');
-      if (actionEl && actionEl.dataset.id) {
-        closeAllSwipes();
-        tapHandled = true;
-        setTimeout(() => { tapHandled = false; }, 400);
-        // Use setTimeout to avoid interference with touch event cycle
-        const id = actionEl.dataset.id;
-        setTimeout(() => showPreview(id), 0);
-      }
-    }
-
-    swipeTarget = null;
-    swipeActive = false;
-    directionLocked = false;
-    wasSwiped = false;
-    tapTarget = null;
-  };
-
-  app.addEventListener('touchstart', handleTouchStart, { passive: true });
-  app.addEventListener('touchmove', handleTouchMove, { passive: false });
-  app.addEventListener('touchend', handleTouchEnd);
-
   return () => {
     app.removeEventListener('click', handleClick);
     app.removeEventListener('input', handleSearchInput);
-    app.removeEventListener('touchstart', handleTouchStart);
-    app.removeEventListener('touchmove', handleTouchMove);
-    app.removeEventListener('touchend', handleTouchEnd);
   };
 }

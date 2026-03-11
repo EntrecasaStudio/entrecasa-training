@@ -17,6 +17,7 @@ import {
   showPreview,
   showDayAssignmentModal,
   formatNumero,
+  normalizeGrupos,
 } from '@js/helpers/rutina-helpers.js';
 import {
   getWeeklyStreak,
@@ -34,7 +35,7 @@ import { calcVolumenSesion } from '@/store.js';
 // ── Calendar state ──────────────────────────
 let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth();
-let calExpanded = true;
+let calExpanded = false;
 let selectedDate = new Date();
 
 const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -278,22 +279,34 @@ function renderUserDayRow(u, selectedDate, isToday, isPast, dow, isActive) {
   const planned = getPlannedRoutineForDate(u, selectedDate);
   const initial = u.charAt(0).toUpperCase();
 
-  // Status badge
+  // Build status + meta info
   let statusHtml = '';
   if (sessions.length > 0) {
     const s = sessions[0];
-    const dur = s.duracionMin ? ` &middot; ${s.duracionMin}min` : '';
+    const dur = s.duracionMin ? `${s.duracionMin}min` : '';
+    const vol = calcVolumenSesion(s);
+    const metaParts = [dur, vol ? `${vol}kg` : ''].filter(Boolean);
+    const metaLine = metaParts.length > 0 ? `<div class="cal-shared-meta">${metaParts.join(' · ')}</div>` : '';
     statusHtml = `
       <div class="cal-shared-row-info">
-        <span class="cal-shared-status cal-shared-status--done">&#10003; ${s.rutinaNombre}${dur}</span>
+        <span class="cal-shared-status cal-shared-status--done">&#10003; ${s.rutinaNombre}</span>
+        ${metaLine}
       </div>`;
   } else if (planned && planned.routine) {
     const r = planned.routine;
-    const codePrefix = r.numero ? `<span class="cal-shared-code">${r.tipo === 'cross' ? 'C' : 'G'}${formatNumero(r.numero)}</span> ` : '';
+    const code = r.numero ? `${r.tipo === 'cross' ? 'C' : 'G'}${formatNumero(r.numero)}` : '';
+    const volanta = code ? `<div class="cal-shared-volanta">${code}</div>` : '';
+    // Meta: circuits, exercises, muscle groups
+    const numCirc = r.circuitos ? r.circuitos.length : 0;
+    const numEj = r.circuitos ? r.circuitos.reduce((sum, c) => sum + (c.ejercicios ? c.ejercicios.length : 0), 0) : 0;
+    const grupos = r.circuitos ? [...new Set(r.circuitos.flatMap((c) => normalizeGrupos(c)))] : [];
+    const metaParts = [`${numCirc}c · ${numEj}ej`, ...grupos].filter(Boolean);
+    const metaLine = metaParts.length > 0 ? `<div class="cal-shared-meta">${metaParts.join(' · ')}</div>` : '';
     statusHtml = `
       <div class="cal-shared-row-info">
-        <span class="cal-shared-status" data-action="start" data-id="${r.id}" style="cursor:pointer">${codePrefix}${r.nombre}</span>
-        <span class="cal-shared-tipo ${planned.tipo}">${planned.tipo === 'cross' ? 'Cross' : 'Gym'}</span>
+        ${volanta}
+        <span class="cal-shared-status" data-action="start" data-id="${r.id}" style="cursor:pointer">${r.nombre}</span>
+        ${metaLine}
       </div>`;
   } else if (planned && !planned.routine) {
     statusHtml = `

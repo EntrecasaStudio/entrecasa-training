@@ -11,6 +11,11 @@ import { applyUserAccent } from '@js/services/theme-manager.js';
 
 const PROFILES = ['Lean', 'Nat'];
 
+const PROFILE_COLORS = {
+  Lean: { bg: 'rgba(255,205,0,0.2)', fg: '#FFCD00' },
+  Nat: { bg: 'rgba(155,135,245,0.2)', fg: '#9b87f5' },
+};
+
 let _container = null;
 let _isOpen = false;
 
@@ -32,11 +37,12 @@ function renderButton() {
 }
 
 function renderProfileItem(name, isActive) {
+  const c = PROFILE_COLORS[name] || PROFILE_COLORS.Lean;
   return `
     <button class="avatar-user-item ${isActive ? 'active' : ''}" data-avatar-action="switch-profile" data-profile="${name}">
-      <span class="avatar-item-initial">${getInitial(name)}</span>
+      <span class="avatar-item-initial" style="background:${c.bg};color:${c.fg}">${getInitial(name)}</span>
       <span class="avatar-item-name">${name}</span>
-      ${isActive ? `<span class="avatar-item-check">${icon.check}</span>` : ''}
+      ${isActive ? `<span class="avatar-item-check" style="color:${c.fg}">${icon.check}</span>` : ''}
     </button>
   `;
 }
