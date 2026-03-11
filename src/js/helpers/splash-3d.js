@@ -23,9 +23,9 @@ async function setupKettlebell3D(container, size, onProgress) {
 
   if (onProgress) onProgress(30);
 
-  // Set up renderer — optimized settings
-  const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false });
+  // Set up renderer — lightweight for fast first paint
+  const dpr = Math.min(window.devicePixelRatio || 1, 1);
+  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false, powerPreference: 'low-power' });
   renderer.setSize(size, size);
   renderer.setPixelRatio(dpr);
   renderer.setClearColor(0x000000, 0);
@@ -157,8 +157,8 @@ export async function mountSplash3D() {
 
   try {
     _splashCleanup = await setupKettlebell3D(container, 120, updateProgress);
-    // Give the animation at least 1 frame to render
-    await new Promise((r) => requestAnimationFrame(r));
+    // Wait for several frames to ensure canvas is painted and visible
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r))));
   } catch (err) {
     console.warn('[splash-3d] Failed to load kettlebell:', err.message);
     updateProgress(100);

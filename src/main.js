@@ -22,7 +22,7 @@ import { mountOfflineBanner } from '@js/components/offline-banner.js';
 
 // ── Splash 3D kettlebell (loaded immediately) ──────────────
 const splashStart = Date.now();
-const MIN_SPLASH_MS = 1800; // minimum time to show splash so kettlebell is visible
+const MIN_SPLASH_MS = 2200; // minimum time to show splash so kettlebell is visible
 const splashReadyP = import('@js/helpers/splash-3d.js').then(({ mountSplash3D }) => mountSplash3D()).catch(() => {});
 
 // Seed initial rutinas from Notion data (only if empty)

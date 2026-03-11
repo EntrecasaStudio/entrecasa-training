@@ -124,9 +124,9 @@ export function mount(params) {
   let swipeActive = false;
   let swipeBlocked = false;
   let wasSwiped = false;
-  let swipeStartTime = 0;
-  let swipeReady = false;
-  const SWIPE_HOLD_MS = 180;
+  let directionLocked = false;
+
+  const SWIPE_DEAD_ZONE = 30;
 
   function closeAllSwipes(except) {
     app.querySelectorAll('.sesion-swipe-content').forEach((el) => {
@@ -152,12 +152,11 @@ export function mount(params) {
     swipeTarget = content;
     swipeDeltaX = 0;
     swipeActive = false;
-    swipeReady = false;
+    directionLocked = false;
     wasSwiped = content.closest('.sesion-swipe-container')?.classList.contains('swiped') || false;
     const touch = e.touches[0];
     swipeStartX = touch.clientX;
     swipeStartY = touch.clientY;
-    swipeStartTime = Date.now();
   };
 
   const handleTouchMove = (e) => {
@@ -166,24 +165,21 @@ export function mount(params) {
     const dx = touch.clientX - swipeStartX;
     const dy = touch.clientY - swipeStartY;
 
-    // Require minimum hold time before allowing horizontal swipe
-    if (!swipeReady && !wasSwiped) {
-      if (Date.now() - swipeStartTime < SWIPE_HOLD_MS) {
-        if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
-          swipeTarget = null;
-          return;
-        }
-        return;
-      }
-      swipeReady = true;
-    }
+    if (!directionLocked) {
+      if (Math.abs(dx) < SWIPE_DEAD_ZONE && Math.abs(dy) < SWIPE_DEAD_ZONE) return;
 
-    // 15px dead zone to avoid accidental swipe on tap
-    if (!swipeActive && (Math.abs(dx) > 15 || Math.abs(dy) > 15)) {
-      if (Math.abs(dy) > Math.abs(dx)) {
+      directionLocked = true;
+
+      if (Math.abs(dy) >= Math.abs(dx)) {
         swipeTarget = null;
         return;
       }
+
+      if (dx > 0 && !wasSwiped) {
+        swipeTarget = null;
+        return;
+      }
+
       swipeActive = true;
       swipeTarget.style.transition = 'none';
       closeAllSwipes(swipeTarget);
@@ -214,7 +210,7 @@ export function mount(params) {
 
     swipeTarget = null;
     swipeActive = false;
-    swipeReady = false;
+    directionLocked = false;
     wasSwiped = false;
   };
 
