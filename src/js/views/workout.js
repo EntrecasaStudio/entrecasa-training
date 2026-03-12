@@ -180,7 +180,8 @@ function renderCircuitSelector() {
         numHtml = `<span class="circuit-seg-num">${i + 1}</span>`;
       }
       const label = Array.isArray(circ.grupoMuscular) ? circ.grupoMuscular.join(', ') : (circ.grupoMuscular || '');
-      return `<button class="${cls}" data-action="goto-circuit" data-idx="${i}">${numHtml}<span class="circuit-seg-label">${label}</span></button>`;
+      const chalecoIcon = circ.chaleco ? '<span class="circuit-seg-chaleco">🦺</span>' : '';
+      return `<button class="${cls}" data-action="goto-circuit" data-idx="${i}">${numHtml}<span class="circuit-seg-label">${label}</span>${chalecoIcon}</button>`;
     })
     .join('');
 

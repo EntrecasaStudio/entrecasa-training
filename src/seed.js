@@ -190,7 +190,7 @@ function rutinasNat() {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '9'; // 9 = real Notion exercises, 113 gym + 32 cross
+  const CURRENT_SEED_V = '10'; // 10 = chaleco flag on cross circuits
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -224,6 +224,13 @@ export function seedIfEmpty() {
           // ── Migration v8: add picante field, set usuario on library routines ──
           for (const r of parsed) {
             if (r.picante === undefined) r.picante = 0;
+          }
+
+          // ── Migration v10: rebuild library routines (adds chaleco flag) ──
+          // Remove all library routines (those with numero) so they get
+          // re-added from fresh seed with chaleco info on circuits.
+          if (!seedV || parseInt(seedV, 10) < 10) {
+            parsed = parsed.filter((r) => !r.numero);
           }
 
           // ── Dedup: remove duplicate numeros (keep first per tipo+usuario) ──

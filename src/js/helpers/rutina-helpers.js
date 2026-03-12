@@ -113,6 +113,7 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
       (c, i) => {
         const circTipo = c.tipo || 'normal';
         const typeBadge = circTipo !== 'normal' ? `<span class="preview-type-badge ${circTipo}">${circTipo === 'velocidad' ? 'Vel' : circTipo === 'caminata' ? 'Cam' : 'HIIT'}</span>` : '';
+        const chalecoBadge = c.chaleco ? `<span class="preview-chaleco-badge">🦺${c.chalecoPeso ? ` ${c.chalecoPeso}` : ''}</span>` : '';
 
         const grupos = normalizeGrupos(c);
         const tagsHtml = grupos.map((g) => `<span class="tag tag-sm ${TAG_CLASS[g] || ''}">${g}</span>`).join('');
@@ -130,6 +131,7 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
                 <span class="preview-circuit-num">${i + 1}</span>
                 ${tagsHtml}
                 ${typeBadge}
+                ${chalecoBadge}
               </div>
               <div class="preview-exercises">${exercisesHtml}</div>
             </div>

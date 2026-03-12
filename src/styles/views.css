@@ -3618,6 +3618,15 @@
 .preview-type-badge.caminata { background: #22C55E; color: #fff; }
 .preview-type-badge.hiit { background: #ef4444; color: #fff; }
 
+/* ── Preview chaleco badge ───────────────────── */
+.preview-chaleco-badge {
+  font-size: 11px;
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 160, 0, 0.15);
+  margin-left: auto;
+}
+
 /* ── Detalle type badge ────────────────────── */
 .detalle-type-badge {
   font-size: 9px;

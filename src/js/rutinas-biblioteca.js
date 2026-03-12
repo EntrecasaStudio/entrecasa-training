@@ -64,6 +64,21 @@ function assignCircuitGrupo(circuitName, routineGrupos, circuitIndex) {
   return nonCore[(circuitIndex - 1) % nonCore.length] || nonCore[0];
 }
 
+// ── Parse chaleco (vest) info from circuit name ──
+
+function parseChalecoFromName(circuitName) {
+  const cn = circuitName.toLowerCase();
+  const hasChaleco = cn.includes('chaleco') || cn.includes('🦺');
+  if (!hasChaleco) return { chaleco: false, chalecoPeso: null };
+
+  // Extract optional weight: "chaleco 10 kg" or "con chaleco x 14kg"
+  const pesoMatch = circuitName.match(/chaleco\s+(?:x\s*)?(\d+)\s*kg/i);
+  return {
+    chaleco: true,
+    chalecoPeso: pesoMatch ? `${pesoMatch[1]}kg` : null,
+  };
+}
+
 // ── Build one rutina variant from Notion data ───
 
 function buildFromNotion(entry, usuario) {
@@ -73,6 +88,7 @@ function buildFromNotion(entry, usuario) {
 
   const circuitos = variant.map((c, i) => {
     const grupo = assignCircuitGrupo(c.n, routineGrupos, i);
+    const { chaleco, chalecoPeso } = parseChalecoFromName(c.n);
 
     const ejercicios = c.e.map((name) => ({
       id: generateId(),
@@ -81,7 +97,12 @@ function buildFromNotion(entry, usuario) {
       pesoKg: 0,
     }));
 
-    return { id: generateId(), grupoMuscular: grupo, ejercicios };
+    const circ = { id: generateId(), grupoMuscular: grupo, ejercicios };
+    if (chaleco) {
+      circ.chaleco = true;
+      if (chalecoPeso) circ.chalecoPeso = chalecoPeso;
+    }
+    return circ;
   });
 
   return {

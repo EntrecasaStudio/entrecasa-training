@@ -183,6 +183,12 @@
   opacity: 1;
 }
 
+.circuit-seg-chaleco {
+  font-size: 10px;
+  line-height: 1;
+  margin-top: 1px;
+}
+
 /* Add circuit button in selector */
 .circuit-add-seg {
   flex: 0 0 auto;
