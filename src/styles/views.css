@@ -1123,6 +1123,98 @@
 
 /* rutina-card-actions removed — play button is now .rutina-card-play */
 
+/* ── Done marking ────────────────────────── */
+
+.rutina-card--done {
+  opacity: 0.65;
+}
+
+.rutina-compact--done {
+  opacity: 0.65;
+}
+
+.rutina-done-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 14px;
+  font-weight: var(--fw-bold);
+  color: var(--color-success, #4caf50);
+  pointer-events: none;
+}
+
+.rutina-card {
+  position: relative;
+}
+
+.rutina-compact {
+  position: relative;
+}
+
+/* ── Difficulty peppers ──────────────────── */
+
+.rutina-picante {
+  font-size: 0.8em;
+  margin-left: 2px;
+}
+
+/* ── Stats line (preview modal) ──────────── */
+
+.rutina-stats-line {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  padding: 0 var(--space-lg);
+  margin-bottom: var(--space-sm);
+  opacity: 0.7;
+}
+
+/* ── Sort/filter row ─────────────────────── */
+
+.rutinas-sort-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0 var(--space-md);
+  margin-bottom: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.rutinas-sort-select {
+  appearance: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  padding: 4px 24px 4px 8px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23999' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+}
+
+.rutinas-filter-chips {
+  display: flex;
+  gap: 4px;
+}
+
+.rutinas-filter-chip {
+  font-size: var(--text-xs);
+  padding: 3px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.rutinas-filter-chip.active {
+  background: var(--color-accent);
+  color: var(--color-bg);
+  border-color: var(--color-accent);
+}
+
 /* ── Rutina Form view ────────────────────── */
 
 .form-section {

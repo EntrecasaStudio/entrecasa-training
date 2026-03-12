@@ -423,7 +423,7 @@ function renderForm(isEdit) {
     <div class="form-section">
       <div class="form-name-row">
         <label class="input-label">Nombre de la rutina</label>
-        ${rutina.numero ? `<span class="form-routine-code">${rutina.tipo === 'cross' ? 'C' : 'G'}${formatNumero(rutina.numero)}</span>` : ''}
+        ${rutina.numero ? `<span class="form-routine-code">${formatNumero(rutina.numero, rutina)}</span>` : ''}
       </div>
       <input type="text" class="input" id="rutina-nombre" data-field="nombre" placeholder="Ej: Pecho y espalda"
              value="${rutina.nombre}">
@@ -566,8 +566,8 @@ function getNextNumero(tipo) {
 function showSaveOptionsModal() {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
-  const num = formatNumero(rutina.numero);
-  const nextNum = formatNumero(getNextNumero(rutina.tipo));
+  const num = formatNumero(rutina.numero, rutina);
+  const nextNum = formatNumero(getNextNumero(rutina.tipo), rutina);
   overlay.innerHTML = `
     <div class="modal-box" role="dialog" aria-modal="true">
       <div class="modal-title">Guardar cambios</div>
@@ -611,7 +611,7 @@ function showSaveOptionsModal() {
           copia.diaSemana = null;
           saveRutina(copia);
           isDirty = false;
-          showToast(`Rutina ${formatNumero(copia.numero)} creada`);
+          showToast(`Rutina ${formatNumero(copia.numero, copia)} creada`);
           navigate(returnTo);
         });
         break;

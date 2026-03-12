@@ -190,7 +190,7 @@ function rutinasNat() {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '7'; // Bump when seed data changes (7 = strip 'Día X' from names)
+  const CURRENT_SEED_V = '8'; // 8 = H/M split, picante, usuario on library routines
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -221,26 +221,31 @@ export function seedIfEmpty() {
             if (m) r.nombre = m[1];
           }
 
-          // ── Dedup: remove duplicate numeros (keep first occurrence) ──
+          // ── Migration v8: add picante field, set usuario on library routines ──
+          for (const r of parsed) {
+            if (r.picante === undefined) r.picante = 0;
+          }
+
+          // ── Dedup: remove duplicate numeros (keep first per tipo+usuario) ──
           const seenNumeros = new Set();
           parsed = parsed.filter((r) => {
             if (r.numero) {
-              const key = `${r.tipo || 'gimnasio'}::${r.numero}`;
+              const key = `${r.tipo || 'gimnasio'}::${r.numero}::${r.usuario || ''}`;
               if (seenNumeros.has(key)) return false;
               seenNumeros.add(key);
             }
             return true;
           });
 
-          // Find routines that already exist by numero
+          // Find routines that already exist by numero+tipo+usuario
           const existingNumeros = new Set(
-            parsed.filter((r) => r.numero).map((r) => `${r.tipo || 'gimnasio'}::${r.numero}`),
+            parsed.filter((r) => r.numero).map((r) => `${r.tipo || 'gimnasio'}::${r.numero}::${r.usuario || ''}`),
           );
-          const existingNames = new Set(parsed.map((r) => r.nombre));
+          const existingNames = new Set(parsed.map((r) => `${r.nombre}::${r.usuario || ''}`));
           // Only add routines that don't exist yet
           const newOnes = seedRutinas.filter((r) => {
-            if (r.numero) return !existingNumeros.has(`${r.tipo || 'gimnasio'}::${r.numero}`);
-            return !existingNames.has(r.nombre);
+            if (r.numero) return !existingNumeros.has(`${r.tipo || 'gimnasio'}::${r.numero}::${r.usuario || ''}`);
+            return !existingNames.has(`${r.nombre}::${r.usuario || ''}`);
           });
           const merged = [...parsed, ...newOnes];
           localStorage.setItem(KEY, JSON.stringify(merged));

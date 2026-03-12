@@ -1,4 +1,4 @@
-import { getRutinaById, getRutinas, getUltimaSesionDeRutina, assignRutinaADia, clearRutinaDelDia, setPlanDia, getUsuarioActivo, getPlanSemanal, duplicateRutina, deleteRutina, setDayOverride, clearDayOverride } from '@/store.js';
+import { getRutinaById, getRutinas, getUltimaSesionDeRutina, assignRutinaADia, clearRutinaDelDia, setPlanDia, getUsuarioActivo, getPlanSemanal, duplicateRutina, deleteRutina, setDayOverride, clearDayOverride, getRutinaStats } from '@/store.js';
 import { navigate, refreshCurrentTab } from '@/router.js';
 import { icon } from '@js/icons.js';
 import { showToastAction } from '@js/components/toast.js';
@@ -53,9 +53,29 @@ export function getDisplayName(rutina) {
   return match ? match[1] : rutina.nombre;
 }
 
-/** Format routine number as 3-digit code */
-export function formatNumero(n) {
-  return n ? `#${String(n).padStart(3, '0')}` : '';
+/** Format routine number as coded string: G#001H, C#005M, etc. */
+export function formatNumero(n, rutina) {
+  if (!n) return '';
+  const prefix = rutina?.tipo === 'cross' ? 'C' : 'G';
+  const suffix = rutina?.usuario === 'Nat' ? 'M' : 'H';
+  return `${prefix}#${String(n).padStart(3, '0')}${suffix}`;
+}
+
+/** Render difficulty peppers */
+export function renderPicante(level) {
+  if (!level) return '';
+  return `<span class="rutina-picante">${'🌶️'.repeat(level)}</span>`;
+}
+
+/** Render routine stats line (avg duration, calories, sessions) */
+export function renderRutinaStatsLine(rutinaId) {
+  const stats = getRutinaStats(rutinaId);
+  if (!stats) return '';
+  const parts = [];
+  if (stats.avgDuracion) parts.push(`~${stats.avgDuracion} min`);
+  if (stats.avgCalorias) parts.push(`~${stats.avgCalorias} kcal`);
+  if (stats.totalSesiones) parts.push(`${stats.totalSesiones} sesion${stats.totalSesiones > 1 ? 'es' : ''}`);
+  return parts.length ? `<div class="rutina-stats-line">${parts.join(' · ')}</div>` : '';
 }
 
 /** Get emoji icon for routine type */
@@ -124,7 +144,8 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
   overlay.innerHTML = `
     <div class="modal-box preview-modal" role="dialog" aria-modal="true">
       <button class="ej-detail-close-x" data-preview-cancel>${icon.close}</button>
-      <div class="modal-title">${rutina.nombre}</div>
+      <div class="modal-title">${rutina.nombre} ${renderPicante(rutina.picante)}</div>
+      ${renderRutinaStatsLine(rutina.id)}
       <div class="modal-body"><div class="preview-body">${circuitsHtml}</div></div>
       <div class="preview-modal-actions">
         <button class="btn-icon-action btn-icon-action--danger" data-preview-delete title="Eliminar">${icon.trash}</button>
@@ -231,8 +252,9 @@ export function showDayAssignmentModal(usuario, dia, tipoActual, onDone, { date,
 
   // ── Helpers ──
   function getRoutinesForTipo(tipo) {
+    const activeUser = getUsuarioActivo();
     return getRutinas()
-      .filter((r) => r.tipo === tipo)
+      .filter((r) => r.tipo === tipo && (!r.usuario || r.usuario === activeUser))
       .sort((a, b) => (b.numero || 0) - (a.numero || 0));
   }
 
@@ -249,7 +271,7 @@ export function showDayAssignmentModal(usuario, dia, tipoActual, onDone, { date,
 
     return rutinas.map((r) => {
       const isActive = r.id === selectedRutinaId ? ' active' : '';
-      const code = formatNumero(r.numero);
+      const code = formatNumero(r.numero, r);
       const name = getDisplayName(r);
       return `
         <div class="day-assign-option${isActive}" data-assign-rutina="${r.id}">

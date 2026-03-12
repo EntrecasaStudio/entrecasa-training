@@ -360,3 +360,55 @@ export function getPreviousSesion(sesion) {
   const idx = all.findIndex((s) => s.id === sesion.id);
   return idx >= 0 && idx < all.length - 1 ? all[idx + 1] : null;
 }
+
+// ── Routine stats (duration/calories aggregation) ──
+
+export function getRutinaStats(rutinaId) {
+  const sesiones = getSesionesByRutina(rutinaId);
+  if (!sesiones.length) return null;
+  const durations = sesiones.filter((s) => s.duracionMin).map((s) => s.duracionMin);
+  const calories = sesiones.filter((s) => s.calorias).map((s) => s.calorias);
+  return {
+    avgDuracion: durations.length ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : null,
+    avgCalorias: calories.length ? Math.round(calories.reduce((a, b) => a + b, 0) / calories.length) : null,
+    totalSesiones: sesiones.length,
+  };
+}
+
+// ── Cycle tracking (done marking) ───────────────
+
+const CYCLE_KEY = 'gym_cycle_start';
+
+export function getCycleStart(usuario, tipo) {
+  const all = read(CYCLE_KEY) || {};
+  const key = `${usuario}::${tipo}`;
+  return all[key] || '2000-01-01T00:00:00.000Z'; // epoch = everything counts
+}
+
+export function resetCycle(usuario, tipo) {
+  const all = read(CYCLE_KEY) || {};
+  const key = `${usuario}::${tipo}`;
+  all[key] = new Date().toISOString();
+  write(CYCLE_KEY, all);
+}
+
+export function isRutinaDoneInCycle(rutinaId, usuario, tipo) {
+  const cycleStart = getCycleStart(usuario, tipo);
+  const sesiones = getSesionesByRutina(rutinaId);
+  return sesiones.some((s) => new Date(s.fecha) >= new Date(cycleStart));
+}
+
+export function checkCycleComplete(usuario, tipo) {
+  const rutinas = getRutinas().filter((r) =>
+    (r.tipo || 'gimnasio') === tipo &&
+    r.usuario === usuario &&
+    r.numero // only library routines (have numero)
+  );
+  if (rutinas.length === 0) return false;
+  const allDone = rutinas.every((r) => isRutinaDoneInCycle(r.id, usuario, tipo));
+  if (allDone) {
+    resetCycle(usuario, tipo);
+    return true;
+  }
+  return false;
+}

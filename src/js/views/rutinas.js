@@ -2,9 +2,14 @@ import {
   getRutinas,
   deleteRutina,
   getUltimaSesionDeRutina,
+  getUsuarioActivo,
+  isRutinaDoneInCycle,
+  checkCycleComplete,
+  getRutinaStats,
 } from '@/store.js';
 import { navigate } from '@/router.js';
 import { showModal } from '@js/components/modal.js';
+import { showToast } from '@js/components/toast.js';
 import { icon, iconLg } from '@js/icons.js';
 import {
   DIAS_LABEL,
@@ -14,6 +19,7 @@ import {
   formatNumero,
   getTipoIcon,
   normalizeGrupos,
+  renderPicante,
 } from '@js/helpers/rutina-helpers.js';
 import { getCompositeMuscleSvg } from '@js/helpers/muscle-illustrations.js';
 
@@ -22,6 +28,8 @@ let activeFilter = 'gimnasio';
 let compactView = false;
 let cardCounter = 0;
 let searchQuery = '';
+let sortBy = 'numero'; // 'numero' | 'picante' | 'duracion' | 'done'
+let filterDone = 'all'; // 'all' | 'pending' | 'done'
 
 // ── Helpers ──────────────────────────────────
 
@@ -50,6 +58,9 @@ function getMetaText(rutina) {
   if (numCirc > 0) parts.push(`${numCirc}c`);
   if (numEj > 0) parts.push(`${numEj}ej`);
 
+  const stats = getRutinaStats(rutina.id);
+  if (stats?.avgDuracion) parts.push(`~${stats.avgDuracion}min`);
+
   const ultimaSesion = getUltimaSesionDeRutina(rutina.id);
   if (ultimaSesion) {
     const ago = formatTimeAgo(ultimaSesion.fecha);
@@ -59,6 +70,42 @@ function getMetaText(rutina) {
   return parts.join(' · ') || '';
 }
 
+/** Filter routines by active user */
+function filterByUser(rutinas) {
+  const activeUser = getUsuarioActivo();
+  return rutinas.filter((r) => !r.usuario || r.usuario === activeUser);
+}
+
+/** Check if routine is done in current cycle */
+function isDone(rutina) {
+  const usuario = getUsuarioActivo();
+  const tipo = rutina.tipo || 'gimnasio';
+  return isRutinaDoneInCycle(rutina.id, usuario, tipo);
+}
+
+/** Apply sort */
+function applySorting(rutinas) {
+  switch (sortBy) {
+    case 'picante':
+      return [...rutinas].sort((a, b) => (b.picante || 0) - (a.picante || 0));
+    case 'duracion': {
+      return [...rutinas].sort((a, b) => {
+        const sa = getRutinaStats(a.id);
+        const sb = getRutinaStats(b.id);
+        return (sb?.avgDuracion || 0) - (sa?.avgDuracion || 0);
+      });
+    }
+    case 'done':
+      return [...rutinas].sort((a, b) => {
+        const da = isDone(a) ? 1 : 0;
+        const db = isDone(b) ? 1 : 0;
+        return da - db; // undone first
+      });
+    default: // 'numero'
+      return [...rutinas].sort((a, b) => (b.numero || 0) - (a.numero || 0));
+  }
+}
+
 // ── Card renderers ───────────────────────────
 
 function capitalizeFirst(str) {
@@ -66,25 +113,23 @@ function capitalizeFirst(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-function getTipoPrefix(rutina) {
-  return rutina.tipo === 'cross' ? 'C' : 'G';
-}
-
 function renderCompactCard(rutina) {
   const displayName = capitalizeFirst(getDisplayName(rutina));
   const meta = getMetaText(rutina);
-  const prefix = getTipoPrefix(rutina);
-  const num = rutina.numero ? `${prefix}${formatNumero(rutina.numero)}` : '';
+  const num = rutina.numero ? formatNumero(rutina.numero, rutina) : '';
   const delay = cardCounter++ * 40;
+  const done = isDone(rutina);
+  const picanteHtml = renderPicante(rutina.picante);
 
   return `
     <div class="animate-in" style="animation-delay:${delay}ms" data-rutina-id="${rutina.id}">
-      <div class="rutina-compact" data-action="preview" data-id="${rutina.id}" style="cursor:pointer">
+      <div class="rutina-compact ${done ? 'rutina-compact--done' : ''}" data-action="preview" data-id="${rutina.id}" style="cursor:pointer">
         <div class="rutina-compact-main">
           ${num ? `<div class="rutina-compact-code">${num}</div>` : ''}
-          <div class="rutina-compact-name">${displayName}</div>
+          <div class="rutina-compact-name">${displayName} ${picanteHtml}</div>
           ${meta ? `<div class="rutina-compact-meta">${meta}</div>` : ''}
         </div>
+        ${done ? '<span class="rutina-done-check">✓</span>' : ''}
       </div>
     </div>
   `;
@@ -92,9 +137,9 @@ function renderCompactCard(rutina) {
 
 function renderRutinaCard(rutina) {
   const displayName = capitalizeFirst(getDisplayName(rutina));
-  const prefix = getTipoPrefix(rutina);
-  const num = rutina.numero ? `${prefix}${formatNumero(rutina.numero)}` : '';
+  const num = rutina.numero ? formatNumero(rutina.numero, rutina) : '';
   const { numCirc, numEj } = getRoutineStats(rutina);
+  const picanteHtml = renderPicante(rutina.picante);
 
   const volantaParts = [num, `${numCirc}c · ${numEj}ej`].filter(Boolean);
   const volanta = volantaParts.join(' · ');
@@ -102,20 +147,25 @@ function renderRutinaCard(rutina) {
   const ultimaSesion = getUltimaSesionDeRutina(rutina.id);
   const lastDone = ultimaSesion ? formatTimeAgo(ultimaSesion.fecha) : '';
 
+  const stats = getRutinaStats(rutina.id);
+  const statsText = stats?.avgDuracion ? `~${stats.avgDuracion}min` : '';
+
   const delay = cardCounter++ * 60;
   const grupos = [...new Set(rutina.circuitos.flatMap((c) => normalizeGrupos(c)))];
+  const done = isDone(rutina);
 
   return `
     <div class="animate-in" style="animation-delay:${delay}ms" data-rutina-id="${rutina.id}">
-      <div class="rutina-card card" data-rutina-id="${rutina.id}">
+      <div class="rutina-card card ${done ? 'rutina-card--done' : ''}" data-rutina-id="${rutina.id}">
         <div class="rutina-card-body" data-action="preview" data-id="${rutina.id}" style="cursor:pointer">
           <div class="rutina-card-info">
-            <div class="rutina-card-volanta">${volanta}</div>
+            <div class="rutina-card-volanta">${volanta} ${picanteHtml}</div>
             <div class="rutina-card-name">${displayName}</div>
-            ${lastDone ? `<div class="rutina-card-last">${lastDone}</div>` : ''}
+            ${lastDone || statsText ? `<div class="rutina-card-last">${[lastDone, statsText].filter(Boolean).join(' · ')}</div>` : ''}
           </div>
           <div class="rutina-card-illustration">${getCompositeMuscleSvg(grupos, 88)}</div>
         </div>
+        ${done ? '<span class="rutina-done-check">✓</span>' : ''}
       </div>
     </div>
   `;
@@ -125,15 +175,10 @@ function renderRutinaCard(rutina) {
 
 export function render() {
   cardCounter = 0;
-  const allRutinas = getRutinas();
+  const allRutinas = filterByUser(getRutinas());
 
-  const gimnasio = allRutinas
-    .filter((r) => r.tipo === 'gimnasio' || !r.tipo)
-    .sort((a, b) => (b.numero || 0) - (a.numero || 0));
-
-  const cross = allRutinas
-    .filter((r) => r.tipo === 'cross')
-    .sort((a, b) => (b.numero || 0) - (a.numero || 0));
+  const gimnasio = allRutinas.filter((r) => r.tipo === 'gimnasio' || !r.tipo);
+  const cross = allRutinas.filter((r) => r.tipo === 'cross');
 
   const gimCount = gimnasio.length;
   const crossCount = cross.length;
@@ -184,6 +229,22 @@ export function render() {
     </div>
   `;
 
+  const sortFilterRow = `
+    <div class="rutinas-sort-row">
+      <select class="rutinas-sort-select" data-action="sort-rutinas" id="rutinas-sort-select">
+        <option value="numero" ${sortBy === 'numero' ? 'selected' : ''}>Número</option>
+        <option value="picante" ${sortBy === 'picante' ? 'selected' : ''}>Dificultad</option>
+        <option value="duracion" ${sortBy === 'duracion' ? 'selected' : ''}>Duración</option>
+        <option value="done" ${sortBy === 'done' ? 'selected' : ''}>Pendientes</option>
+      </select>
+      <div class="rutinas-filter-chips">
+        <button class="rutinas-filter-chip ${filterDone === 'all' ? 'active' : ''}" data-action="filter-done" data-value="all">Todas</button>
+        <button class="rutinas-filter-chip ${filterDone === 'pending' ? 'active' : ''}" data-action="filter-done" data-value="pending">Pendientes</button>
+        <button class="rutinas-filter-chip ${filterDone === 'done' ? 'active' : ''}" data-action="filter-done" data-value="done">Hechas</button>
+      </div>
+    </div>
+  `;
+
   let filtered = activeFilter === 'cross' ? cross : gimnasio;
 
   // Apply search filter
@@ -191,10 +252,20 @@ export function render() {
     const q = searchQuery.toLowerCase();
     filtered = filtered.filter((r) => {
       const name = (r.nombre || '').toLowerCase();
-      const num = formatNumero(r.numero).toLowerCase();
+      const num = formatNumero(r.numero, r).toLowerCase();
       return name.includes(q) || num.includes(q);
     });
   }
+
+  // Apply done filter
+  if (filterDone === 'pending') {
+    filtered = filtered.filter((r) => !isDone(r));
+  } else if (filterDone === 'done') {
+    filtered = filtered.filter((r) => isDone(r));
+  }
+
+  // Apply sorting
+  filtered = applySorting(filtered);
 
   const listClass = compactView ? 'rutinas-list rutinas-list--compact' : 'rutinas-list';
   const renderCard = compactView ? renderCompactCard : renderRutinaCard;
@@ -209,6 +280,7 @@ export function render() {
   return `
     ${header}
     ${toggle}
+    ${sortFilterRow}
     ${list}
   `;
 }
@@ -218,18 +290,12 @@ export function render() {
 export function mount() {
   const app = document.getElementById('app');
 
-
   function rerender() {
     cardCounter = 0;
-    const allRutinas = getRutinas();
+    const allRutinas = filterByUser(getRutinas());
 
-    const gimnasio = allRutinas
-      .filter((r) => r.tipo === 'gimnasio' || !r.tipo)
-      .sort((a, b) => (b.numero || 0) - (a.numero || 0));
-
-    const cross = allRutinas
-      .filter((r) => r.tipo === 'cross')
-      .sort((a, b) => (b.numero || 0) - (a.numero || 0));
+    const gimnasio = allRutinas.filter((r) => r.tipo === 'gimnasio' || !r.tipo);
+    const cross = allRutinas.filter((r) => r.tipo === 'cross');
 
     // Update toggle counts
     const toggleBtns = document.querySelectorAll('[data-action="filter-rutina-type"]');
@@ -247,6 +313,15 @@ export function mount() {
       btn.classList.toggle('active', isCompact === compactView);
     });
 
+    // Update sort select
+    const sortSelect = document.getElementById('rutinas-sort-select');
+    if (sortSelect) sortSelect.value = sortBy;
+
+    // Update filter chips
+    document.querySelectorAll('[data-action="filter-done"]').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.value === filterDone);
+    });
+
     // Re-render list
     const container = document.getElementById('rutinas-filtered-list');
     if (!container) return;
@@ -258,10 +333,20 @@ export function mount() {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter((r) => {
         const name = (r.nombre || '').toLowerCase();
-        const num = formatNumero(r.numero).toLowerCase();
+        const num = formatNumero(r.numero, r).toLowerCase();
         return name.includes(q) || num.includes(q);
       });
     }
+
+    // Apply done filter
+    if (filterDone === 'pending') {
+      filtered = filtered.filter((r) => !isDone(r));
+    } else if (filterDone === 'done') {
+      filtered = filtered.filter((r) => isDone(r));
+    }
+
+    // Apply sorting
+    filtered = applySorting(filtered);
 
     const renderCard = compactView ? renderCompactCard : renderRutinaCard;
 
@@ -275,7 +360,6 @@ export function mount() {
         ${!searchQuery ? `<button class="btn btn-primary" data-action="new-rutina">${icon.plus} Nueva rutina</button>` : ''}
       `;
     }
-
   }
 
   const handleClick = (e) => {
@@ -295,7 +379,6 @@ export function mount() {
       case 'edit':
         navigate(`/rutina/editar/${id}`);
         break;
-      /* duplicate moved to preview modal */
       case 'filter-rutina-type': {
         const newFilter = btn.dataset.type;
         if (newFilter !== activeFilter) {
@@ -326,6 +409,14 @@ export function mount() {
         }
         break;
       }
+      case 'filter-done': {
+        const newVal = btn.dataset.value;
+        if (newVal !== filterDone) {
+          filterDone = newVal;
+          rerender();
+        }
+        break;
+      }
       case 'delete':
         showModal({
           title: 'Eliminar rutina',
@@ -343,6 +434,15 @@ export function mount() {
 
   app.addEventListener('click', handleClick);
 
+  // Sort select listener
+  const handleChange = (e) => {
+    if (e.target.id === 'rutinas-sort-select') {
+      sortBy = e.target.value;
+      rerender();
+    }
+  };
+  app.addEventListener('change', handleChange);
+
   // Search input listener
   const handleSearchInput = (e) => {
     if (e.target.id === 'rutinas-search-input') {
@@ -352,8 +452,15 @@ export function mount() {
   };
   app.addEventListener('input', handleSearchInput);
 
+  // Check cycle completion on mount
+  const usuario = getUsuarioActivo();
+  if (checkCycleComplete(usuario, activeFilter)) {
+    showToast('Completaste todas las rutinas de ' + (activeFilter === 'cross' ? 'Cross' : 'Gimnasio') + '! Nuevo ciclo iniciado.');
+  }
+
   return () => {
     app.removeEventListener('click', handleClick);
+    app.removeEventListener('change', handleChange);
     app.removeEventListener('input', handleSearchInput);
   };
 }

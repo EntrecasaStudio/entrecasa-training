@@ -75,6 +75,7 @@ function initState(rutinaId) {
     rutinaId: rutina.id,
     rutinaNombre: rutina.nombre,
     rutinaNumero: rutina.numero || null,
+    rutinaTipo: rutina.tipo || 'gimnasio',
     usuario: rutina.usuario || getUsuarioActivo(),
     inicioISO: new Date().toISOString(),
     circuitoActual: 0,
@@ -647,7 +648,7 @@ export function render(params) {
     : `<button class="btn btn-primary btn-full" data-action="next-circuit">Siguiente ${icon.arrowRight}</button>`;
 
   const initial = (state.usuario || 'L').charAt(0).toUpperCase();
-  const numeroStr = state.rutinaNumero ? formatNumero(state.rutinaNumero) : '';
+  const numeroStr = state.rutinaNumero ? formatNumero(state.rutinaNumero, { tipo: state.rutinaTipo, usuario: state.usuario }) : '';
 
   // Only show peso step toggle for normal circuits
   const pesoStepHtml = circTipo === 'normal' ? `
@@ -870,7 +871,7 @@ function finishWorkout() {
   const existing = document.getElementById('workout-save-modal');
   if (existing) existing.remove();
 
-  const numero = state.rutinaNumero ? formatNumero(state.rutinaNumero) : '';
+  const numero = state.rutinaNumero ? formatNumero(state.rutinaNumero, { tipo: state.rutinaTipo, usuario: state.usuario }) : '';
   const overlay = document.createElement('div');
   overlay.id = 'workout-save-modal';
   overlay.className = 'modal-overlay';

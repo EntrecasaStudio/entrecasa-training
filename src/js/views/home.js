@@ -295,7 +295,7 @@ function renderUserDayRow(u, selectedDate, isToday, isPast, dow, isActive) {
       </div>`;
   } else if (planned && planned.routine) {
     const r = planned.routine;
-    const code = r.numero ? `${r.tipo === 'cross' ? 'C' : 'G'}${formatNumero(r.numero)}` : '';
+    const code = r.numero ? formatNumero(r.numero, r) : '';
     const volanta = code ? `<div class="cal-shared-volanta">${code}</div>` : '';
     // Meta: circuits, exercises, muscle groups
     const numCirc = r.circuitos ? r.circuitos.length : 0;
