@@ -53,12 +53,12 @@ export function getDisplayName(rutina) {
   return match ? match[1] : rutina.nombre;
 }
 
-/** Format routine number as coded string: G#001H, C#005M, etc. */
+/** Format routine number as coded string: G#001-H, C#005-M, etc. */
 export function formatNumero(n, rutina) {
   if (!n) return '';
   const prefix = rutina?.tipo === 'cross' ? 'C' : 'G';
   const suffix = rutina?.usuario === 'Nat' ? 'M' : 'H';
-  return `${prefix}#${String(n).padStart(3, '0')}${suffix}`;
+  return `${prefix}#${String(n).padStart(3, '0')}-${suffix}`;
 }
 
 /** Render difficulty peppers */
