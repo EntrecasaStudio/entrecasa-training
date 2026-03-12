@@ -190,7 +190,7 @@ function rutinasNat() {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '10'; // 10 = chaleco flag on cross circuits
+  const CURRENT_SEED_V = '11'; // 11 = rebuild library with proper H/M usuario variants
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -226,10 +226,12 @@ export function seedIfEmpty() {
             if (r.picante === undefined) r.picante = 0;
           }
 
-          // ── Migration v10: rebuild library routines (adds chaleco flag) ──
+          // ── Migration v10-11: rebuild library routines ──
+          // v10 = chaleco flag on cross circuits
+          // v11 = proper H/M usuario field on ALL library routines
           // Remove all library routines (those with numero) so they get
-          // re-added from fresh seed with chaleco info on circuits.
-          if (!seedV || parseInt(seedV, 10) < 10) {
+          // re-added from fresh seed with correct data.
+          if (!seedV || parseInt(seedV, 10) < 11) {
             parsed = parsed.filter((r) => !r.numero);
           }
 
