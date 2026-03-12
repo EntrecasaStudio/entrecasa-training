@@ -5,7 +5,6 @@ import { loginWithGoogle } from '@js/services/firebase.js';
 import { downloadAllData, uploadAllData, startRealtimeSync } from '@js/services/sync.js';
 import { navigate } from '@/router.js';
 import { showToast } from '@js/components/toast.js';
-import { iconLg } from '@js/icons.js';
 import { mountLoginKettlebell, cleanupLoginKettlebell } from '@js/helpers/splash-3d.js';
 
 export function render() {
@@ -13,7 +12,7 @@ export function render() {
     <div class="login-screen">
       <div class="login-hero">
         <div class="login-icon">
-          <div class="login-kb-card" id="login-kb-container">${iconLg('kettlebell', 64)}</div>
+          <div class="login-kb-card" id="login-kb-container"><img src="${import.meta.env.BASE_URL}images/kettlebell-3d.png" alt="" width="96" height="96" style="object-fit:contain;pointer-events:none;"></div>
         </div>
         <h1 class="login-title">Mi Entrenamiento</h1>
         <p class="login-subtitle">Tu plan de entrenamiento sincronizado en todos tus dispositivos</p>

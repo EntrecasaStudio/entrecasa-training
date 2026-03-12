@@ -190,7 +190,7 @@ function rutinasNat() {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '8'; // 8 = H/M split, picante, usuario on library routines
+  const CURRENT_SEED_V = '9'; // 9 = real Notion exercises, 113 gym + 32 cross
 
   const seedRutinas = [
     ...rutinasLean(),

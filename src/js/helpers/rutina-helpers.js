@@ -252,9 +252,8 @@ export function showDayAssignmentModal(usuario, dia, tipoActual, onDone, { date,
 
   // ── Helpers ──
   function getRoutinesForTipo(tipo) {
-    const activeUser = getUsuarioActivo();
     return getRutinas()
-      .filter((r) => r.tipo === tipo && (!r.usuario || r.usuario === activeUser))
+      .filter((r) => r.tipo === tipo)
       .sort((a, b) => (b.numero || 0) - (a.numero || 0));
   }
 

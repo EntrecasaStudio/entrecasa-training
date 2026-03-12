@@ -70,10 +70,9 @@ function getMetaText(rutina) {
   return parts.join(' · ') || '';
 }
 
-/** Filter routines by active user */
+/** Return all routines (H and M visible for both users) */
 function filterByUser(rutinas) {
-  const activeUser = getUsuarioActivo();
-  return rutinas.filter((r) => !r.usuario || r.usuario === activeUser);
+  return rutinas;
 }
 
 /** Check if routine is done in current cycle */
