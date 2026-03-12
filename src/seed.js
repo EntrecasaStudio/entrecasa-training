@@ -204,7 +204,10 @@ export function seedIfEmpty() {
 
     if (existing && seedV === CURRENT_SEED_V) {
       const parsed = JSON.parse(existing);
-      if (parsed.length > 0) {
+      // Also check data integrity: if library routines lack usuario,
+      // data was overwritten by stale Firestore — needs re-migration.
+      const needsMigration = parsed.some((r) => r.numero && !r.usuario);
+      if (parsed.length > 0 && !needsMigration) {
         seedPlan(); // ensure plan exists even on existing data
         return; // Already seeded with current version
       }
@@ -229,9 +232,12 @@ export function seedIfEmpty() {
           // ── Migration v10-11: rebuild library routines ──
           // v10 = chaleco flag on cross circuits
           // v11 = proper H/M usuario field on ALL library routines
-          // Remove all library routines (those with numero) so they get
-          // re-added from fresh seed with correct data.
-          if (!seedV || parseInt(seedV, 10) < 11) {
+          // Remove old library routines but preserve user-created copies.
+          // Old library routines have `numero` but no `usuario` field.
+          // User copies have both `numero` and `usuario` (e.g. "fiter" copies).
+          let userCopies = [];
+          if (!seedV || parseInt(seedV, 10) < 11 || parsed.some((r) => r.numero && !r.usuario)) {
+            userCopies = parsed.filter((r) => r.numero && r.usuario);
             parsed = parsed.filter((r) => !r.numero);
           }
 
@@ -256,7 +262,8 @@ export function seedIfEmpty() {
             if (r.numero) return !existingNumeros.has(`${r.tipo || 'gimnasio'}::${r.numero}::${r.usuario || ''}`);
             return !existingNames.has(`${r.nombre}::${r.usuario || ''}`);
           });
-          const merged = [...parsed, ...newOnes];
+          // Merge: programmed + new library + user copies at the end
+          const merged = [...parsed, ...newOnes, ...userCopies];
           localStorage.setItem(KEY, JSON.stringify(merged));
           localStorage.setItem(SEED_VERSION, CURRENT_SEED_V);
           seedPlan(); // ensure plan exists

@@ -107,6 +107,8 @@ onAuth(async (user) => {
         if (hadCloud) {
           // Re-run seed to apply migrations to downloaded data
           seedIfEmpty();
+          // Upload migrated data back to cloud so other devices get the fix
+          await uploadAllData();
         } else {
           await uploadAllData();
         }
