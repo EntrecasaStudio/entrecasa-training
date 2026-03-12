@@ -12,7 +12,7 @@ export function render() {
     <div class="login-screen">
       <div class="login-hero">
         <div class="login-icon">
-          <div class="login-kb-card" id="login-kb-container"><img src="${import.meta.env.BASE_URL}images/kettlebell-3d.png" alt="" width="96" height="96" style="object-fit:contain;pointer-events:none;"></div>
+          <div class="login-kb-card" id="login-kb-container"><img src="${import.meta.env.BASE_URL}images/kettlebell-3d.png" alt="" width="140" height="140" style="display:block;pointer-events:none;"></div>
         </div>
         <h1 class="login-title">Mi Entrenamiento</h1>
         <p class="login-subtitle">Tu plan de entrenamiento sincronizado en todos tus dispositivos</p>
