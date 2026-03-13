@@ -116,6 +116,10 @@ onAuth(async (user) => {
         console.warn('[app] Initial sync failed:', err.message);
       }
       startRealtimeSync(() => {
+        // Re-apply seed migrations in case remote data reverted local changes
+        seedIfEmpty();
+        // Push migrated data back so other devices get the fix
+        uploadAllData().catch(() => {});
         // Remote data changed — refresh current view (but not during active edits/workouts)
         const hash = window.location.hash || '#/';
         const path = hash.replace('#', '') || '/';
@@ -149,6 +153,9 @@ onAuth(async (user) => {
       console.warn('[app] Sync after login failed:', err.message);
     }
     startRealtimeSync(() => {
+      // Re-apply seed migrations in case remote data reverted local changes
+      seedIfEmpty();
+      uploadAllData().catch(() => {});
       const hash = window.location.hash || '#/';
       const path = hash.replace('#', '') || '/';
       if (path.includes('/editar/') || path.includes('/nueva') || path.startsWith('/entrenamiento')) return;
