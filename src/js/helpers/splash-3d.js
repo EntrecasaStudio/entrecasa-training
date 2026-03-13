@@ -19,7 +19,8 @@ function updateProgress(pct) {
 }
 
 /**
- * Build a canvas texture: dark-grey disc (#1A1A1A) with Entrecasa logo in yellow.
+ * Build a canvas texture: transparent background with Entrecasa logo in dark grey.
+ * Only the logo shape is opaque — the rest is see-through so the yellow surface shows.
  */
 function buildLogoTexture(THREE, texSize) {
   const c = document.createElement('canvas');
@@ -27,21 +28,16 @@ function buildLogoTexture(THREE, texSize) {
   c.height = texSize;
   const ctx = c.getContext('2d');
 
-  // Dark grey circle background (matches app bg)
-  ctx.fillStyle = '#1A1A1A';
-  ctx.beginPath();
-  ctx.arc(texSize / 2, texSize / 2, texSize / 2, 0, Math.PI * 2);
-  ctx.fill();
+  // Transparent background (canvas default) — no disc drawn
 
-  // Draw the Entrecasa logo paths in yellow, centered and scaled
+  // Draw the Entrecasa logo in app background grey
   const logoSize = texSize * 0.57;
-  // Offset: nudge logo 8px right and 8px down (scaled to texture size)
   const nudge = texSize * (8 / 256);
   const ox = (texSize - logoSize) / 2 + nudge;
   const oy = (texSize - logoSize) / 2 + nudge;
   const s = logoSize / 200; // SVG viewBox is 200x200
 
-  ctx.fillStyle = '#FFCD00';
+  ctx.fillStyle = '#1A1A1A';
 
   // Logo polygon data (from entrecasa-logo.svg, viewBox 0 0 200 200)
   const polys = [
@@ -128,13 +124,14 @@ function addBrandedDiscs(THREE, model) {
 
     const discRadius = maxRadialDist > 0 ? maxRadialDist * 0.75 : bodyDepthZ * 0.5;
 
-    // Build logo texture and material
+    // Build logo texture and material — transparent except for the logo shape
     const logoTex = buildLogoTexture(THREE, 256);
     const disc = new THREE.CircleGeometry(discRadius, 48);
     const mat = new THREE.MeshStandardMaterial({
       map: logoTex,
+      transparent: true,
       side: THREE.FrontSide,
-      depthWrite: true,
+      depthWrite: false,
       metalness: 0.1,
       roughness: 0.5,
     });
