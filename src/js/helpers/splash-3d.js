@@ -37,35 +37,15 @@ async function addLogoDecal(THREE, model, basePath) {
       });
       if (!img.complete || img.naturalWidth === 0) return;
 
-      // Render to canvas: black circle background + white logo
+      // Render SVG to canvas texture (white bg + black logo, clipped to circle)
       const texSize = 256;
-      const pad = texSize * 0.18;
-      const drawSize = texSize - pad * 2;
-
-      // Temp canvas: recolor SVG logo to white
-      const tmp = document.createElement('canvas');
-      tmp.width = texSize;
-      tmp.height = texSize;
-      const tmpCtx = tmp.getContext('2d');
-      tmpCtx.drawImage(img, pad, pad, drawSize, drawSize);
-      tmpCtx.globalCompositeOperation = 'source-in';
-      tmpCtx.fillStyle = '#ffffff';
-      tmpCtx.fillRect(0, 0, texSize, texSize);
-
-      // Final texture: black circle + white logo
       const cvs = document.createElement('canvas');
       cvs.width = texSize;
       cvs.height = texSize;
       const ctx = cvs.getContext('2d');
 
-      // Solid black circle filling the entire canvas
-      ctx.beginPath();
-      ctx.arc(texSize / 2, texSize / 2, texSize / 2, 0, Math.PI * 2);
-      ctx.fillStyle = '#000000';
-      ctx.fill();
-
-      // White logo on top
-      ctx.drawImage(tmp, 0, 0);
+      // Draw the SVG (already has white rect bg + black polygons)
+      ctx.drawImage(img, 0, 0, texSize, texSize);
 
       _logoTexture = new THREE.CanvasTexture(cvs);
       _logoTexture.colorSpace = THREE.SRGBColorSpace;

@@ -190,7 +190,7 @@ function rutinasNat() {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '11'; // 11 = rebuild library with proper H/M usuario variants
+  const CURRENT_SEED_V = '12'; // 12 = fix missing M variants + clean titles
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -198,15 +198,23 @@ export function seedIfEmpty() {
     ...getBibliotecaRutinas(),
   ];
 
+  // Expected library count: both H and M variants
+  const EXPECTED_LIBRARY = seedRutinas.filter((r) => r.numero).length;
+
   try {
     const existing = localStorage.getItem(KEY);
     const seedV = localStorage.getItem(SEED_VERSION);
 
     if (existing && seedV === CURRENT_SEED_V) {
       const parsed = JSON.parse(existing);
-      // Also check data integrity: if library routines lack usuario,
-      // data was overwritten by stale Firestore — needs re-migration.
-      const needsMigration = parsed.some((r) => r.numero && !r.usuario);
+      // Check data integrity:
+      // 1) Library routines must have usuario field
+      // 2) Must have both H and M variants (enough library routines)
+      const libraryCount = parsed.filter((r) => r.numero).length;
+      const hasNatVariants = parsed.some((r) => r.numero && r.usuario === 'Nat');
+      const needsMigration = parsed.some((r) => r.numero && !r.usuario)
+        || !hasNatVariants
+        || libraryCount < EXPECTED_LIBRARY * 0.9;
       if (parsed.length > 0 && !needsMigration) {
         seedPlan(); // ensure plan exists even on existing data
         return; // Already seeded with current version
@@ -229,15 +237,20 @@ export function seedIfEmpty() {
             if (r.picante === undefined) r.picante = 0;
           }
 
-          // ── Migration v10-11: rebuild library routines ──
+          // ── Migration v10-12: rebuild library routines ──
           // v10 = chaleco flag on cross circuits
           // v11 = proper H/M usuario field on ALL library routines
-          // Remove old library routines but preserve user-created copies.
-          // Old library routines have `numero` but no `usuario` field.
-          // User copies have both `numero` and `usuario` (e.g. "fiter" copies).
+          // v12 = fix missing M (Nat) variants + clean titles
+          // Remove ALL old library routines and replace with fresh seed.
+          // Preserve user-created routines (those without `numero`).
           let userCopies = [];
-          if (!seedV || parseInt(seedV, 10) < 11 || parsed.some((r) => r.numero && !r.usuario)) {
-            userCopies = parsed.filter((r) => r.numero && r.usuario);
+          const needsLibraryRebuild = !seedV
+            || parseInt(seedV, 10) < 12
+            || parsed.some((r) => r.numero && !r.usuario)
+            || !parsed.some((r) => r.numero && r.usuario === 'Nat');
+          if (needsLibraryRebuild) {
+            // Keep user-created routines (no numero) and any user-customized copies
+            userCopies = [];
             parsed = parsed.filter((r) => !r.numero);
           }
 

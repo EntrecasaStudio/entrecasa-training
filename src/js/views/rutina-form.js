@@ -438,6 +438,14 @@ function renderForm(isEdit) {
     </div>
 
     <div class="form-section">
+      <label class="input-label">Usuario</label>
+      <div class="ej-type-toggle">
+        <button class="ej-type-btn ${rutina.usuario !== 'Nat' ? 'active' : ''}" data-action="set-usuario" data-usuario="Lean">H (Lean)</button>
+        <button class="ej-type-btn ${rutina.usuario === 'Nat' ? 'active' : ''}" data-action="set-usuario" data-usuario="Nat">M (Nat)</button>
+      </div>
+    </div>
+
+    <div class="form-section">
       <div class="form-section-title">Circuitos</div>
       <div id="circuitos-container">
         ${circuitos}
@@ -830,6 +838,14 @@ export function mount(params) {
       case 'set-tipo': {
         syncFromInputs();
         rutina.tipo = btn.dataset.tipo;
+        isDirty = true;
+        reRender();
+        break;
+      }
+
+      case 'set-usuario': {
+        syncFromInputs();
+        rutina.usuario = btn.dataset.usuario;
         isDirty = true;
         reRender();
         break;

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gym-app-v5';
+const CACHE_NAME = 'gym-app-v6';
 
 const PRECACHE_URLS = [
   '/entrecasa-training/',
