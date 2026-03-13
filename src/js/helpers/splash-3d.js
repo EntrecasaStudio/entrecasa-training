@@ -58,8 +58,24 @@ function addBlackDiscs(THREE, model) {
     bodyMesh.localToWorld(bodyCenterWorld);
     const bodyCenterLocal = model.worldToLocal(bodyCenterWorld);
 
-    // Small disc matching the beveled flat circle on the kettlebell body
-    const discRadius = bodyDepthZ * 0.38;
+    // Compute the actual bevel radius from geometry: find vertices on the
+    // front flat face and measure the max radial distance from the body center.
+    const positions = bodyMesh.geometry.attributes.position;
+    const frontZ = bbox.max.z;
+    const tolerance = bboxSize.z * 0.02; // 2% of depth
+    let maxRadialDist = 0;
+
+    for (let i = 0; i < positions.count; i++) {
+      const z = positions.getZ(i);
+      if (Math.abs(z - frontZ) < tolerance) {
+        const x = positions.getX(i) - bodyCenterGeom.x;
+        const y = positions.getY(i) - bodyCenterGeom.y;
+        const radial = Math.sqrt(x * x + y * y);
+        if (radial > maxRadialDist) maxRadialDist = radial;
+      }
+    }
+
+    const discRadius = maxRadialDist > 0 ? maxRadialDist : bodyDepthZ * 0.62;
 
     // Shared geometry and material — solid black, fully opaque
     const disc = new THREE.CircleGeometry(discRadius, 48);
