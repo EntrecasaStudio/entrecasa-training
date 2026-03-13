@@ -146,7 +146,7 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
   overlay.innerHTML = `
     <div class="modal-box preview-modal" role="dialog" aria-modal="true">
       <button class="ej-detail-close-x" data-preview-cancel>${icon.close}</button>
-      <div class="modal-title">${rutina.nombre} ${renderPicante(rutina.picante)}</div>
+      <div class="modal-title">${rutina.nombre}</div>
       ${renderRutinaStatsLine(rutina.id)}
       <div class="modal-body"><div class="preview-body">${circuitsHtml}</div></div>
       <div class="preview-modal-actions">
