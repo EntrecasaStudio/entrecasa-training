@@ -8,7 +8,6 @@ let _splashCleanup = null;
 let _loginCleanup = null;
 let _cachedGltfScene = null;
 let _sharedDracoLoader = null;
-let _logoTexture = null;
 
 // Track when splash 3D is ready so hideSplash can wait for it
 let _splashReadyResolve = null;
@@ -20,37 +19,10 @@ function updateProgress(pct) {
 }
 
 /**
- * Add the Entrecasa Studio logo as a flat decal on the kettlebell body.
- * Loads the SVG, renders it to a canvas texture (black circle + white logo),
- * creates circular disc meshes on front and back faces of the body sphere.
+ * Add flat black discs on front and back faces of the kettlebell body.
  */
-async function addLogoDecal(THREE, model, basePath) {
+function addBlackDiscs(THREE, model) {
   try {
-    // Load or reuse cached logo texture
-    if (!_logoTexture) {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.src = `${basePath}images/entrecasa-logo.svg`;
-      await new Promise((resolve) => {
-        img.onload = resolve;
-        img.onerror = resolve;
-      });
-      if (!img.complete || img.naturalWidth === 0) return;
-
-      // Render SVG to canvas texture (white bg + black logo, clipped to circle)
-      const texSize = 256;
-      const cvs = document.createElement('canvas');
-      cvs.width = texSize;
-      cvs.height = texSize;
-      const ctx = cvs.getContext('2d');
-
-      // Draw the SVG (already has white rect bg + black polygons)
-      ctx.drawImage(img, 0, 0, texSize, texSize);
-
-      _logoTexture = new THREE.CanvasTexture(cvs);
-      _logoTexture.colorSpace = THREE.SRGBColorSpace;
-    }
-
     // Find the kettlebell mesh (single mesh: body + handle)
     let bodyMesh = null;
     let maxVerts = 0;
@@ -73,7 +45,7 @@ async function addLogoDecal(THREE, model, basePath) {
     // Body depth (Z) gives the front-surface distance from center
     const bodyDepthZ = bboxSize.z / 2;
 
-    // Body center: body sphere sits at the bottom, radius ≈ X half-extent
+    // Body center: body sphere sits at the bottom, radius ~ X half-extent
     const bodyRadiusX = bboxSize.x / 2;
     const bodyCenterGeom = new THREE.Vector3(
       (bbox.min.x + bbox.max.x) / 2,
@@ -81,18 +53,18 @@ async function addLogoDecal(THREE, model, basePath) {
       (bbox.min.z + bbox.max.z) / 2,
     );
 
-    // Convert body center: geometry → world → model-local
+    // Convert body center: geometry -> world -> model-local
     const bodyCenterWorld = bodyCenterGeom.clone();
     bodyMesh.localToWorld(bodyCenterWorld);
     const bodyCenterLocal = model.worldToLocal(bodyCenterWorld);
 
-    // Disc matches the body's front circular profile (Z half-extent, slight inset)
+    // Disc matches the body's front circular profile (slight inset)
     const discRadius = bodyDepthZ * 0.85;
 
-    // Shared geometry and material for front + back
+    // Shared geometry and material — plain black
     const disc = new THREE.CircleGeometry(discRadius, 48);
     const mat = new THREE.MeshBasicMaterial({
-      map: _logoTexture,
+      color: 0x000000,
       side: THREE.FrontSide,
       depthWrite: false,
       polygonOffset: true,
@@ -105,14 +77,14 @@ async function addLogoDecal(THREE, model, basePath) {
     front.position.z += bodyDepthZ * 1.005;
     model.add(front);
 
-    // Back face (-Z) — rotate 180° around Y so logo faces outward
+    // Back face (-Z) — rotate 180deg around Y so disc faces outward
     const back = new THREE.Mesh(disc, mat);
     back.position.copy(bodyCenterLocal);
     back.position.z -= bodyDepthZ * 1.005;
     back.rotation.y = Math.PI;
     model.add(back);
   } catch {
-    // Logo is decorative — fail silently
+    // Decorative — fail silently
   }
 }
 
@@ -215,8 +187,8 @@ async function setupKettlebell3D(container, size, onProgress) {
   const center2 = box2.getCenter(new THREE.Vector3());
   model.position.y -= center2.y - 7;
 
-  // ── Add Entrecasa logo on kettlebell body face ──
-  await addLogoDecal(THREE, model, basePath);
+  // ── Black discs on front + back of kettlebell body ──
+  addBlackDiscs(THREE, model);
 
   scene.add(model);
 
