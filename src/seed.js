@@ -190,7 +190,7 @@ function rutinasNat() {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '12'; // 12 = fix missing M variants + clean titles
+  const CURRENT_SEED_V = '13'; // 13 = strip all emojis + Día prefix from titles
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -245,7 +245,7 @@ export function seedIfEmpty() {
           // Preserve user-created routines (those without `numero`).
           let userCopies = [];
           const needsLibraryRebuild = !seedV
-            || parseInt(seedV, 10) < 12
+            || parseInt(seedV, 10) < 13
             || parsed.some((r) => r.numero && !r.usuario)
             || !parsed.some((r) => r.numero && r.usuario === 'Nat');
           if (needsLibraryRebuild) {

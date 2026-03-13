@@ -124,8 +124,8 @@ function renderCompactCard(rutina) {
     <div class="animate-in" style="animation-delay:${delay}ms" data-rutina-id="${rutina.id}">
       <div class="rutina-compact ${done ? 'rutina-compact--done' : ''}" data-action="preview" data-id="${rutina.id}" style="cursor:pointer">
         <div class="rutina-compact-main">
-          ${num ? `<div class="rutina-compact-code">${num}</div>` : ''}
-          <div class="rutina-compact-name">${displayName} ${picanteHtml}</div>
+          ${num ? `<div class="rutina-compact-code">${num} ${picanteHtml}</div>` : ''}
+          <div class="rutina-compact-name">${displayName}</div>
           ${meta ? `<div class="rutina-compact-meta">${meta}</div>` : ''}
         </div>
         ${done ? '<span class="rutina-done-check">✓</span>' : ''}

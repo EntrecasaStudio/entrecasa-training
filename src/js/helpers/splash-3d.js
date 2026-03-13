@@ -19,9 +19,58 @@ function updateProgress(pct) {
 }
 
 /**
- * Add flat black discs on front and back faces of the kettlebell body.
+ * Build a canvas texture: dark-grey disc (#1A1A1A) with Entrecasa logo in yellow.
  */
-function addBlackDiscs(THREE, model) {
+function buildLogoTexture(THREE, texSize) {
+  const c = document.createElement('canvas');
+  c.width = texSize;
+  c.height = texSize;
+  const ctx = c.getContext('2d');
+
+  // Dark grey circle background (matches app bg)
+  ctx.fillStyle = '#1A1A1A';
+  ctx.beginPath();
+  ctx.arc(texSize / 2, texSize / 2, texSize / 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Draw the Entrecasa logo paths in yellow, centered and scaled
+  const logoSize = texSize * 0.52;
+  const ox = (texSize - logoSize) / 2;
+  const oy = (texSize - logoSize) / 2;
+  const s = logoSize / 200; // SVG viewBox is 200x200
+
+  ctx.fillStyle = '#FFCD00';
+
+  // Logo polygon data (from entrecasa-logo.svg, viewBox 0 0 200 200)
+  const polys = [
+    [[28.92,154.17],[28.92,156.46],[99.61,115.96],[99.61,113.66]],
+    [[28.92,141.47],[28.92,143.78],[99.61,103.27],[99.61,100.97]],
+    [[28.92,128.78],[28.92,131.07],[99.61,90.57],[99.61,88.27]],
+    [[28.92,116.08],[28.92,118.38],[99.61,77.88],[99.61,75.57]],
+    [[28.92,103.38],[28.92,105.68],[99.61,65.18],[99.61,62.87]],
+    [[28.92,90.68],[28.92,92.98],[99.61,52.48],[99.61,50.17]],
+    [[99.61,37.52],[28.92,78.04],[28.92,80.29],[99.61,39.77]],
+    [[99.61,37.52],[99.61,115.96],[171.08,156.48],[171.08,78.04]],
+  ];
+  for (const pts of polys) {
+    ctx.beginPath();
+    ctx.moveTo(ox + pts[0][0] * s, oy + pts[0][1] * s);
+    for (let i = 1; i < pts.length; i++) {
+      ctx.lineTo(ox + pts[i][0] * s, oy + pts[i][1] * s);
+    }
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+/**
+ * Add branded discs on front and back faces of the kettlebell body.
+ */
+function addBrandedDiscs(THREE, model) {
   try {
     // Find the kettlebell mesh (single mesh: body + handle)
     let bodyMesh = null;
@@ -62,7 +111,7 @@ function addBlackDiscs(THREE, model) {
     // front flat face and measure the max radial distance from the body center.
     const positions = bodyMesh.geometry.attributes.position;
     const frontZ = bbox.max.z;
-    const tolerance = bboxSize.z * 0.02; // 2% of depth
+    const tolerance = bboxSize.z * 0.02;
     let maxRadialDist = 0;
 
     for (let i = 0; i < positions.count; i++) {
@@ -75,14 +124,17 @@ function addBlackDiscs(THREE, model) {
       }
     }
 
-    const discRadius = maxRadialDist > 0 ? maxRadialDist : bodyDepthZ * 0.62;
+    const discRadius = maxRadialDist > 0 ? maxRadialDist * 0.75 : bodyDepthZ * 0.5;
 
-    // Shared geometry and material — solid black, fully opaque
+    // Build logo texture and material
+    const logoTex = buildLogoTexture(THREE, 256);
     const disc = new THREE.CircleGeometry(discRadius, 48);
-    const mat = new THREE.MeshBasicMaterial({
-      color: 0x000000,
+    const mat = new THREE.MeshStandardMaterial({
+      map: logoTex,
       side: THREE.FrontSide,
       depthWrite: true,
+      metalness: 0.1,
+      roughness: 0.5,
     });
 
     // Front face (+Z) — sits just on the surface
@@ -201,8 +253,8 @@ async function setupKettlebell3D(container, size, onProgress) {
   const center2 = box2.getCenter(new THREE.Vector3());
   model.position.y -= center2.y - 7;
 
-  // ── Black discs on front + back of kettlebell body ──
-  addBlackDiscs(THREE, model);
+  // ── Branded discs on front + back of kettlebell body ──
+  addBrandedDiscs(THREE, model);
 
   scene.add(model);
 
