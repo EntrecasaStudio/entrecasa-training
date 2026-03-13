@@ -58,29 +58,27 @@ function addBlackDiscs(THREE, model) {
     bodyMesh.localToWorld(bodyCenterWorld);
     const bodyCenterLocal = model.worldToLocal(bodyCenterWorld);
 
-    // Disc matches the body's front circular profile (slight inset)
-    const discRadius = bodyDepthZ * 0.85;
+    // Small disc matching the beveled flat circle on the kettlebell body
+    const discRadius = bodyDepthZ * 0.38;
 
-    // Shared geometry and material — plain black
+    // Shared geometry and material — solid black, fully opaque
     const disc = new THREE.CircleGeometry(discRadius, 48);
     const mat = new THREE.MeshBasicMaterial({
       color: 0x000000,
       side: THREE.FrontSide,
-      depthWrite: false,
-      polygonOffset: true,
-      polygonOffsetFactor: -2,
+      depthWrite: true,
     });
 
-    // Front face (+Z)
+    // Front face (+Z) — sits just on the surface
     const front = new THREE.Mesh(disc, mat);
     front.position.copy(bodyCenterLocal);
-    front.position.z += bodyDepthZ * 1.005;
+    front.position.z += bodyDepthZ * 1.01;
     model.add(front);
 
     // Back face (-Z) — rotate 180deg around Y so disc faces outward
     const back = new THREE.Mesh(disc, mat);
     back.position.copy(bodyCenterLocal);
-    back.position.z -= bodyDepthZ * 1.005;
+    back.position.z -= bodyDepthZ * 1.01;
     back.rotation.y = Math.PI;
     model.add(back);
   } catch {
