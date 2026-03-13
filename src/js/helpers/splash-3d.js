@@ -31,7 +31,7 @@ function buildLogoTexture(THREE, texSize) {
   // Transparent background (canvas default) — no disc drawn
 
   // Draw the Entrecasa logo in app background grey
-  const logoSize = texSize * 0.57;
+  const logoSize = texSize * 0.98;
   const nudge = texSize * (8 / 256);
   const ox = (texSize - logoSize) / 2 + nudge;
   const oy = (texSize - logoSize) / 2 + nudge;
