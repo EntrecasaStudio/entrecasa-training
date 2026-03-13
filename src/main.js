@@ -89,6 +89,7 @@ async function hideSplash() {
   if (splash) {
     splash.style.opacity = '0';
     splash.style.transform = 'scale(1.05)';
+    splash.style.filter = 'blur(6px)';
     setTimeout(() => splash.remove(), 500);
   }
 }

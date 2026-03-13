@@ -34,9 +34,11 @@ function buildLogoTexture(THREE, texSize) {
   ctx.fill();
 
   // Draw the Entrecasa logo paths in yellow, centered and scaled
-  const logoSize = texSize * 0.52;
-  const ox = (texSize - logoSize) / 2;
-  const oy = (texSize - logoSize) / 2;
+  const logoSize = texSize * 0.57;
+  // Offset: nudge logo 8px right and 8px down (scaled to texture size)
+  const nudge = texSize * (8 / 256);
+  const ox = (texSize - logoSize) / 2 + nudge;
+  const oy = (texSize - logoSize) / 2 + nudge;
   const s = logoSize / 200; // SVG viewBox is 200x200
 
   ctx.fillStyle = '#FFCD00';
