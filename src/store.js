@@ -67,6 +67,7 @@ export function duplicateRutina(id) {
   const rutinas = getRutinas();
   const sameType = rutinas.filter((r) => r.tipo === (copia.tipo || 'gimnasio'));
   copia.numero = sameType.reduce((m, r) => Math.max(m, r.numero || 0), 0) + 1;
+  copia.custom = true;
   rutinas.push(copia);
   write(KEYS.rutinas, rutinas);
   bumpVersion();

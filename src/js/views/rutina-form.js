@@ -617,6 +617,7 @@ function showSaveOptionsModal() {
           copia.id = generateId();
           copia.numero = getNextNumero(rutina.tipo);
           copia.diaSemana = null;
+          copia.custom = true;
           saveRutina(copia);
           isDirty = false;
           showToast(`Rutina ${formatNumero(copia.numero, copia)} creada`);
@@ -673,6 +674,7 @@ function showExitEditModal() {
             showSaveOptionsModal();
           } else {
             if (!rutina.numero) rutina.numero = getNextNumero(rutina.tipo);
+            rutina.custom = true;
             saveRutina(rutina);
             isDirty = false;
             showToast('Rutina guardada');
@@ -1136,6 +1138,7 @@ export function mount(params) {
           if (!rutina.numero) {
             rutina.numero = getNextNumero(rutina.tipo);
           }
+          rutina.custom = true;
           saveRutina(rutina);
           isDirty = false;
           showToast('Rutina guardada');

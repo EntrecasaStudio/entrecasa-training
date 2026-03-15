@@ -42,6 +42,7 @@ export function showVoicePreview(rutina) {
       rutina.id = crypto.randomUUID();
       rutina.creada = new Date().toISOString();
       rutina.diaSemana = null;
+      rutina.custom = true;
 
       // Ensure each exercise has a pesoKg field
       for (const c of rutina.circuitos) {

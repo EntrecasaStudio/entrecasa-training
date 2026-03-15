@@ -190,7 +190,7 @@ function rutinasNat() {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '13'; // 13 = strip all emojis + Día prefix from titles
+  const CURRENT_SEED_V = '14'; // 14 = mark custom routines to survive seed rebuilds
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -237,6 +237,16 @@ export function seedIfEmpty() {
             if (r.picante === undefined) r.picante = 0;
           }
 
+          // ── Migration v14: mark user-created routines with `custom` flag ──
+          // Library routines have numeros from the Notion seed (1-113).
+          // Any routine with a higher numero is user-created and must be preserved.
+          const libraryNumeros = new Set(seedRutinas.filter((r) => r.numero).map((r) => r.numero));
+          for (const r of parsed) {
+            if (r.numero && !libraryNumeros.has(r.numero) && !r.custom) {
+              r.custom = true;
+            }
+          }
+
           // ── Migration v10-12: rebuild library routines ──
           // v10 = chaleco flag on cross circuits
           // v11 = proper H/M usuario field on ALL library routines
@@ -245,13 +255,14 @@ export function seedIfEmpty() {
           // Preserve user-created routines (those without `numero`).
           let userCopies = [];
           const needsLibraryRebuild = !seedV
-            || parseInt(seedV, 10) < 13
+            || parseInt(seedV, 10) < 14
             || parsed.some((r) => r.numero && !r.usuario)
             || !parsed.some((r) => r.numero && r.usuario === 'Nat');
           if (needsLibraryRebuild) {
-            // Keep user-created routines (no numero) and any user-customized copies
+            // Keep user-created routines: those without `numero`, OR those
+            // explicitly marked as custom (user-created copies get `custom: true`).
             userCopies = [];
-            parsed = parsed.filter((r) => !r.numero);
+            parsed = parsed.filter((r) => !r.numero || r.custom);
           }
 
           // ── Dedup: remove duplicate numeros (keep first per tipo+usuario) ──
