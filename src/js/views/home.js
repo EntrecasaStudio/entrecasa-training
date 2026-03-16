@@ -5,6 +5,7 @@ import {
   getRutinaHoy,
   getProximoEntrenamiento,
   getPlanSemanal,
+  getDayOverride,
   setPlanDia,
   clearRutinaDelDia,
   clearDayOverride,
@@ -129,12 +130,15 @@ function renderWeekStrip(usuario) {
     const isPast = d < startOfDay(today) && !isToday;
 
     // Build dual dots (one per user)
+    const dateStr = dateToStr(d);
     let dotsHtml = '<span class="cal-strip-dots">';
     for (const u of USERS) {
       const plan = getPlanSemanal(u);
       const sessions = getSessionsForDate(u, d.getFullYear(), d.getMonth(), d.getDate());
       const hasCompleted = sessions.length > 0;
-      const tipo = plan[dow] || '';
+      // Check date-specific override first, then fall back to weekly plan
+      const override = getDayOverride(u, dateStr);
+      const tipo = override ? (override.tipo || '') : (plan[dow] || '');
       const hasPlanned = !!tipo && !isPast;
 
       let dotCls = 'cal-strip-dot-user';

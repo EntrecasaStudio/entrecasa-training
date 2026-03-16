@@ -22,8 +22,8 @@ function findEjercicio(nombre) {
 }
 
 export function showExerciseDetail(nombre, { onSave } = {}) {
-  const ej = findEjercicio(nombre);
-  if (!ej) return;
+  const ej = findEjercicio(nombre)
+    || { nombre, categoria: '', tipo: 'funcional' };
 
   const defaultDesc = DESCRIPCIONES[nombre] || '';
   const meta = getEjercicioMeta(nombre);

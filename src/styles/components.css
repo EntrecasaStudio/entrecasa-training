@@ -220,6 +220,7 @@ select.input {
 
 .exercise-picker-box {
   max-height: 80vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   text-align: left;
@@ -262,8 +263,9 @@ select.input {
 
 .exercise-picker-box .ej-picker-list {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  max-height: 50vh;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
   gap: 2px;
