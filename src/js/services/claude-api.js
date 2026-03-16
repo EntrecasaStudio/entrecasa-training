@@ -40,8 +40,7 @@ export async function processVoiceCommand(message, usuario, rutinas) {
       circuitos: (r.circuitos || []).map((c, i) => ({
         indice: i,
         grupoMuscular: c.grupoMuscular,
-        tipo: c.tipo || 'normal',
-        ejercicios: (c.ejercicios || []).map((e) => e.nombre),
+        ejercicios: (c.ejercicios || []).map((e) => ({ nombre: e.nombre, tipo: e.tipo || 'normal' })),
       })),
     }));
   }

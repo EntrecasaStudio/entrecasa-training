@@ -328,9 +328,10 @@ export function getPersonalRecords(usuario) {
   const records = {}; // { nombre: { maxPeso, fecha } }
   for (const s of sesiones) {
     for (const c of s.circuitos) {
-      // Skip non-normal circuits (velocidad/HIIT don't have weight PRs)
-      if ((c.tipo || 'normal') !== 'normal') continue;
       for (const ej of c.ejercicios) {
+        // Skip cardio exercises (velocidad/HIIT don't have weight PRs)
+        const ejTipo = ej.tipo || c.tipo || 'normal';
+        if (ejTipo !== 'normal') continue;
         const best = getEjBestRound(ej);
         const key = ej.nombre;
         if (!records[key] || best.pesoRealKg > records[key].maxPeso) {
@@ -344,14 +345,13 @@ export function getPersonalRecords(usuario) {
 
 export function calcVolumenSesion(sesion) {
   return sesion.circuitos.reduce(
-    (sum, c) => {
-      // Skip non-normal circuits for volume calculation
-      if ((c.tipo || 'normal') !== 'normal') return sum;
-      return sum + c.ejercicios.reduce((s, ej) => {
-        const vueltas = getEjVueltas(ej);
-        return s + vueltas.reduce((vs, v) => vs + (v.repsReal * v.pesoRealKg), 0);
-      }, 0);
-    },
+    (sum, c) => sum + c.ejercicios.reduce((s, ej) => {
+      // Skip cardio exercises for volume calculation
+      const ejTipo = ej.tipo || c.tipo || 'normal';
+      if (ejTipo !== 'normal') return s;
+      const vueltas = getEjVueltas(ej);
+      return s + vueltas.reduce((vs, v) => vs + (v.repsReal * v.pesoRealKg), 0);
+    }, 0),
     0,
   );
 }

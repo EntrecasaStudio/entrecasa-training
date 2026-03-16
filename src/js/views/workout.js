@@ -80,51 +80,53 @@ function initState(rutinaId) {
     inicioISO: new Date().toISOString(),
     circuitoActual: 0,
     resultados: rutina.circuitos.map((circ) => {
-      const circTipo = circ.tipo || 'normal';
-
-      if (circTipo === 'velocidad' || circTipo === 'caminata') {
-        // Read params from circuit level (new), fall back to first exercise (old routines)
-        const vel = circ.velocidad ?? circ.ejercicios[0]?.velocidad ?? 12;
-        const tiempo = circ.tiempo ?? circ.ejercicios[0]?.tiempo ?? 30;
-        const descanso = circ.descanso ?? circ.ejercicios[0]?.descanso ?? 60;
-        const cantPasadas = circ.cantidadPasadas ?? circ.ejercicios[0]?.cantidadPasadas ?? 6;
-        return {
-          tipo: circTipo,
-          grupoMuscular: circ.grupoMuscular,
-          velocidad: vel,
-          tiempo,
-          descanso,
-          cantidadPasadas: cantPasadas,
-          ejercicios: circ.ejercicios.map((ej) => ({
-            nombre: ej.nombre,
-            pasadas: Array.from({ length: cantPasadas }, () => ({ completada: false, tiempoReal: tiempo })),
-          })),
-        };
+      // Backward compat: migrate old circuit-level cardio to exercise-level
+      const oldCircTipo = circ.tipo || 'normal';
+      if (oldCircTipo !== 'normal') {
+        for (const ej of circ.ejercicios) {
+          ej.tipo = ej.tipo || oldCircTipo;
+          if (oldCircTipo === 'velocidad' || oldCircTipo === 'caminata') {
+            ej.velocidad = ej.velocidad ?? circ.velocidad ?? 12;
+            ej.tiempo = ej.tiempo ?? circ.tiempo ?? 30;
+            ej.descanso = ej.descanso ?? circ.descanso ?? 60;
+            ej.cantidadPasadas = ej.cantidadPasadas ?? circ.cantidadPasadas ?? 6;
+          } else if (oldCircTipo === 'hiit') {
+            ej.workTime = ej.workTime ?? circ.workTime ?? 40;
+            ej.restTime = ej.restTime ?? circ.restTime ?? 20;
+            ej.rounds = ej.rounds ?? circ.rounds ?? 3;
+          }
+        }
       }
 
-      if (circTipo === 'hiit') {
-        // Read params from circuit level (new), fall back to first exercise (old routines)
-        const workTime = circ.workTime ?? circ.ejercicios[0]?.workTime ?? 40;
-        const restTime = circ.restTime ?? circ.ejercicios[0]?.restTime ?? 20;
-        const rounds = circ.rounds ?? circ.ejercicios[0]?.rounds ?? 3;
-        return {
-          tipo: 'hiit',
-          grupoMuscular: circ.grupoMuscular,
-          workTime,
-          restTime,
-          rounds,
-          ejercicios: circ.ejercicios.map((ej) => ({
-            nombre: ej.nombre,
-            roundResults: Array.from({ length: rounds }, () => ({ completada: false })),
-          })),
-        };
-      }
-
-      // Normal circuit
       return {
-        tipo: 'normal',
         grupoMuscular: circ.grupoMuscular,
         ejercicios: circ.ejercicios.map((ej) => {
+          const ejTipo = ej.tipo || 'normal';
+
+          if (ejTipo === 'velocidad' || ejTipo === 'caminata') {
+            const vel = ej.velocidad ?? 12;
+            const tiempo = ej.tiempo ?? 30;
+            const descanso = ej.descanso ?? 60;
+            const cantPasadas = ej.cantidadPasadas ?? 6;
+            return {
+              nombre: ej.nombre, tipo: ejTipo,
+              velocidad: vel, tiempo, descanso, cantidadPasadas: cantPasadas,
+              pasadas: Array.from({ length: cantPasadas }, () => ({ completada: false, tiempoReal: tiempo })),
+            };
+          }
+
+          if (ejTipo === 'hiit') {
+            const workTime = ej.workTime ?? 40;
+            const restTime = ej.restTime ?? 20;
+            const rounds = ej.rounds ?? 3;
+            return {
+              nombre: ej.nombre, tipo: 'hiit',
+              workTime, restTime, rounds,
+              roundResults: Array.from({ length: rounds }, () => ({ completada: false })),
+            };
+          }
+
+          // Normal exercise
           const prev = lastMap[ej.nombre];
           let vueltas;
           if (prev) {
@@ -138,7 +140,7 @@ function initState(rutinaId) {
           }
           const firstSerie = ej.series?.[0];
           return {
-            nombre: ej.nombre,
+            nombre: ej.nombre, tipo: 'normal',
             repsObjetivo: firstSerie ? firstSerie.reps : ej.repsObjetivo,
             pesoObjetivoKg: firstSerie ? firstSerie.pesoKg : ej.pesoKg,
             chaleco: prev ? prev.chaleco : false,
@@ -338,9 +340,10 @@ function renderEjercicio(ej, ejIdx) {
 }
 
 // ── Velocidad/Caminata exercise rendering ────
-function renderEjercicioVelocidad(ej, ejIdx, circ, tipo = 'velocidad') {
+function renderEjercicioVelocidad(ej, ejIdx) {
+  const tipo = ej.tipo || 'velocidad';
   const completadas = ej.pasadas.filter((p) => p.completada).length;
-  const total = circ.cantidadPasadas;
+  const total = ej.cantidadPasadas;
   const allDone = completadas === total;
 
   const isTimerActive = activeTimer && (activeTimer.type === 'velocidad' || activeTimer.type === 'caminata') && activeTimer.ejIdx === ejIdx;
@@ -356,7 +359,7 @@ function renderEjercicioVelocidad(ej, ejIdx, circ, tipo = 'velocidad') {
       <div class="${cls}">
         <button class="workout-vuelta-check" data-action="toggle-pasada" data-ej="${ejIdx}" data-pasada="${pIdx}">${checkIcon}</button>
         <span class="workout-vuelta-label">P${pIdx + 1}</span>
-        <span class="workout-pasada-info">${circ.velocidad} km/h &middot; ${circ.tiempo}s</span>
+        <span class="workout-pasada-info">${ej.velocidad} km/h &middot; ${ej.tiempo}s</span>
         ${p.completada ? `<span class="workout-pasada-done-label">${icon.check}</span>` : ''}
       </div>
     `;
@@ -386,7 +389,7 @@ function renderEjercicioVelocidad(ej, ejIdx, circ, tipo = 'velocidad') {
         <span class="workout-circuit-type-badge ${tipo}">${tipo === 'caminata' ? 'Caminata' : 'Velocidad'}</span>
       </div>
       <div class="workout-ejercicio-target">
-        ${total} pasadas &middot; ${circ.velocidad} km/h &middot; ${circ.tiempo}s / ${circ.descanso}s desc
+        ${total} pasadas &middot; ${ej.velocidad} km/h &middot; ${ej.tiempo}s / ${ej.descanso}s desc
       </div>
       <div class="workout-pasada-progress">${completadas}/${total} completadas ${allDone ? icon.check : ''}</div>
       ${timerHtml}
@@ -402,9 +405,9 @@ function renderEjercicioVelocidad(ej, ejIdx, circ, tipo = 'velocidad') {
 }
 
 // ── HIIT exercise rendering ─────────────────
-function renderEjercicioHIIT(ej, ejIdx, circ) {
+function renderEjercicioHIIT(ej, ejIdx) {
   const completadas = ej.roundResults.filter((r) => r.completada).length;
-  const total = circ.rounds;
+  const total = ej.rounds;
   const allDone = completadas === total;
 
   const isTimerActive = activeTimer && activeTimer.type === 'hiit' && activeTimer.ejIdx === ejIdx;
@@ -419,7 +422,7 @@ function renderEjercicioHIIT(ej, ejIdx, circ) {
       <div class="${cls}">
         <button class="workout-vuelta-check" data-action="toggle-hiit-round" data-ej="${ejIdx}" data-round="${rIdx}">${checkIcon}</button>
         <span class="workout-vuelta-label">R${rIdx + 1}</span>
-        <span class="workout-pasada-info">${circ.workTime}s work / ${circ.restTime}s rest</span>
+        <span class="workout-pasada-info">${ej.workTime}s work / ${ej.restTime}s rest</span>
       </div>
     `;
   }).join('');
@@ -448,7 +451,7 @@ function renderEjercicioHIIT(ej, ejIdx, circ) {
         <span class="workout-circuit-type-badge hiit">HIIT</span>
       </div>
       <div class="workout-ejercicio-target">
-        ${total} rondas &middot; ${circ.workTime}s work / ${circ.restTime}s rest
+        ${total} rondas &middot; ${ej.workTime}s work / ${ej.restTime}s rest
       </div>
       <div class="workout-pasada-progress">${completadas}/${total} rondas ${allDone ? icon.check : ''}</div>
       ${timerHtml}
@@ -464,13 +467,14 @@ function renderEjercicioHIIT(ej, ejIdx, circ) {
 }
 
 // ── Timer logic for velocidad/caminata ───────
-function startVelocidadTimer(ejIdx, pasadaIdx, params, timerType = 'velocidad') {
+function startVelocidadTimer(ejIdx, pasadaIdx, params) {
   const circ = state.resultados[state.circuitoActual];
   const ej = circ.ejercicios[ejIdx];
   if (!ej) return;
+  const timerType = ej.tipo || 'velocidad';
 
   clearActiveTimer();
-  activeTimer = { type: timerType, ejIdx, phase: 'run', remaining: circ.tiempo, pasadaIdx };
+  activeTimer = { type: timerType, ejIdx, phase: 'run', remaining: ej.tiempo, pasadaIdx };
 
   activeTimerInterval = setInterval(() => {
     activeTimer.remaining--;
@@ -492,10 +496,10 @@ function startVelocidadTimer(ejIdx, pasadaIdx, params, timerType = 'velocidad') 
 
         // Check if there are more pasadas
         const nextPasada = pasadaIdx + 1;
-        if (nextPasada < circ.cantidadPasadas && circ.descanso > 0) {
+        if (nextPasada < ej.cantidadPasadas && ej.descanso > 0) {
           // Start rest phase
           activeTimer.phase = 'rest';
-          activeTimer.remaining = circ.descanso;
+          activeTimer.remaining = ej.descanso;
           activeTimer.pasadaIdx = nextPasada;
           reRenderWorkout(params);
         } else {
@@ -508,7 +512,7 @@ function startVelocidadTimer(ejIdx, pasadaIdx, params, timerType = 'velocidad') 
         playFinishBeep();
         haptic.warning();
         activeTimer.phase = 'run';
-        activeTimer.remaining = circ.tiempo;
+        activeTimer.remaining = ej.tiempo;
         reRenderWorkout(params);
       }
     }
@@ -528,7 +532,7 @@ function startHIITTimer(ejIdx, params) {
   if (roundIdx < 0) return;
 
   clearActiveTimer();
-  activeTimer = { type: 'hiit', ejIdx, phase: 'work', remaining: circ.workTime, roundIdx };
+  activeTimer = { type: 'hiit', ejIdx, phase: 'work', remaining: ej.workTime, roundIdx };
 
   activeTimerInterval = setInterval(() => {
     activeTimer.remaining--;
@@ -549,16 +553,16 @@ function startHIITTimer(ejIdx, params) {
         saveWorkoutActivo(state);
 
         const nextRound = activeTimer.roundIdx + 1;
-        if (nextRound < circ.rounds && circ.restTime > 0) {
+        if (nextRound < ej.rounds && ej.restTime > 0) {
           // Start rest
           activeTimer.phase = 'rest';
-          activeTimer.remaining = circ.restTime;
+          activeTimer.remaining = ej.restTime;
           activeTimer.roundIdx = nextRound;
           reRenderWorkout(params);
-        } else if (nextRound < circ.rounds) {
+        } else if (nextRound < ej.rounds) {
           // No rest, start next work
           activeTimer.phase = 'work';
-          activeTimer.remaining = circ.workTime;
+          activeTimer.remaining = ej.workTime;
           activeTimer.roundIdx = nextRound;
           reRenderWorkout(params);
         } else {
@@ -571,7 +575,7 @@ function startHIITTimer(ejIdx, params) {
         playFinishBeep();
         haptic.warning();
         activeTimer.phase = 'work';
-        activeTimer.remaining = circ.workTime;
+        activeTimer.remaining = ej.workTime;
         reRenderWorkout(params);
       }
     }
@@ -633,14 +637,13 @@ export function render(params) {
   if (!state) return '';
 
   const circ = state.resultados[state.circuitoActual];
-  const circTipo = circ.tipo || 'normal';
   const isLast = state.circuitoActual === state.resultados.length - 1;
 
-  // Branch exercise rendering by circuit type
+  // Branch exercise rendering by per-exercise type
   const ejercicios = circ.ejercicios.map((ej, i) => {
-    if (circTipo === 'velocidad') return renderEjercicioVelocidad(ej, i, circ, 'velocidad');
-    if (circTipo === 'caminata') return renderEjercicioVelocidad(ej, i, circ, 'caminata');
-    if (circTipo === 'hiit') return renderEjercicioHIIT(ej, i, circ);
+    const ejTipo = ej.tipo || 'normal';
+    if (ejTipo === 'velocidad' || ejTipo === 'caminata') return renderEjercicioVelocidad(ej, i);
+    if (ejTipo === 'hiit') return renderEjercicioHIIT(ej, i);
     return renderEjercicio(ej, i);
   }).join('');
 
@@ -655,8 +658,9 @@ export function render(params) {
   const initial = (state.usuario || 'L').charAt(0).toUpperCase();
   const numeroStr = state.rutinaNumero ? formatNumero(state.rutinaNumero, { tipo: state.rutinaTipo, usuario: state.usuario }) : '';
 
-  // Only show peso step toggle for normal circuits
-  const pesoStepHtml = circTipo === 'normal' ? `
+  // Show peso step toggle if any exercise in circuit is normal
+  const hasNormalEj = circ.ejercicios.some((ej) => (ej.tipo || 'normal') === 'normal');
+  const pesoStepHtml = hasNormalEj ? `
     <div class="peso-step-toggle">
       <span class="peso-step-label">Incremento:</span>
       ${PESO_STEPS.map((s, i) => `<button class="peso-step-btn ${i === pesoStepIdx ? 'active' : ''}" data-action="set-peso-step" data-idx="${i}">${s}kg</button>`).join('')}
@@ -699,15 +703,8 @@ export function render(params) {
 function syncInputs() {
   if (!state) return;
   const circ = state.resultados[state.circuitoActual];
-  const circTipo = circ.tipo || 'normal';
 
-  // Velocidad/HIIT: no manual stepper inputs to sync
-  if (circTipo !== 'normal') {
-    saveWorkoutActivo(state);
-    return;
-  }
-
-  // Sync per-round stepper values (normal circuits only)
+  // Sync per-round stepper values (normal exercises only)
   document.querySelectorAll('.stepper-value').forEach((input) => {
     const ejIdx = parseInt(input.dataset.ej);
     const vueltaIdx = input.dataset.vuelta != null ? parseInt(input.dataset.vuelta) : null;
@@ -840,28 +837,21 @@ function showCaloriesPrompt(onDone) {
 function applyModificationsToRutina() {
   const rutina = getRutinaById(state.rutinaId);
   if (!rutina) return;
-  // Update circuits/exercises from workout state
-  rutina.circuitos = state.resultados.map((circ) => {
-    const circTipo = circ.tipo || 'normal';
-    const base = { tipo: circTipo, grupoMuscular: circ.grupoMuscular };
-
-    if (circTipo === 'velocidad' || circTipo === 'caminata') {
-      return { ...base,
-        velocidad: circ.velocidad, tiempo: circ.tiempo, descanso: circ.descanso, cantidadPasadas: circ.cantidadPasadas,
-        ejercicios: circ.ejercicios.map((ej) => ({ nombre: ej.nombre })),
-      };
-    }
-    if (circTipo === 'hiit') {
-      return { ...base,
-        workTime: circ.workTime, restTime: circ.restTime, rounds: circ.rounds,
-        ejercicios: circ.ejercicios.map((ej) => ({ nombre: ej.nombre })),
-      };
-    }
-    return { ...base, ejercicios: circ.ejercicios.map((ej) => ({
-      nombre: ej.nombre,
-      series: ej.vueltas.map((v) => ({ reps: v.repsReal, pesoKg: v.pesoRealKg })),
-    })) };
-  });
+  // Update circuits/exercises from workout state (exercise-level types)
+  rutina.circuitos = state.resultados.map((circ) => ({
+    grupoMuscular: circ.grupoMuscular,
+    ejercicios: circ.ejercicios.map((ej) => {
+      const ejTipo = ej.tipo || 'normal';
+      const base = { nombre: ej.nombre, tipo: ejTipo };
+      if (ejTipo === 'velocidad' || ejTipo === 'caminata') {
+        return { ...base, velocidad: ej.velocidad, tiempo: ej.tiempo, descanso: ej.descanso, cantidadPasadas: ej.cantidadPasadas };
+      }
+      if (ejTipo === 'hiit') {
+        return { ...base, workTime: ej.workTime, restTime: ej.restTime, rounds: ej.rounds };
+      }
+      return { ...base, series: ej.vueltas.map((v) => ({ reps: v.repsReal, pesoKg: v.pesoRealKg })) };
+    }),
+  }));
   saveRutina(rutina);
 }
 
@@ -918,13 +908,17 @@ function finishWorkout() {
           if (copia) {
             copia.circuitos = state.resultados.map((circ) => ({
               grupoMuscular: circ.grupoMuscular,
-              tipo: circ.tipo || 'normal',
-              ...((circ.tipo === 'velocidad' || circ.tipo === 'caminata') ? { velocidad: circ.velocidad, tiempo: circ.tiempo, descanso: circ.descanso, cantidadPasadas: circ.cantidadPasadas } : {}),
-              ...(circ.tipo === 'hiit' ? { workTime: circ.workTime, restTime: circ.restTime, rounds: circ.rounds } : {}),
-              ejercicios: circ.ejercicios.map((ej) => ({
-                nombre: ej.nombre,
-                ...(circ.tipo === 'normal' ? { series: ej.vueltas?.map((v) => ({ reps: v.repsReal, pesoKg: v.pesoRealKg })) || [] } : {}),
-              })),
+              ejercicios: circ.ejercicios.map((ej) => {
+                const ejTipo = ej.tipo || 'normal';
+                const base = { nombre: ej.nombre, tipo: ejTipo };
+                if (ejTipo === 'velocidad' || ejTipo === 'caminata') {
+                  return { ...base, velocidad: ej.velocidad, tiempo: ej.tiempo, descanso: ej.descanso, cantidadPasadas: ej.cantidadPasadas };
+                }
+                if (ejTipo === 'hiit') {
+                  return { ...base, workTime: ej.workTime, restTime: ej.restTime, rounds: ej.rounds };
+                }
+                return { ...base, series: ej.vueltas?.map((v) => ({ reps: v.repsReal, pesoKg: v.pesoRealKg })) || [] };
+              }),
             }));
             saveRutina(copia);
           }
@@ -1534,8 +1528,7 @@ export function mount(params) {
       case 'start-vel-timer': {
         const ejIdx = parseInt(btn.dataset.ej);
         const pasadaIdx = parseInt(btn.dataset.pasada);
-        const circTipoTimer = state.resultados[state.circuitoActual]?.tipo || 'velocidad';
-        startVelocidadTimer(ejIdx, pasadaIdx, params, circTipoTimer);
+        startVelocidadTimer(ejIdx, pasadaIdx, params);
         break;
       }
 
@@ -1607,8 +1600,8 @@ export function mount(params) {
         const circ6 = state.resultados[state.circuitoActual];
         const ej6 = circ6?.ejercicios[ejIdx6];
         if (ej6?.pasadas) {
-          ej6.pasadas.push({ completada: false, tiempoReal: circ6.tiempo });
-          circ6.cantidadPasadas = Math.max(circ6.cantidadPasadas || 0, ej6.pasadas.length);
+          ej6.pasadas.push({ completada: false, tiempoReal: ej6.tiempo });
+          ej6.cantidadPasadas = Math.max(ej6.cantidadPasadas || 0, ej6.pasadas.length);
           state.modified = true;
           saveWorkoutActivo(state);
           haptic.light();
@@ -1623,7 +1616,7 @@ export function mount(params) {
         const ej7 = circ7?.ejercicios[ejIdx7];
         if (ej7?.roundResults) {
           ej7.roundResults.push({ completada: false });
-          circ7.rounds = Math.max(circ7.rounds || 0, ej7.roundResults.length);
+          ej7.rounds = Math.max(ej7.rounds || 0, ej7.roundResults.length);
           state.modified = true;
           saveWorkoutActivo(state);
           haptic.light();

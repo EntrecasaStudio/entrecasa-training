@@ -416,7 +416,10 @@ function handleEditRoutine(data, confirmMessage) {
       const circ = target.circuitos[upd.circuitIndex];
       if (!circ) continue;
       if (upd.grupoMuscular) circ.grupoMuscular = upd.grupoMuscular;
-      if (upd.tipo) circ.tipo = upd.tipo;
+      // Set tipo on exercises (not circuit) for exercise-level cardio
+      if (upd.tipo && upd.tipo !== 'normal') {
+        for (const ej of circ.ejercicios) { ej.tipo = upd.tipo; }
+      }
     }
   }
 
@@ -469,13 +472,14 @@ function handleEditRoutine(data, confirmMessage) {
   // Add new circuits
   if (changes.addCircuits) {
     for (const newCirc of changes.addCircuits) {
+      const circTipo = newCirc.tipo || 'normal';
       const circ = {
         id: crypto.randomUUID(),
         grupoMuscular: newCirc.grupoMuscular || 'Core',
-        tipo: newCirc.tipo || 'normal',
         ejercicios: (newCirc.ejercicios || []).map((e) => ({
           id: crypto.randomUUID(),
           nombre: e.nombre,
+          tipo: circTipo,
           repsObjetivo: e.repsObjetivo || 10,
           pesoKg: e.pesoKg || 0,
         })),

@@ -112,8 +112,6 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
   const circuitsHtml = rutina.circuitos
     .map(
       (c, i) => {
-        const circTipo = c.tipo || 'normal';
-        const typeBadge = circTipo !== 'normal' ? `<span class="preview-type-badge ${circTipo}">${circTipo === 'velocidad' ? 'Vel' : circTipo === 'caminata' ? 'Cam' : 'HIIT'}</span>` : '';
         const chalecoBadge = c.chaleco ? `<span class="preview-chaleco-badge">🦺${c.chalecoPeso ? ` ${c.chalecoPeso}` : ''}</span>` : '';
 
         const grupos = normalizeGrupos(c);
@@ -121,7 +119,9 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
         const colorSlug = (TAG_CLASS[grupos[0]] || 'tag-core').replace('tag-', '');
 
         const exercisesHtml = c.ejercicios.map((ej) => {
-          return `<div class="preview-exercise">${ej.nombre}</div>`;
+          const ejTipo = ej.tipo || 'normal';
+          const badge = ejTipo !== 'normal' ? ` <span class="preview-type-badge ${ejTipo}">${ejTipo === 'velocidad' ? 'Vel' : ejTipo === 'caminata' ? 'Cam' : 'HIIT'}</span>` : '';
+          return `<div class="preview-exercise">${ej.nombre}${badge}</div>`;
         }).join('');
 
         return `
@@ -131,7 +131,6 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
               <div class="preview-circuit-header">
                 <span class="preview-circuit-num">${i + 1}</span>
                 ${tagsHtml}
-                ${typeBadge}
                 ${chalecoBadge}
               </div>
               <div class="preview-exercises">${exercisesHtml}</div>

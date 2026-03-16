@@ -47,9 +47,10 @@ function renderPRs(sesion, records) {
   const prs = [];
 
   for (const c of sesion.circuitos) {
-    // Skip non-normal circuits for PRs
-    if ((c.tipo || 'normal') !== 'normal') continue;
     for (const ej of c.ejercicios) {
+      // Skip cardio exercises for PRs
+      const ejTipo = ej.tipo || c.tipo || 'normal';
+      if (ejTipo !== 'normal') continue;
       const rec = records[ej.nombre];
       // PR if current peso matches the all-time max and this is from this session
       const best = getEjBestRound(ej);
@@ -97,13 +98,14 @@ const MUSCLE_COLORS = {
 };
 
 function renderDonutChart(sesion) {
-  // Aggregate volume by muscle group (skip non-normal circuits)
+  // Aggregate volume by muscle group (skip cardio exercises)
   const groups = {};
   for (const c of sesion.circuitos) {
-    if ((c.tipo || 'normal') !== 'normal') continue;
     const grupos = Array.isArray(c.grupoMuscular) ? c.grupoMuscular : [c.grupoMuscular || 'Otro'];
     const group = grupos[0].toLowerCase();
     const vol = c.ejercicios.reduce((sum, ej) => {
+      const ejTipo = ej.tipo || c.tipo || 'normal';
+      if (ejTipo !== 'normal') return sum;
       const vueltas = getEjVueltas(ej);
       return sum + vueltas.reduce((vs, v) => vs + (v.pesoRealKg * v.repsReal), 0);
     }, 0);

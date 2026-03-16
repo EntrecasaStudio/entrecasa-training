@@ -3631,7 +3631,38 @@
   font-weight: var(--fw-medium);
 }
 
-/* (Velocidad/HIIT fields are now at circuit level via .circuit-params) */
+/* ── Per-exercise type chips ─────────────── */
+.ej-tipo-chips {
+  display: flex;
+  gap: 2px;
+  margin: var(--space-xs) 0;
+  padding: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: transparent;
+}
+.ej-tipo-chips .ej-type-chip {
+  font-size: 11px;
+  padding: 2px 8px;
+  min-height: 24px;
+  color: var(--color-text-muted);
+  flex: 1;
+}
+.ej-tipo-chips .ej-type-chip.active {
+  background-color: var(--color-surface-alt);
+  color: var(--color-text);
+  font-weight: var(--fw-medium);
+}
+
+/* ── Per-exercise cardio params ─────────── */
+.ej-cardio-params {
+  margin-top: var(--space-xs);
+  padding-top: 0;
+  border-top: none;
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
 
 /* ── Cardio tag color ──────────────────────── */
 .circuito-color-cardio {

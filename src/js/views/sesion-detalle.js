@@ -68,20 +68,21 @@ function renderStatsStrip(sesion) {
 }
 
 function renderCircuito(circ, circIdx, prevCirc, records) {
-  const circTipo = circ.tipo || 'normal';
-
   const ejercicios = circ.ejercicios
     .map((ej, ejIdx) => {
+      // Check per-exercise type (backward compat: fall back to circuit tipo for old data)
+      const ejTipo = ej.tipo || circ.tipo || 'normal';
+
       // Velocidad/Caminata exercise detail
-      if (circTipo === 'velocidad' || circTipo === 'caminata') {
+      if (ejTipo === 'velocidad' || ejTipo === 'caminata') {
         const completadas = (ej.pasadas || []).filter((p) => p.completada).length;
-        const total = circ.cantidadPasadas ?? ej.cantidadPasadas ?? ej.pasadas?.length ?? 0;
-        const vel = circ.velocidad ?? ej.velocidad ?? 0;
-        const tiempo = circ.tiempo ?? ej.tiempo ?? 0;
-        const badgeLabel = circTipo === 'caminata' ? 'Caminata' : 'Velocidad';
+        const total = ej.cantidadPasadas ?? circ.cantidadPasadas ?? ej.pasadas?.length ?? 0;
+        const vel = ej.velocidad ?? circ.velocidad ?? 0;
+        const tiempo = ej.tiempo ?? circ.tiempo ?? 0;
+        const badgeLabel = ejTipo === 'caminata' ? 'Caminata' : 'Velocidad';
         return `
           <div class="ejercicio-detalle-row">
-            <div class="ejercicio-detalle-name">${ej.nombre} <span class="detalle-type-badge ${circTipo}">${badgeLabel}</span></div>
+            <div class="ejercicio-detalle-name">${ej.nombre} <span class="detalle-type-badge ${ejTipo}">${badgeLabel}</span></div>
             <div class="ejercicio-detalle-values">
               <div class="ejercicio-detalle-col">
                 <div class="ejercicio-detalle-col-label">Pasadas</div>
@@ -93,11 +94,11 @@ function renderCircuito(circ, circIdx, prevCirc, records) {
       }
 
       // HIIT exercise detail
-      if (circTipo === 'hiit') {
+      if (ejTipo === 'hiit') {
         const completadas = (ej.roundResults || []).filter((r) => r.completada).length;
-        const total = circ.rounds ?? ej.rounds ?? ej.roundResults?.length ?? 0;
-        const workT = circ.workTime ?? ej.workTime ?? 0;
-        const restT = circ.restTime ?? ej.restTime ?? 0;
+        const total = ej.rounds ?? circ.rounds ?? ej.roundResults?.length ?? 0;
+        const workT = ej.workTime ?? circ.workTime ?? 0;
+        const restT = ej.restTime ?? circ.restTime ?? 0;
         return `
           <div class="ejercicio-detalle-row">
             <div class="ejercicio-detalle-name">${ej.nombre} <span class="detalle-type-badge hiit">HIIT</span></div>
@@ -152,12 +153,10 @@ function renderCircuito(circ, circIdx, prevCirc, records) {
     })
     .join('');
 
-  const typeBadge = circTipo !== 'normal' ? ` <span class="detalle-type-badge ${circTipo}">${circTipo === 'velocidad' ? 'Velocidad' : circTipo === 'caminata' ? 'Caminata' : 'HIIT'}</span>` : '';
-
   return `
     <div class="card circuito-detalle-card animate-in" style="animation-delay:${100 + circIdx * 80}ms">
       <div class="circuito-detalle-header">
-        ${(Array.isArray(circ.grupoMuscular) ? circ.grupoMuscular : [circ.grupoMuscular]).filter(Boolean).map(g => `<span class="tag ${TAG_CLASS[g] || ''}">${g}</span>`).join('')}${typeBadge}
+        ${(Array.isArray(circ.grupoMuscular) ? circ.grupoMuscular : [circ.grupoMuscular]).filter(Boolean).map(g => `<span class="tag ${TAG_CLASS[g] || ''}">${g}</span>`).join('')}
       </div>
       ${ejercicios}
     </div>

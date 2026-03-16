@@ -190,7 +190,7 @@ function rutinasNat() {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '14'; // 14 = mark custom routines to survive seed rebuilds
+  const CURRENT_SEED_V = '15'; // 15 = cardio mode per-exercise (not per-circuit)
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -244,6 +244,35 @@ export function seedIfEmpty() {
           for (const r of parsed) {
             if (r.numero && !libraryNumeros.has(r.numero) && !r.custom) {
               r.custom = true;
+            }
+          }
+
+          // ── Migration v15: cardio mode per-exercise (not per-circuit) ──
+          for (const r of parsed) {
+            for (const circ of (r.circuitos || [])) {
+              const ct = circ.tipo;
+              if (ct && ct !== 'normal') {
+                for (const ej of circ.ejercicios) {
+                  ej.tipo = ej.tipo || ct;
+                  if (ct === 'velocidad' || ct === 'caminata') {
+                    ej.velocidad = ej.velocidad ?? circ.velocidad ?? 12;
+                    ej.tiempo = ej.tiempo ?? circ.tiempo ?? 30;
+                    ej.descanso = ej.descanso ?? circ.descanso ?? 60;
+                    ej.cantidadPasadas = ej.cantidadPasadas ?? circ.cantidadPasadas ?? 6;
+                  } else if (ct === 'hiit') {
+                    ej.workTime = ej.workTime ?? circ.workTime ?? 40;
+                    ej.restTime = ej.restTime ?? circ.restTime ?? 20;
+                    ej.rounds = ej.rounds ?? circ.rounds ?? 3;
+                  }
+                }
+                delete circ.tipo;
+                delete circ.velocidad; delete circ.tiempo; delete circ.descanso; delete circ.cantidadPasadas;
+                delete circ.workTime; delete circ.restTime; delete circ.rounds;
+              }
+              // Ensure all exercises have tipo
+              for (const ej of circ.ejercicios) {
+                if (!ej.tipo) ej.tipo = 'normal';
+              }
             }
           }
 
