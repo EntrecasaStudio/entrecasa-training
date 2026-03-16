@@ -20,8 +20,8 @@ import {
   getTipoIcon,
   normalizeGrupos,
   renderPicante,
+  renderTags,
 } from '@js/helpers/rutina-helpers.js';
-import { getCompositeMuscleSvg } from '@js/helpers/muscle-illustrations.js';
 
 // ── Module-level state ───────────────────────
 let activeFilter = 'gimnasio';
@@ -150,8 +150,8 @@ function renderRutinaCard(rutina) {
   const statsText = stats?.avgDuracion ? `~${stats.avgDuracion}min` : '';
 
   const delay = cardCounter++ * 60;
-  const grupos = [...new Set(rutina.circuitos.flatMap((c) => normalizeGrupos(c)))];
   const done = isDone(rutina);
+  const tagsHtml = renderTags(rutina, true);
 
   return `
     <div class="animate-in" style="animation-delay:${delay}ms" data-rutina-id="${rutina.id}">
@@ -161,8 +161,8 @@ function renderRutinaCard(rutina) {
             <div class="rutina-card-volanta">${volanta} ${picanteHtml}</div>
             <div class="rutina-card-name">${displayName}</div>
             ${lastDone || statsText ? `<div class="rutina-card-last">${[lastDone, statsText].filter(Boolean).join(' · ')}</div>` : ''}
+            <div class="rutina-card-tags">${tagsHtml}</div>
           </div>
-          <div class="rutina-card-illustration">${getCompositeMuscleSvg(grupos, 88)}</div>
         </div>
         ${done ? '<span class="rutina-done-check">✓</span>' : ''}
       </div>
