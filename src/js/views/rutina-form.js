@@ -2,7 +2,7 @@ import { getRutinaById, getRutinas, saveRutina, getUsuarioActivo, getEjercicioMe
 import { generateId } from '@/id.js';
 import { navigate } from '@/router.js';
 import { icon } from '@js/icons.js';
-import { buscarEjerciciosPorCategorias, addEjercicioCustom, CATEGORIAS } from '@js/ejercicios-catalogo.js';
+import { buscarEjerciciosPorCategorias, addEjercicioCustom, CATEGORIAS, ejerciciosCatalogo, getEjerciciosCustom } from '@js/ejercicios-catalogo.js';
 import { showModal } from '@js/components/modal.js';
 import { showToast } from '@js/components/toast.js';
 import { showExerciseDetail } from '@js/helpers/ejercicio-detail.js';
@@ -37,6 +37,27 @@ const GRUPO_A_CATEGORIAS = {
   Hombros: ['Hombros'],
   Cardio: ['Piernas', 'Core', 'Pecho', 'Espalda', 'Brazos', 'Hombros', 'Glúteos'],
 };
+
+// ── Auto-derive grupoMuscular from exercise categories ──
+function autoGruposFromEjercicios(circuito) {
+  const allEj = [...ejerciciosCatalogo, ...getEjerciciosCustom()];
+  const catMap = new Map(allEj.map((e) => [e.nombre, e.categoria]));
+  const grupos = new Set();
+  for (const ej of circuito.ejercicios) {
+    if (ej.nombre) {
+      const cat = catMap.get(ej.nombre);
+      if (cat && GRUPOS_MUSCULARES.includes(cat)) grupos.add(cat);
+    }
+  }
+  return [...grupos];
+}
+
+function syncGruposFromEjercicios(circIdx) {
+  const circ = rutina.circuitos[circIdx];
+  if (!circ) return;
+  const auto = autoGruposFromEjercicios(circ);
+  if (auto.length > 0) circ.grupoMuscular = auto;
+}
 
 function crearEjercicioVacio() {
   return {
@@ -560,6 +581,7 @@ function validate() {
 
 function selectEjercicio(circIdx, ejIdx, nombre) {
   rutina.circuitos[circIdx].ejercicios[ejIdx].nombre = nombre;
+  syncGruposFromEjercicios(circIdx);
   activePicker = null;
   pickerQuery = '';
   reRender();
@@ -987,6 +1009,7 @@ export function mount(params) {
             if (ej.series) ej.series = [{ reps: 8, pesoKg: 8 }, { reps: 8, pesoKg: 8 }, { reps: 8, pesoKg: 8 }];
           }
         }
+        syncGruposFromEjercicios(circIdx);
         reRender();
         break;
       }

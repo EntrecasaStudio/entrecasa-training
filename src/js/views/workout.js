@@ -1132,6 +1132,7 @@ function showExitWorkoutModal() {
       <div class="modal-title">¿Qué querés hacer?</div>
       <div class="modal-actions-vertical">
         <button class="btn btn-primary btn-full" data-exit-action="resume">Volver al entrenamiento</button>
+        <button class="btn btn-ghost btn-full" data-exit-action="pause">${icon.pause} Pausar y navegar</button>
         <button class="btn btn-ghost btn-full" data-exit-action="finish">${icon.check} Finalizar y guardar</button>
         <button class="btn btn-ghost btn-full workout-exit-discard" data-exit-action="discard">Descartar</button>
       </div>
@@ -1165,6 +1166,15 @@ function showExitWorkoutModal() {
     switch (btn.dataset.exitAction) {
       case 'resume':
         close();
+        break;
+      case 'pause':
+        close(() => {
+          // Save current state and pause timer, but keep workout in localStorage
+          saveWorkoutActivo(state);
+          stopTimer();
+          if (_removePopGuard) _removePopGuard();
+          navigate('/');
+        });
         break;
       case 'finish':
         close(() => finishWorkout());

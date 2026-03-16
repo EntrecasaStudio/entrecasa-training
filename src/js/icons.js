@@ -30,6 +30,7 @@ export const icon = {
 
   // Media
   play: s('<polygon points="5 3 19 12 5 21 5 3"/>'),
+  pause: s('<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>'),
 
   // Fitness
   kettlebell: s('<path d="M9 5a3 3 0 0 1 6 0"/><path d="M9 5v4"/><path d="M15 5v4"/><circle cx="12" cy="14.5" r="6"/>'),
