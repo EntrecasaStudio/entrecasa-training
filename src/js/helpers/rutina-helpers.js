@@ -182,13 +182,13 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
       const copia = duplicateRutina(rutinaId);
       if (copia) {
         close(() => {
-          refreshCurrentTab();
+          navigate(`/rutina/editar/${copia.id}`);
           showToastAction(
             `Rutina duplicada: ${copia.nombre}`,
             'Deshacer',
             () => {
               deleteRutina(copia.id);
-              refreshCurrentTab();
+              navigate('/rutinas');
             },
             { duration: 8000 }
           );

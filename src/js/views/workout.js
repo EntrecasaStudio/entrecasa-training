@@ -588,10 +588,14 @@ function clearActiveTimer() {
   activeTimer = null;
 }
 
-function reRenderWorkout(params) {
+function reRenderWorkout(params, { preserveScroll = false } = {}) {
   const container = getWorkoutContainer();
   if (container) {
+    const savedScroll = preserveScroll ? window.scrollY : null;
     container.innerHTML = render(params);
+    if (savedScroll !== null) {
+      requestAnimationFrame(() => window.scrollTo(0, savedScroll));
+    }
     scrollToActiveSegment();
   }
 }
@@ -1290,11 +1294,7 @@ export function mount(params) {
       case 'show-detail': {
         const nombre = btn.dataset.nombre;
         if (nombre) showExerciseDetail(nombre, {
-          onSave: () => {
-            const container = getWorkoutContainer();
-            container.innerHTML = render(params);
-            scrollToActiveSegment();
-          },
+          onSave: () => reRenderWorkout(params, { preserveScroll: true }),
         });
         break;
       }
@@ -1314,9 +1314,7 @@ export function mount(params) {
               state.modified = true;
               saveWorkoutActivo(state);
               haptic.medium();
-              const container = getWorkoutContainer();
-              container.innerHTML = render(params);
-              scrollToActiveSegment();
+              reRenderWorkout(params, { preserveScroll: true });
             }
           },
         });
@@ -1400,10 +1398,7 @@ export function mount(params) {
           ej.vueltas.push({ repsReal: last.repsReal, pesoRealKg: last.pesoRealKg, done: false });
           saveWorkoutActivo(state);
           haptic.light();
-          // Re-render current circuit
-          const container = getWorkoutContainer();
-          container.innerHTML = render(params);
-          scrollToActiveSegment();
+          reRenderWorkout(params, { preserveScroll: true });
         }
         break;
       }
@@ -1418,9 +1413,7 @@ export function mount(params) {
           ej.vueltas.splice(vIdx, 1);
           saveWorkoutActivo(state);
           haptic.medium();
-          const container = getWorkoutContainer();
-          container.innerHTML = render(params);
-          scrollToActiveSegment();
+          reRenderWorkout(params, { preserveScroll: true });
         }
         break;
       }
@@ -1433,10 +1426,7 @@ export function mount(params) {
           ej.addedPeso = !ej.addedPeso;
           saveWorkoutActivo(state);
           haptic.medium();
-          // Re-render in place without transition
-          const container = getWorkoutContainer();
-          container.innerHTML = render(params);
-          scrollToActiveSegment();
+          reRenderWorkout(params, { preserveScroll: true });
         }
         break;
       }
