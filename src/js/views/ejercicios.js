@@ -154,6 +154,10 @@ function showNewExerciseModal(onDone) {
       addEjercicioCustom(nombre, cat, tipo);
       close();
       if (onDone) onDone();
+      // Open detail modal so user can add description immediately
+      requestAnimationFrame(() => {
+        showExerciseDetail(nombre, { onSave: onDone });
+      });
     }
   });
 }

@@ -3,6 +3,7 @@ import { navigate, refreshCurrentTab } from '@/router.js';
 import { icon } from '@js/icons.js';
 import { showToastAction } from '@js/components/toast.js';
 import { showModal } from '@js/components/modal.js';
+import { getMuscleSvg } from '@js/helpers/muscle-illustrations.js';
 
 // ── Helpers ──────────────────────────────────
 
@@ -141,6 +142,26 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
     )
     .join('');
 
+  // ── Muscle carousel (unique grupos from all circuits) ──
+  const allGrupos = [...new Set(rutina.circuitos.flatMap((c) => normalizeGrupos(c)))];
+  const MUSCLE_COLORS = {
+    Core: 'var(--color-tag-core)', Piernas: 'var(--color-tag-piernas)',
+    Pecho: 'var(--color-tag-pecho)', Espalda: 'var(--color-tag-espalda)',
+    Brazos: 'var(--color-tag-brazos)', 'Glúteos': 'var(--color-tag-gluteos)',
+    Hombros: 'var(--color-tag-hombros)', Cardio: 'var(--color-tag-cardio)',
+  };
+  const carouselItems = allGrupos.map((g) => {
+    const color = MUSCLE_COLORS[g] || 'var(--color-accent)';
+    const svg = getMuscleSvg(g, 72);
+    return `<div class="preview-muscle-item" style="--muscle-color: ${color}">
+      <div class="preview-muscle-svg">${svg}</div>
+      <span class="preview-muscle-label">${g}</span>
+    </div>`;
+  }).join('');
+  const carouselHtml = allGrupos.length > 0
+    ? `<div class="preview-muscle-carousel">${carouselItems}</div>`
+    : '';
+
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
@@ -148,6 +169,7 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
       <button class="ej-detail-close-x" data-preview-cancel>${icon.close}</button>
       <div class="modal-title">${rutina.nombre}</div>
       ${renderRutinaStatsLine(rutina.id)}
+      ${carouselHtml}
       <div class="modal-body"><div class="preview-body">${circuitsHtml}</div></div>
       <div class="preview-modal-actions">
         <button class="btn-icon-action btn-icon-action--danger" data-preview-delete title="Eliminar">${icon.trash}</button>

@@ -99,6 +99,18 @@ export function showExerciseDetail(nombre, { onSave } = {}) {
 
   document.body.appendChild(overlay);
 
+  // Auto-expand description textarea if empty (e.g. newly created exercise)
+  if (!desc) {
+    requestAnimationFrame(() => {
+      const display = overlay.querySelector('[data-desc-display]');
+      const editBtn = overlay.querySelector('[data-action="edit-desc"]');
+      const textarea = overlay.querySelector('.ej-detail-desc-textarea');
+      if (display) display.classList.add('hidden');
+      if (editBtn) editBtn.classList.add('hidden');
+      if (textarea) textarea.classList.remove('hidden');
+    });
+  }
+
   const close = () => {
     clearTimeout(_autoSaveTimer);
     autoSave(); // flush pending save
