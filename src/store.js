@@ -180,11 +180,11 @@ export function saveEjercicioMeta(nombre, meta) {
 
 // ── Routine-day assignment ──────────────────
 
-export function assignRutinaADia(rutinaId, dia, _usuario) {
+export function assignRutinaADia(rutinaId, dia, usuario) {
   const rutinas = getRutinas();
-  // Clear any routine currently assigned to this day (shared routines)
+  // Clear any routine currently assigned to this day for this user
   for (const r of rutinas) {
-    if (Number(r.diaSemana) === Number(dia)) {
+    if (Number(r.diaSemana) === Number(dia) && r.usuario === usuario) {
       r.diaSemana = null;
     }
   }
@@ -195,10 +195,10 @@ export function assignRutinaADia(rutinaId, dia, _usuario) {
   bumpVersion();
 }
 
-export function clearRutinaDelDia(dia, _usuario) {
+export function clearRutinaDelDia(dia, usuario) {
   const rutinas = getRutinas();
   for (const r of rutinas) {
-    if (Number(r.diaSemana) === Number(dia)) {
+    if (Number(r.diaSemana) === Number(dia) && r.usuario === usuario) {
       r.diaSemana = null;
     }
   }
@@ -256,12 +256,12 @@ export function getRutinaHoy(usuario) {
 
   const rutinas = getRutinas();
 
-  // First try: programmed routine for this day
-  const programada = rutinas.find((r) => Number(r.diaSemana) === hoy);
+  // First try: programmed routine for this day + user
+  const programada = rutinas.find((r) => Number(r.diaSemana) === hoy && r.usuario === usuario);
   if (programada) return programada;
 
-  // Fallback: first library routine of matching type
-  return rutinas.find((r) => r.tipo === tipoHoy && r.diaSemana == null) || null;
+  // Fallback: first library routine of matching type + user
+  return rutinas.find((r) => r.tipo === tipoHoy && r.usuario === usuario && r.diaSemana == null) || null;
 }
 
 export function getProximoEntrenamiento(usuario) {
@@ -277,8 +277,8 @@ export function getProximoEntrenamiento(usuario) {
 
     // Find a routine for that day
     const rut =
-      rutinas.find((r) => Number(r.diaSemana) === d) ||
-      rutinas.find((r) => r.tipo === tipo && r.diaSemana == null);
+      rutinas.find((r) => Number(r.diaSemana) === d && r.usuario === usuario) ||
+      rutinas.find((r) => r.tipo === tipo && r.usuario === usuario && r.diaSemana == null);
     if (rut) return { rutina: rut, diaNombre: DIAS_NOMBRES[d], tipo };
   }
   return null;

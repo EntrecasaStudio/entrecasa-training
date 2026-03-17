@@ -3,7 +3,6 @@ import { navigate, refreshCurrentTab } from '@/router.js';
 import { icon } from '@js/icons.js';
 import { showToastAction } from '@js/components/toast.js';
 import { showModal } from '@js/components/modal.js';
-import { getMuscleSvg } from '@js/helpers/muscle-illustrations.js';
 
 // ── Helpers ──────────────────────────────────
 
@@ -141,26 +140,6 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
     )
     .join('');
 
-  // ── Muscle carousel (unique grupos from all circuits) ──
-  const allGrupos = [...new Set(rutina.circuitos.flatMap((c) => normalizeGrupos(c)))];
-  const MUSCLE_COLORS = {
-    Core: 'var(--color-tag-core)', Piernas: 'var(--color-tag-piernas)',
-    Pecho: 'var(--color-tag-pecho)', Espalda: 'var(--color-tag-espalda)',
-    Brazos: 'var(--color-tag-brazos)', 'Glúteos': 'var(--color-tag-gluteos)',
-    Hombros: 'var(--color-tag-hombros)', Cardio: 'var(--color-tag-cardio)',
-  };
-  const carouselItems = allGrupos.map((g) => {
-    const color = MUSCLE_COLORS[g] || 'var(--color-accent)';
-    const svg = getMuscleSvg(g, 72);
-    return `<div class="preview-muscle-item" style="--muscle-color: ${color}">
-      <div class="preview-muscle-svg">${svg}</div>
-      <span class="preview-muscle-label">${g}</span>
-    </div>`;
-  }).join('');
-  const carouselHtml = allGrupos.length > 0
-    ? `<div class="preview-muscle-carousel">${carouselItems}</div>`
-    : '';
-
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
@@ -168,7 +147,6 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
       <button class="ej-detail-close-x" data-preview-cancel>${icon.close}</button>
       <div class="modal-title">${rutina.nombre}</div>
       ${renderRutinaStatsLine(rutina.id)}
-      ${carouselHtml}
       <div class="modal-body"><div class="preview-body">${circuitsHtml}</div></div>
       <div class="preview-modal-actions">
         <button class="btn-icon-action btn-icon-action--danger" data-preview-delete title="Eliminar">${icon.trash}</button>
@@ -260,7 +238,7 @@ export function showDayAssignmentModal(usuario, dia, tipoActual, onDone, { date,
 
   // Pre-populate: find currently assigned routine
   const allRutinas = getRutinas();
-  const currentlyAssigned = allRutinas.find((r) => Number(r.diaSemana) === Number(dia));
+  const currentlyAssigned = allRutinas.find((r) => Number(r.diaSemana) === Number(dia) && r.usuario === usuario);
   if (currentlyAssigned) {
     selectedRutinaId = currentlyAssigned.id;
     currentTipo = currentlyAssigned.tipo || currentTipo;
@@ -272,11 +250,13 @@ export function showDayAssignmentModal(usuario, dia, tipoActual, onDone, { date,
   if (date) {
     titleText = `${diaLabel} ${date.getDate()} ${MONTH_ABREV[date.getMonth()]}`;
   }
+  // Show which user we're assigning for
+  titleText += ` — ${usuario}`;
 
   // ── Helpers ──
   function getRoutinesForTipo(tipo) {
     return getRutinas()
-      .filter((r) => r.tipo === tipo)
+      .filter((r) => r.tipo === tipo && r.usuario === usuario)
       .sort((a, b) => (b.numero || 0) - (a.numero || 0));
   }
 

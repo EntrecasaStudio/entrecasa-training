@@ -139,7 +139,7 @@ function renderWeekStrip(usuario) {
       // Check date-specific override first, then fall back to weekly plan
       const override = getDayOverride(u, dateStr);
       const tipo = override ? (override.tipo || '') : (plan[dow] || '');
-      const hasPlanned = !!tipo && !isPast;
+      const hasPlanned = !!tipo;
 
       let dotCls = 'cal-strip-dot-user';
       if (hasCompleted) {
@@ -214,7 +214,7 @@ function renderMonthGrid(usuario) {
       let dotCls = 'cal-month-dot-user';
       if (hasSession) {
         dotCls += ` cal-month-dot-user--done cal-month-dot-user--${ud.name.toLowerCase()}`;
-      } else if (plannedTipo && !isPast) {
+      } else if (plannedTipo) {
         dotCls += ` cal-month-dot-user--plan cal-month-dot-user--${ud.name.toLowerCase()}`;
       }
       dotsHtml += `<span class="${dotCls}"></span>`;
@@ -325,19 +325,17 @@ function renderUserDayRow(u, selectedDate, isToday, isPast, dow, isActive) {
       </div>`;
   }
 
-  // Actions (only for active user)
+  // Actions (for any user)
   let actionHtml = '';
-  if (isActive) {
-    if (sessions.length > 0) {
-      actionHtml = `<button class="btn btn-ghost btn-xs" data-action="cal-view-session" data-id="${sessions[0].id}">Ver</button>`;
-    } else if (planned && planned.routine && (isToday || !isPast)) {
-      actionHtml = isToday
-        ? `<button class="btn btn-ghost btn-xs" data-action="cal-change-routine" data-day="${dow}">Cambiar</button>
-           <button class="btn btn-primary btn-play-circle" data-action="start" data-id="${planned.routine.id}">${icon.play}</button>`
-        : `<button class="btn btn-ghost btn-xs" data-action="cal-change-routine" data-day="${dow}">Cambiar</button>`;
-    } else if (!isPast) {
-      actionHtml = `<button class="btn btn-ghost btn-xs" data-action="cal-assign-training" data-day="${dow}">+</button>`;
-    }
+  if (sessions.length > 0) {
+    actionHtml = `<button class="btn btn-ghost btn-xs" data-action="cal-view-session" data-id="${sessions[0].id}">Ver</button>`;
+  } else if (planned && planned.routine && (isToday || !isPast)) {
+    actionHtml = isToday && isActive
+      ? `<button class="btn btn-ghost btn-xs" data-action="cal-change-routine" data-day="${dow}" data-user="${u}">Cambiar</button>
+         <button class="btn btn-primary btn-play-circle" data-action="start" data-id="${planned.routine.id}">${icon.play}</button>`
+      : `<button class="btn btn-ghost btn-xs" data-action="cal-change-routine" data-day="${dow}" data-user="${u}">Cambiar</button>`;
+  } else if (!isPast) {
+    actionHtml = `<button class="btn btn-ghost btn-xs" data-action="cal-assign-training" data-day="${dow}" data-user="${u}">+</button>`;
   }
 
   // Row-level click action (whole row is tappable)
@@ -346,8 +344,8 @@ function renderUserDayRow(u, selectedDate, isToday, isPast, dow, isActive) {
     rowAction = `data-action="cal-view-session" data-id="${sessions[0].id}"`;
   } else if (planned && planned.routine) {
     rowAction = `data-action="start" data-id="${planned.routine.id}"`;
-  } else if (!isPast && isActive) {
-    rowAction = `data-action="cal-assign-training" data-day="${dow}"`;
+  } else if (!isPast) {
+    rowAction = `data-action="cal-assign-training" data-day="${dow}" data-user="${u}"`;
   }
 
   return `
@@ -576,16 +574,16 @@ export function mount() {
       }
 
       case 'cal-change-routine': {
-        const usuario = getUsuarioActivo();
+        const targetUser = btn.dataset.user || getUsuarioActivo();
         const dia = Number(btn.dataset.day);
-        const plan = getPlanSemanal(usuario);
+        const plan = getPlanSemanal(targetUser);
         const current = plan[dia] || 'gimnasio';
-        showDayAssignmentModal(usuario, dia, current, () => refreshCalendarSection(), { date: selectedDate, dateOverride: !calExpanded });
+        showDayAssignmentModal(targetUser, dia, current, () => refreshCalendarSection(), { date: selectedDate, dateOverride: !calExpanded });
         break;
       }
 
       case 'cal-remove-routine': {
-        const usuario = getUsuarioActivo();
+        const usuario = btn.dataset.user || getUsuarioActivo();
         const dia = Number(btn.dataset.day);
         if (!calExpanded) {
           const dateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
@@ -599,9 +597,9 @@ export function mount() {
       }
 
       case 'cal-assign-training': {
-        const usuario = getUsuarioActivo();
+        const targetUser = btn.dataset.user || getUsuarioActivo();
         const dia = Number(btn.dataset.day);
-        showDayAssignmentModal(usuario, dia, 'gimnasio', () => refreshCalendarSection(), { date: selectedDate, dateOverride: !calExpanded });
+        showDayAssignmentModal(targetUser, dia, 'gimnasio', () => refreshCalendarSection(), { date: selectedDate, dateOverride: !calExpanded });
         break;
       }
 

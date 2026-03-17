@@ -231,8 +231,8 @@ export function getPlannedRoutineForDate(usuario, date) {
 
   const rutinas = getRutinas();
   const routine =
-    rutinas.find((r) => Number(r.diaSemana) === dayOfWeek) ||
-    rutinas.find((r) => r.tipo === tipo && r.diaSemana == null);
+    rutinas.find((r) => Number(r.diaSemana) === dayOfWeek && r.usuario === usuario) ||
+    rutinas.find((r) => r.tipo === tipo && r.usuario === usuario && r.diaSemana == null);
 
   return { tipo, routine: routine || null };
 }
