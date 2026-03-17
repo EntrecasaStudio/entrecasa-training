@@ -267,6 +267,47 @@ export function getCompositeMuscleSvg(grupos, size = 32) {
   return `<span class="muscle-composite">${frontSvg}${backSvg}</span>`;
 }
 
+/**
+ * Render a heatmap silhouette (front + back) where each muscle group
+ * is colored by its intensity level (0-3).
+ * @param {Map<string, number>} intensityMap - grupo → level (0=inactive, 1=low, 2=med, 3=high)
+ * @param {number} [size=120] - SVG height
+ * @returns {string} HTML with front + back SVGs
+ */
+export function getMuscleHeatmapSvg(intensityMap, size = 120) {
+  // Build part → intensity lookup from grupo → intensity
+  const frontIntensity = {};
+  const backIntensity = {};
+
+  for (const [grupo, level] of intensityMap.entries()) {
+    const mapping = GRUPO_MAP[grupo];
+    if (!mapping) continue;
+    for (const part of mapping.front) {
+      frontIntensity[part] = Math.max(frontIntensity[part] || 0, level);
+    }
+    for (const part of mapping.back) {
+      backIntensity[part] = Math.max(backIntensity[part] || 0, level);
+    }
+  }
+
+  function renderView(allParts, partIntensity, vb, vbH) {
+    const w = size * (100 / vbH);
+    let polysHtml = '';
+    for (const [partName, polygons] of Object.entries(allParts)) {
+      const level = partIntensity[partName] || 0;
+      const cls = level > 0 ? `muscle-part muscle-heat-${level}` : 'muscle-part';
+      const polys = polygons.map((p) => `<polygon points="${p}"/>`).join('');
+      polysHtml += `<g class="${cls}" data-muscle="${partName}">${polys}</g>`;
+    }
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${w.toFixed(0)}" height="${size}" viewBox="${vb}" class="muscle-silhouette muscle-heatmap">${polysHtml}</svg>`;
+  }
+
+  const frontSvg = renderView(FRONT_PARTS, frontIntensity, '0 0 100 200', 200);
+  const backSvg = renderView(BACK_PARTS, backIntensity, '0 0 100 225', 225);
+
+  return `<div class="muscle-heatmap-pair">${frontSvg}${backSvg}</div>`;
+}
+
 // Re-export for backward compat with existing MUSCLE_GROUP_SVG consumers
 export const MUSCLE_GROUP_SVG = {};
 for (const grupo of Object.keys(GRUPO_MAP)) {

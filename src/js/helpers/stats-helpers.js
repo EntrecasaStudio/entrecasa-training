@@ -1,4 +1,4 @@
-import { getSesiones, calcVolumenSesion, getEjBestRound, getPlanSemanal, getRutinas, getDayOverride, getRutinaById } from '@/store.js';
+import { getSesiones, calcVolumenSesion, getEjBestRound, getEjVueltas, getPlanSemanal, getRutinas, getDayOverride, getRutinaById } from '@/store.js';
 
 /**
  * Weekly streak: consecutive weeks (Mon-Sun) with at least 1 session.
@@ -276,4 +276,45 @@ export function getSessionsForDate(usuario, year, month, day) {
     const d = new Date(s.fecha);
     return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day;
   });
+}
+
+/**
+ * Muscle group training load over the last N weeks.
+ * Returns a Map of grupoMuscular → { sessions, volume, lastDate }
+ * @param {string} usuario
+ * @param {number} [weeks=4]
+ * @returns {Map<string, { sessions: number, volume: number, lastDate: string }>}
+ */
+export function getMuscleGroupLoad(usuario, weeks = 4) {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - weeks * 7);
+
+  const sesiones = getSesiones().filter(
+    (s) => s.usuario === usuario && new Date(s.fecha) >= cutoff,
+  );
+
+  const result = new Map();
+
+  for (const s of sesiones) {
+    for (const c of s.circuitos) {
+      const grupos = Array.isArray(c.grupoMuscular) ? c.grupoMuscular : [c.grupoMuscular];
+      // Volume for this circuit
+      let circVol = 0;
+      for (const ej of c.ejercicios) {
+        const tipo = ej.tipo || 'normal';
+        if (tipo !== 'normal') continue;
+        const vueltas = getEjVueltas(ej);
+        circVol += vueltas.reduce((sum, v) => sum + v.repsReal * v.pesoRealKg, 0);
+      }
+      for (const g of grupos.filter(Boolean)) {
+        const entry = result.get(g) || { sessions: 0, volume: 0, lastDate: null };
+        entry.sessions++;
+        entry.volume += circVol;
+        if (!entry.lastDate || s.fecha > entry.lastDate) entry.lastDate = s.fecha;
+        result.set(g, entry);
+      }
+    }
+  }
+
+  return result;
 }

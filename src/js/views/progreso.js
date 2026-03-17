@@ -10,7 +10,10 @@ import {
   getWeeklyActivity,
   getExerciseProgressData,
   getDaysSinceLastSession,
+  getMuscleGroupLoad,
 } from '@js/helpers/stats-helpers.js';
+import { getMuscleHeatmapSvg } from '@js/helpers/muscle-illustrations.js';
+import { TAG_CLASS } from '@js/helpers/rutina-helpers.js';
 
 function renderQuickStats(usuario) {
   const stats = getGeneralStats(usuario);
@@ -108,6 +111,51 @@ function renderExerciseCards(usuario) {
   `;
 }
 
+function renderMuscleHeatmap(usuario) {
+  const load = getMuscleGroupLoad(usuario, 4);
+  if (load.size === 0) return '';
+
+  // Calculate intensity levels (0-3) relative to the max
+  const maxSessions = Math.max(...[...load.values()].map((v) => v.sessions), 1);
+  const intensityMap = new Map();
+  for (const [grupo, data] of load.entries()) {
+    const level = Math.min(Math.ceil((data.sessions / maxSessions) * 3), 3);
+    intensityMap.set(grupo, level);
+  }
+
+  const heatmapSvg = getMuscleHeatmapSvg(intensityMap, 140);
+
+  // Legend: list each grupo with session count and bar
+  const legend = [...load.entries()]
+    .sort((a, b) => b[1].sessions - a[1].sessions)
+    .map(([grupo, data]) => {
+      const pct = Math.round((data.sessions / maxSessions) * 100);
+      const tagCls = TAG_CLASS[grupo] || '';
+      const daysAgo = data.lastDate ? Math.floor((Date.now() - new Date(data.lastDate).getTime()) / 86400000) : null;
+      const lastLabel = daysAgo === 0 ? 'hoy' : daysAgo === 1 ? 'ayer' : daysAgo != null ? `${daysAgo}d` : '';
+      return `
+        <div class="heatmap-legend-row">
+          <span class="tag tag-sm ${tagCls}">${grupo}</span>
+          <div class="heatmap-legend-bar-track">
+            <div class="heatmap-legend-bar" style="width:${pct}%"></div>
+          </div>
+          <span class="heatmap-legend-count">${data.sessions}x</span>
+          <span class="heatmap-legend-last">${lastLabel}</span>
+        </div>`;
+    })
+    .join('');
+
+  return `
+    <div class="progress-section animate-in" style="animation-delay:280ms">
+      <div class="progress-section-title">Carga muscular (4 sem)</div>
+      <div class="heatmap-container">
+        ${heatmapSvg}
+      </div>
+      <div class="heatmap-legend">${legend}</div>
+    </div>
+  `;
+}
+
 function renderRecentPRs(usuario) {
   const records = getPersonalRecords(usuario);
   const entries = Object.entries(records);
@@ -150,6 +198,7 @@ export function render() {
         <div class="progreso-title">Progreso</div>
       </div>
       ${renderQuickStats(usuario)}
+      ${renderMuscleHeatmap(usuario)}
       ${renderActivityGrid(usuario)}
       ${renderExerciseCards(usuario)}
       ${renderRecentPRs(usuario)}
