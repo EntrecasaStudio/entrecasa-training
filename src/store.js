@@ -28,18 +28,23 @@ function write(key, data) {
   queueSync(key); // sync to Firestore in background
 }
 
+// ── Raw readers (include soft-deleted items — for internal read-modify-write) ──
+
+function _allRutinas() { return read(KEYS.rutinas) || []; }
+function _allSesiones() { return read(KEYS.sesiones) || []; }
+
 // ── Rutinas ──────────────────────────────────
 
 export function getRutinas() {
-  return read(KEYS.rutinas) || [];
+  return _allRutinas().filter((r) => !r.deleted);
 }
 
 export function getRutinaById(id) {
-  return getRutinas().find((r) => r.id === id) || null;
+  return _allRutinas().find((r) => r.id === id && !r.deleted) || null;
 }
 
 export function saveRutina(rutina) {
-  const rutinas = getRutinas();
+  const rutinas = _allRutinas();
   const idx = rutinas.findIndex((r) => r.id === rutina.id);
   if (idx >= 0) {
     rutinas[idx] = rutina;
@@ -51,9 +56,25 @@ export function saveRutina(rutina) {
 }
 
 export function deleteRutina(id) {
-  const rutinas = getRutinas().filter((r) => r.id !== id);
-  write(KEYS.rutinas, rutinas);
-  bumpVersion();
+  const rutinas = _allRutinas();
+  const target = rutinas.find((r) => r.id === id);
+  if (target) {
+    target.deleted = true;
+    target.deletedAt = new Date().toISOString();
+    write(KEYS.rutinas, rutinas);
+    bumpVersion();
+  }
+}
+
+export function restoreRutina(id) {
+  const rutinas = _allRutinas();
+  const target = rutinas.find((r) => r.id === id);
+  if (target) {
+    delete target.deleted;
+    delete target.deletedAt;
+    write(KEYS.rutinas, rutinas);
+    bumpVersion();
+  }
 }
 
 export function duplicateRutina(id) {
@@ -68,8 +89,9 @@ export function duplicateRutina(id) {
   const sameType = rutinas.filter((r) => r.tipo === (copia.tipo || 'gimnasio'));
   copia.numero = sameType.reduce((m, r) => Math.max(m, r.numero || 0), 0) + 1;
   copia.custom = true;
-  rutinas.push(copia);
-  write(KEYS.rutinas, rutinas);
+  const all = _allRutinas();
+  all.push(copia);
+  write(KEYS.rutinas, all);
   bumpVersion();
   return copia;
 }
@@ -77,12 +99,11 @@ export function duplicateRutina(id) {
 // ── Sesiones ─────────────────────────────────
 
 export function getSesiones() {
-  const sesiones = read(KEYS.sesiones) || [];
-  return sesiones.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+  return _allSesiones().filter((s) => !s.deleted).sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 }
 
 export function getSesionById(id) {
-  return (read(KEYS.sesiones) || []).find((s) => s.id === id) || null;
+  return _allSesiones().find((s) => s.id === id && !s.deleted) || null;
 }
 
 export function getSesionesByRutina(rutinaId) {
@@ -90,14 +111,14 @@ export function getSesionesByRutina(rutinaId) {
 }
 
 export function saveSesion(sesion) {
-  const sesiones = read(KEYS.sesiones) || [];
+  const sesiones = _allSesiones();
   sesiones.push(sesion);
   write(KEYS.sesiones, sesiones);
   bumpVersion();
 }
 
 export function updateSesion(sesion) {
-  const sesiones = read(KEYS.sesiones) || [];
+  const sesiones = _allSesiones();
   const idx = sesiones.findIndex((s) => s.id === sesion.id);
   if (idx >= 0) {
     sesiones[idx] = sesion;
@@ -107,9 +128,25 @@ export function updateSesion(sesion) {
 }
 
 export function deleteSesion(id) {
-  const sesiones = read(KEYS.sesiones) || [];
-  write(KEYS.sesiones, sesiones.filter((s) => s.id !== id));
-  bumpVersion();
+  const sesiones = _allSesiones();
+  const target = sesiones.find((s) => s.id === id);
+  if (target) {
+    target.deleted = true;
+    target.deletedAt = new Date().toISOString();
+    write(KEYS.sesiones, sesiones);
+    bumpVersion();
+  }
+}
+
+export function restoreSesion(id) {
+  const sesiones = _allSesiones();
+  const target = sesiones.find((s) => s.id === id);
+  if (target) {
+    delete target.deleted;
+    delete target.deletedAt;
+    write(KEYS.sesiones, sesiones);
+    bumpVersion();
+  }
 }
 
 // ── Usuario activo ──────────────────────────
@@ -181,24 +218,24 @@ export function saveEjercicioMeta(nombre, meta) {
 // ── Routine-day assignment ──────────────────
 
 export function assignRutinaADia(rutinaId, dia, usuario) {
-  const rutinas = getRutinas();
+  const rutinas = _allRutinas();
   // Clear any routine currently assigned to this day for this user
   for (const r of rutinas) {
-    if (Number(r.diaSemana) === Number(dia) && r.usuario === usuario) {
+    if (!r.deleted && Number(r.diaSemana) === Number(dia) && r.usuario === usuario) {
       r.diaSemana = null;
     }
   }
   // Assign the new one
-  const target = rutinas.find((r) => r.id === rutinaId);
+  const target = rutinas.find((r) => r.id === rutinaId && !r.deleted);
   if (target) target.diaSemana = Number(dia);
   write(KEYS.rutinas, rutinas);
   bumpVersion();
 }
 
 export function clearRutinaDelDia(dia, usuario) {
-  const rutinas = getRutinas();
+  const rutinas = _allRutinas();
   for (const r of rutinas) {
-    if (Number(r.diaSemana) === Number(dia) && r.usuario === usuario) {
+    if (!r.deleted && Number(r.diaSemana) === Number(dia) && r.usuario === usuario) {
       r.diaSemana = null;
     }
   }
@@ -412,4 +449,33 @@ export function checkCycleComplete(usuario, tipo) {
     return true;
   }
   return false;
+}
+
+// ── Soft-delete purge (remove items deleted > 30 days ago) ──
+
+const PURGE_DAYS = 30;
+
+export function purgeDeleted() {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - PURGE_DAYS);
+
+  let changed = false;
+
+  const rutinas = _allRutinas();
+  const rutinasBefore = rutinas.length;
+  const rutinasAfter = rutinas.filter((r) => !r.deleted || new Date(r.deletedAt) > cutoff);
+  if (rutinasAfter.length < rutinasBefore) {
+    write(KEYS.rutinas, rutinasAfter);
+    changed = true;
+  }
+
+  const sesiones = _allSesiones();
+  const sesionesBefore = sesiones.length;
+  const sesionesAfter = sesiones.filter((s) => !s.deleted || new Date(s.deletedAt) > cutoff);
+  if (sesionesAfter.length < sesionesBefore) {
+    write(KEYS.sesiones, sesionesAfter);
+    changed = true;
+  }
+
+  if (changed) bumpVersion();
 }

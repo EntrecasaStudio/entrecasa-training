@@ -38,6 +38,7 @@ const TAG_CLASS = {
   'Glúteos': 'tag-gluteos',
   Hombros: 'tag-hombros',
   Cardio: 'tag-cardio',
+  HIIT: 'tag-hiit',
 };
 
 // Map category → CSS color variable (matches ejercicio-detail)
@@ -50,6 +51,7 @@ const CATEGORY_COLORS = {
   'Glúteos': 'var(--color-tag-gluteos)',
   Hombros: 'var(--color-tag-hombros)',
   Cardio: 'var(--color-tag-cardio)',
+  HIIT: '#ef4444',
 };
 
 function renderCategorySection(cat, ejercicios, collapsed, lastUsedMap = {}) {

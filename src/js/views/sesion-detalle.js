@@ -1,4 +1,4 @@
-import { getSesionById, getSesionesByRutina, getPersonalRecords, calcVolumenSesion, getUsuarioActivo, getEjVueltas, getEjBestRound, updateSesion, deleteSesion } from '@/store.js';
+import { getSesionById, getSesionesByRutina, getPersonalRecords, calcVolumenSesion, getUsuarioActivo, getEjVueltas, getEjBestRound, updateSesion } from '@/store.js';
 import { navigate } from '@/router.js';
 import { icon } from '@js/icons.js';
 

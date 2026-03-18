@@ -1,6 +1,7 @@
 import {
   getRutinas,
   deleteRutina,
+  restoreRutina,
   getUltimaSesionDeRutina,
   getUsuarioActivo,
   isRutinaDoneInCycle,
@@ -8,8 +9,7 @@ import {
   getRutinaStats,
 } from '@/store.js';
 import { navigate } from '@/router.js';
-import { showModal } from '@js/components/modal.js';
-import { showToast } from '@js/components/toast.js';
+import { showToast, showToastAction } from '@js/components/toast.js';
 import { icon, iconLg } from '@js/icons.js';
 import {
   DIAS_LABEL,
@@ -417,16 +417,12 @@ export function mount() {
         break;
       }
       case 'delete':
-        showModal({
-          title: 'Eliminar rutina',
-          body: 'Esta accion no se puede deshacer.',
-          confirmText: 'Eliminar',
-          danger: true,
-          onConfirm: () => {
-            deleteRutina(id);
-            rerender();
-          },
-        });
+        deleteRutina(id);
+        rerender();
+        showToastAction('Rutina eliminada', 'Deshacer', () => {
+          restoreRutina(id);
+          rerender();
+        }, { duration: 6000 });
         break;
     }
   };

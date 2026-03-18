@@ -2,13 +2,13 @@ import { getRutinaById, getRutinas, saveRutina, getUsuarioActivo, getEjercicioMe
 import { generateId } from '@/id.js';
 import { navigate } from '@/router.js';
 import { icon } from '@js/icons.js';
-import { buscarEjerciciosPorCategorias, addEjercicioCustom, CATEGORIAS, ejerciciosCatalogo, getEjerciciosCustom } from '@js/ejercicios-catalogo.js';
+import { buscarEjerciciosPorCategorias, addEjercicioCustom, CATEGORIAS, ejerciciosCatalogo, getEjerciciosCustom, getTodosLosEjercicios } from '@js/ejercicios-catalogo.js';
 import { showModal } from '@js/components/modal.js';
 import { showToast } from '@js/components/toast.js';
 import { showExerciseDetail } from '@js/helpers/ejercicio-detail.js';
 import { formatNumero, normalizeGrupos } from '@js/helpers/rutina-helpers.js';
 
-const GRUPOS_MUSCULARES = ['Pecho', 'Espalda', 'Piernas', 'Core', 'Brazos', 'Glúteos', 'Hombros', 'Cardio'];
+const GRUPOS_MUSCULARES = ['Pecho', 'Espalda', 'Piernas', 'Core', 'Brazos', 'Glúteos', 'Hombros', 'Cardio', 'HIIT'];
 const GRUPO_COLOR_SLUG = {
   Pecho: 'pecho',
   Espalda: 'espalda',
@@ -18,7 +18,12 @@ const GRUPO_COLOR_SLUG = {
   'Glúteos': 'gluteos',
   Hombros: 'hombros',
   Cardio: 'cardio',
+  HIIT: 'hiit',
 };
+
+// Categories that auto-detect as cardio/hiit exercise type
+const CARDIO_CATEGORIES = ['Cardio'];
+const HIIT_CATEGORIES = ['HIIT'];
 const MIN_EJERCICIOS = 2;
 const MAX_EJERCICIOS = 4;
 const MIN_REPS = 6;
@@ -35,7 +40,8 @@ const GRUPO_A_CATEGORIAS = {
   Brazos: ['Brazos', 'Hombros'],
   'Glúteos': ['Glúteos'],
   Hombros: ['Hombros'],
-  Cardio: ['Piernas', 'Core', 'Pecho', 'Espalda', 'Brazos', 'Hombros', 'Glúteos'],
+  Cardio: ['Cardio'],
+  HIIT: ['HIIT'],
 };
 
 // ── Auto-derive grupoMuscular from exercise categories ──
@@ -125,19 +131,31 @@ function migrateCircuitCardioToExercise(circ) {
 let rutina = null;
 let activePicker = null; // { circIdx, ejIdx } or null
 let pickerQuery = '';
+let pickerDisabledCats = new Set(); // categories the user toggled OFF in the picker
 let activeGrupoDropdown = null; // circIdx or null
 let isDirty = false;
 let expandedFormEjs = new Set(); // tracks 'circIdx-ejIdx' keys for expanded series
 
+function getPickerFilteredResults() {
+  // All categories enabled by default, user can toggle off
+  const enabledCats = CATEGORIAS.filter((c) => !pickerDisabledCats.has(c));
+  return buscarEjerciciosPorCategorias(enabledCats, pickerQuery);
+}
+
 function renderPicker(circIdx, ejIdx) {
-  const circ = rutina.circuitos[circIdx];
-  const gruposCats = normalizeGrupos(circ).flatMap((g) => GRUPO_A_CATEGORIAS[g] || [g]);
-  const categorias = gruposCats.length > 0 ? [...new Set(gruposCats)] : [...CATEGORIAS];
-  const resultados = buscarEjerciciosPorCategorias(categorias, pickerQuery);
+  const resultados = getPickerFilteredResults();
   const q = pickerQuery.trim().toLowerCase();
 
   // Check if exact match exists
   const exactMatch = q && resultados.some((e) => e.nombre.toLowerCase() === q);
+
+  // Category filter chips — all categories, toggleable
+  const catChips = CATEGORIAS.map((cat) => {
+    const isOn = !pickerDisabledCats.has(cat);
+    const slug = GRUPO_COLOR_SLUG[cat] || cat.toLowerCase();
+    return `<button class="picker-cat-chip tag tag-${slug} ${isOn ? '' : 'picker-cat-off'}"
+                    data-action="toggle-picker-cat" data-cat="${cat}">${cat}</button>`;
+  }).join('');
 
   const items = resultados
     .map(
@@ -145,6 +163,7 @@ function renderPicker(circIdx, ejIdx) {
     <button class="ej-picker-option" data-action="select-ejercicio"
             data-circ="${circIdx}" data-ej="${ejIdx}" data-nombre="${e.nombre}">
       <span class="ej-picker-option-name">${e.nombre}</span>
+      <span class="ej-picker-option-cat">${e.categoria}</span>
       <span class="ej-item-type ${e.tipo}">${e.tipo === 'maquina' ? 'M' : 'F'}</span>
       <span class="ej-picker-info" data-action="show-ejercicio-detail" data-nombre="${e.nombre}" title="Ver detalle">${icon.info}</span>
     </button>
@@ -167,8 +186,9 @@ function renderPicker(circIdx, ejIdx) {
                value="${pickerQuery}" autofocus>
         <button class="ej-picker-close" data-action="close-picker">${icon.close}</button>
       </div>
+      <div class="picker-cat-chips">${catChips}</div>
       <div class="ej-picker-list">
-        ${items || '<div class="ej-picker-empty">No hay ejercicios en esta categoría</div>'}
+        ${items || '<div class="ej-picker-empty">Sin resultados</div>'}
       </div>
       ${addBtn}
     </div>
@@ -231,19 +251,9 @@ function renderEjCardioParams(ej, circIdx, ejIdx) {
 function renderEjFields(ej, circIdx, ejIdx) {
   const ejTipo = ej.tipo || 'normal';
 
-  // Per-exercise type selector (only if exercise has a name)
-  const tipoSelector = ej.nombre ? `
-    <div class="ej-type-toggle ej-tipo-chips">
-      <button class="ej-type-btn ej-type-chip ${ejTipo === 'normal' ? 'active' : ''}" data-action="set-ej-tipo" data-circ="${circIdx}" data-ej="${ejIdx}" data-tipo="normal">Normal</button>
-      <button class="ej-type-btn ej-type-chip ${ejTipo === 'velocidad' ? 'active' : ''}" data-action="set-ej-tipo" data-circ="${circIdx}" data-ej="${ejIdx}" data-tipo="velocidad">Vel</button>
-      <button class="ej-type-btn ej-type-chip ${ejTipo === 'caminata' ? 'active' : ''}" data-action="set-ej-tipo" data-circ="${circIdx}" data-ej="${ejIdx}" data-tipo="caminata">Cam</button>
-      <button class="ej-type-btn ej-type-chip ${ejTipo === 'hiit' ? 'active' : ''}" data-action="set-ej-tipo" data-circ="${circIdx}" data-ej="${ejIdx}" data-tipo="hiit">HIIT</button>
-    </div>
-  ` : '';
-
-  // Cardio exercises — show params instead of series
+  // Cardio/HIIT exercises — show specific params (no type toggle needed, auto-detected from category)
   if (ejTipo === 'velocidad' || ejTipo === 'caminata' || ejTipo === 'hiit') {
-    return tipoSelector + renderEjCardioParams(ej, circIdx, ejIdx);
+    return renderEjCardioParams(ej, circIdx, ejIdx);
   }
 
   // Normal — collapsible series section
@@ -270,7 +280,6 @@ function renderEjFields(ej, circIdx, ejIdx) {
   `).join('');
 
   return `
-    ${tipoSelector}
     <div class="ej-series-section">
       <button class="ej-series-toggle" data-action="toggle-form-series" data-circ="${circIdx}" data-ej="${ejIdx}">
         <span class="ej-series-chevron ${isExpanded ? 'expanded' : ''}">${icon.chevronDown}</span>
@@ -441,19 +450,32 @@ function renderForm(isEdit) {
              value="${rutina.nombre}">
     </div>
 
-    <div class="form-section">
-      <label class="input-label">Tipo</label>
-      <div class="ej-type-toggle">
-        <button class="ej-type-btn ${rutina.tipo !== 'cross' ? 'active' : ''}" data-action="set-tipo" data-tipo="gimnasio">Gimnasio</button>
-        <button class="ej-type-btn ${rutina.tipo === 'cross' ? 'active' : ''}" data-action="set-tipo" data-tipo="cross">Cross</button>
+    <div class="form-section form-tipo-usuario-row">
+      <div class="form-tipo-col">
+        <label class="input-label">Tipo</label>
+        <div class="ej-type-toggle">
+          <button class="ej-type-btn ${rutina.tipo !== 'cross' ? 'active' : ''}" data-action="set-tipo" data-tipo="gimnasio">Gimnasio</button>
+          <button class="ej-type-btn ${rutina.tipo === 'cross' ? 'active' : ''}" data-action="set-tipo" data-tipo="cross">Cross</button>
+        </div>
+      </div>
+      <div class="form-usuario-col">
+        <label class="input-label">Usuario</label>
+        <div class="ej-type-toggle ej-toggle-sm ${rutina.usuario === 'Nat' ? 'toggle-nat' : ''}">
+          <button class="ej-type-btn ${rutina.usuario !== 'Nat' ? 'active' : ''}" data-action="set-usuario" data-usuario="Lean">H</button>
+          <button class="ej-type-btn ${rutina.usuario === 'Nat' ? 'active' : ''}" data-action="set-usuario" data-usuario="Nat">M</button>
+        </div>
       </div>
     </div>
 
     <div class="form-section">
-      <label class="input-label">Usuario</label>
-      <div class="ej-type-toggle">
-        <button class="ej-type-btn ${rutina.usuario !== 'Nat' ? 'active' : ''}" data-action="set-usuario" data-usuario="Lean">H (Lean)</button>
-        <button class="ej-type-btn ${rutina.usuario === 'Nat' ? 'active' : ''}" data-action="set-usuario" data-usuario="Nat">M (Nat)</button>
+      <label class="input-label">Dificultad</label>
+      <div class="form-picante-bar">
+        ${[1, 2, 3].map((lvl) => `
+          <button class="form-picante-btn ${(rutina.picante || 0) >= lvl ? 'active' : ''}"
+                  data-action="set-picante" data-level="${lvl}">
+            ${'🌶️'.repeat(lvl)}
+          </button>
+        `).join('')}
       </div>
     </div>
 
@@ -571,19 +593,27 @@ function validate() {
 function selectEjercicio(circIdx, ejIdx, nombre) {
   const ej = rutina.circuitos[circIdx].ejercicios[ejIdx];
   ej.nombre = nombre;
-  // Auto-detect Cardio category → set tipo to velocidad with defaults
-  const allEj = [...ejerciciosCatalogo, ...getEjerciciosCustom()];
+  // Auto-detect exercise type from category
+  const allEj = getTodosLosEjercicios();
   const catEntry = allEj.find((e) => e.nombre === nombre);
-  if (catEntry && catEntry.categoria === 'Cardio' && (ej.tipo || 'normal') === 'normal') {
-    ej.tipo = 'velocidad';
-    ej.velocidad = ej.velocidad ?? 12;
-    ej.tiempo = ej.tiempo ?? 30;
-    ej.descanso = ej.descanso ?? 60;
-    ej.cantidadPasadas = ej.cantidadPasadas ?? 6;
+  if (catEntry) {
+    if (CARDIO_CATEGORIES.includes(catEntry.categoria) && (ej.tipo || 'normal') === 'normal') {
+      ej.tipo = 'velocidad';
+      ej.velocidad = ej.velocidad ?? 12;
+      ej.tiempo = ej.tiempo ?? 30;
+      ej.descanso = ej.descanso ?? 60;
+      ej.cantidadPasadas = ej.cantidadPasadas ?? 6;
+    } else if (HIIT_CATEGORIES.includes(catEntry.categoria) && (ej.tipo || 'normal') === 'normal') {
+      ej.tipo = 'hiit';
+      ej.workTime = ej.workTime ?? 40;
+      ej.restTime = ej.restTime ?? 20;
+      ej.rounds = ej.rounds ?? 3;
+    }
   }
   syncGruposFromEjercicios(circIdx);
   activePicker = null;
   pickerQuery = '';
+  pickerDisabledCats = new Set();
   reRender();
 }
 
@@ -875,29 +905,22 @@ export function mount(params) {
         break;
       }
 
-      case 'set-ej-tipo': {
+      case 'set-picante': {
         syncFromInputs();
-        const ejIdx = parseInt(btn.dataset.ej);
-        const newTipo = btn.dataset.tipo;
-        const ej = rutina.circuitos[circIdx]?.ejercicios[ejIdx];
-        if (!ej) break;
-        const oldTipo = ej.tipo || 'normal';
-        if (newTipo !== oldTipo) {
-          ej.tipo = newTipo;
-          // Set default params for the new type
-          if (newTipo === 'velocidad') {
-            ej.velocidad = ej.velocidad ?? 12; ej.tiempo = ej.tiempo ?? 30;
-            ej.descanso = ej.descanso ?? 60; ej.cantidadPasadas = ej.cantidadPasadas ?? 6;
-          } else if (newTipo === 'caminata') {
-            ej.velocidad = ej.velocidad ?? 5; ej.tiempo = ej.tiempo ?? 120;
-            ej.descanso = ej.descanso ?? 30; ej.cantidadPasadas = ej.cantidadPasadas ?? 4;
-          } else if (newTipo === 'hiit') {
-            ej.workTime = ej.workTime ?? 40; ej.restTime = ej.restTime ?? 20;
-            ej.rounds = ej.rounds ?? 3;
-          } else if (newTipo === 'normal' && !ej.series) {
-            ej.series = [{ reps: 8, pesoKg: 8 }, { reps: 8, pesoKg: 8 }, { reps: 8, pesoKg: 8 }];
-          }
-          isDirty = true;
+        const lvl = parseInt(btn.dataset.level);
+        // Toggle: if same level clicked, clear it
+        rutina.picante = rutina.picante === lvl ? 0 : lvl;
+        isDirty = true;
+        reRender();
+        break;
+      }
+
+      case 'toggle-picker-cat': {
+        const cat = btn.dataset.cat;
+        if (pickerDisabledCats.has(cat)) {
+          pickerDisabledCats.delete(cat);
+        } else {
+          pickerDisabledCats.add(cat);
         }
         reRender();
         break;
@@ -1054,9 +1077,11 @@ export function mount(params) {
         if (activePicker && activePicker.circIdx === circIdx && activePicker.ejIdx === ejIdx) {
           activePicker = null;
           pickerQuery = '';
+          pickerDisabledCats = new Set();
         } else {
           activePicker = { circIdx, ejIdx };
           pickerQuery = '';
+          pickerDisabledCats = new Set();
         }
         reRender();
         break;
@@ -1073,10 +1098,9 @@ export function mount(params) {
       case 'add-custom-ejercicio': {
         const ejIdx = parseInt(btn.dataset.ej);
         const nombre = btn.dataset.nombre;
-        const circ = rutina.circuitos[circIdx];
-        // Use first category in mapping as default for custom exercise
-        const gruposCatsC = normalizeGrupos(circ).flatMap((g) => GRUPO_A_CATEGORIAS[g] || [g]);
-        const categoria = gruposCatsC.length > 0 ? gruposCatsC[0] : 'Core';
+        // Use first enabled category in picker as default
+        const enabledCats = CATEGORIAS.filter((c) => !pickerDisabledCats.has(c));
+        const categoria = enabledCats.length > 0 ? enabledCats[0] : 'Core';
         syncFromInputs();
         isDirty = true;
         addEjercicioCustom(nombre, categoria);
@@ -1087,6 +1111,7 @@ export function mount(params) {
       case 'close-picker':
         activePicker = null;
         pickerQuery = '';
+        pickerDisabledCats = new Set();
         reRender();
         break;
 
@@ -1172,10 +1197,7 @@ export function mount(params) {
       const panel = e.target.closest('.ej-picker-panel');
       if (panel && activePicker) {
         const { circIdx, ejIdx } = activePicker;
-        const circ = rutina.circuitos[circIdx];
-        const gruposCats = normalizeGrupos(circ).flatMap((g) => GRUPO_A_CATEGORIAS[g] || [g]);
-        const categorias = gruposCats.length > 0 ? [...new Set(gruposCats)] : [...CATEGORIAS];
-        const resultados = buscarEjerciciosPorCategorias(categorias, pickerQuery);
+        const resultados = getPickerFilteredResults();
         const q = pickerQuery.trim().toLowerCase();
         const exactMatch = q && resultados.some((r) => r.nombre.toLowerCase() === q);
 
@@ -1188,6 +1210,7 @@ export function mount(params) {
                 <button class="ej-picker-option" data-action="select-ejercicio"
                         data-circ="${circIdx}" data-ej="${ejIdx}" data-nombre="${r.nombre}">
                   <span class="ej-picker-option-name">${r.nombre}</span>
+                  <span class="ej-picker-option-cat">${r.categoria}</span>
                   <span class="ej-item-type ${r.tipo}">${r.tipo === 'maquina' ? 'M' : 'F'}</span>
                   <span class="ej-picker-info" data-action="show-ejercicio-detail" data-nombre="${r.nombre}" title="Ver detalle">${icon.info}</span>
                 </button>

@@ -1,7 +1,7 @@
-import { getSesiones, getUsuarioActivo, calcVolumenSesion, deleteSesion } from '@/store.js';
+import { getSesiones, getUsuarioActivo, calcVolumenSesion, deleteSesion, restoreSesion } from '@/store.js';
 import { navigate } from '@/router.js';
 import { icon, iconLg } from '@js/icons.js';
-import { showModal } from '@js/components/modal.js';
+import { showToastAction } from '@js/components/toast.js';
 
 function formatDate(isoStr) {
   const d = new Date(isoStr);
@@ -232,16 +232,12 @@ export function mount(params) {
         break;
 
       case 'delete-sesion':
-        showModal({
-          title: 'Eliminar sesion',
-          body: 'Esta accion no se puede deshacer.',
-          confirmText: 'Eliminar',
-          danger: true,
-          onConfirm: () => {
-            deleteSesion(id);
-            rerender();
-          },
-        });
+        deleteSesion(id);
+        rerender();
+        showToastAction('Sesion eliminada', 'Deshacer', () => {
+          restoreSesion(id);
+          rerender();
+        }, { duration: 6000 });
         break;
     }
   };

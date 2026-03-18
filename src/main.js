@@ -15,7 +15,7 @@ import { mountAvatarMenu, updateAvatarMenu } from '@js/components/avatar-menu.js
 import { loadSavedTheme, applyUserAccent } from '@js/services/theme-manager.js';
 import { onAuth, auth } from '@js/services/firebase.js';
 import { startRealtimeSync, stopRealtimeSync, downloadAllData, uploadAllData } from '@js/services/sync.js';
-import { setUsuarioActivo, getUsuarioActivo } from './store.js';
+import { setUsuarioActivo, getUsuarioActivo, purgeDeleted } from './store.js';
 import { initSwipeBack } from '@js/helpers/swipe-back.js';
 import { initPullToRefresh } from '@js/helpers/pull-to-refresh.js';
 import { mountOfflineBanner } from '@js/components/offline-banner.js';
@@ -27,6 +27,8 @@ const splashReadyP = import('@js/helpers/splash-3d.js').then(({ mountSplash3D })
 
 // Seed initial rutinas from Notion data (only if empty)
 seedIfEmpty();
+// Purge soft-deleted items older than 30 days
+purgeDeleted();
 
 // Load saved theme customizations + per-user accent
 loadSavedTheme();

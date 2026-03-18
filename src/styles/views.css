@@ -1163,6 +1163,7 @@
 .rutina-picante {
   font-size: 0.8em;
   margin-left: 2px;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
 }
 
 /* ── Stats line (preview modal) ──────────── */
@@ -1738,9 +1739,10 @@
 }
 
 .ej-picker-list {
-  max-height: 200px;
+  max-height: 280px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .ej-picker-option {
@@ -3710,27 +3712,72 @@
   font-weight: var(--fw-medium);
 }
 
-/* ── Per-exercise type chips ─────────────── */
-.ej-tipo-chips {
+/* ── Tipo + Usuario unified row ────────── */
+.form-tipo-usuario-row {
   display: flex;
-  gap: 2px;
-  margin: var(--space-xs) 0;
+  gap: var(--space-md);
+  align-items: flex-end;
+}
+.form-tipo-col { flex: 1; }
+.form-usuario-col { flex-shrink: 0; }
+.ej-toggle-sm {
   padding: 2px;
+  gap: 1px;
+}
+.ej-toggle-sm .ej-type-btn {
+  font-size: var(--text-xs);
+  padding: 4px 12px;
+  min-height: 28px;
+}
+.toggle-nat .ej-type-btn.active {
+  background-color: #9b87f5 !important;
+}
+
+/* ── Difficulty (picante) bar ────────────── */
+.form-picante-bar {
+  display: flex;
+  gap: 4px;
+}
+.form-picante-btn {
+  flex: 1;
+  padding: 6px 4px;
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: transparent;
+  font-size: 14px;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 0.15s, border-color 0.15s;
+  text-align: center;
 }
-.ej-tipo-chips .ej-type-chip {
-  font-size: 11px;
-  padding: 2px 8px;
-  min-height: 24px;
+.form-picante-btn.active {
+  opacity: 1;
+  border-color: var(--color-accent);
+}
+
+/* ── Picker category filter chips ────────── */
+.picker-cat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: var(--space-xs) var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+.picker-cat-chip {
+  font-size: 10px !important;
+  padding: 2px 6px !important;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.picker-cat-off {
+  opacity: 0.25;
+}
+.ej-picker-option-cat {
+  font-size: 10px;
   color: var(--color-text-muted);
-  flex: 1;
-}
-.ej-tipo-chips .ej-type-chip.active {
-  background-color: var(--color-surface-alt);
-  color: var(--color-text);
-  font-weight: var(--fw-medium);
+  margin-left: auto;
+  margin-right: var(--space-xs);
 }
 
 /* ── Per-exercise cardio params ─────────── */
@@ -3741,6 +3788,18 @@
   border-bottom: none;
   padding-bottom: 0;
   margin-bottom: 0;
+}
+
+/* ── HIIT tag color ────────────────────────── */
+.circuito-color-hiit {
+  border-left-color: #ef4444;
+}
+.circuito-num-hiit {
+  color: #ef4444;
+}
+.tag-hiit {
+  background-color: color-mix(in srgb, #ef4444 20%, transparent);
+  color: #ef4444;
 }
 
 /* ── Cardio tag color ──────────────────────── */

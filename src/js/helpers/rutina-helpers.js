@@ -1,4 +1,4 @@
-import { getRutinaById, getRutinas, getUltimaSesionDeRutina, assignRutinaADia, clearRutinaDelDia, setPlanDia, getUsuarioActivo, getPlanSemanal, duplicateRutina, deleteRutina, setDayOverride, clearDayOverride, getRutinaStats } from '@/store.js';
+import { getRutinaById, getRutinas, getUltimaSesionDeRutina, assignRutinaADia, clearRutinaDelDia, setPlanDia, getUsuarioActivo, getPlanSemanal, duplicateRutina, deleteRutina, restoreRutina, setDayOverride, clearDayOverride, getRutinaStats } from '@/store.js';
 import { navigate, refreshCurrentTab } from '@/router.js';
 import { icon } from '@js/icons.js';
 import { showToastAction } from '@js/components/toast.js';
@@ -197,15 +197,15 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
       // Open day picker for this routine
       close(() => showRoutineDayPicker(rutina));
     } else if (e.target.closest('[data-preview-delete]')) {
-      showModal({
-        title: 'Eliminar rutina',
-        body: 'Esta accion no se puede deshacer.',
-        confirmText: 'Eliminar',
-        danger: true,
-        onConfirm: () => {
-          deleteRutina(rutinaId);
-          close(() => refreshCurrentTab());
-        },
+      deleteRutina(rutinaId);
+      close(() => {
+        refreshCurrentTab();
+        showToastAction(
+          'Rutina eliminada',
+          'Deshacer',
+          () => { restoreRutina(rutinaId); refreshCurrentTab(); },
+          { duration: 6000 }
+        );
       });
     } else if (e.target.closest('[data-preview-cambiar]')) {
       const d = optDia != null ? optDia : rutina.diaSemana;

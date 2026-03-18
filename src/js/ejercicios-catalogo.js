@@ -15,6 +15,7 @@ export const CATEGORIAS = [
   'Hombros',
   'Brazos',
   'Cardio',
+  'HIIT',
 ];
 
 export const ejerciciosCatalogo = [
@@ -148,6 +149,15 @@ export const ejerciciosCatalogo = [
   { nombre: 'Remo ergometro', categoria: 'Cardio', tipo: 'maquina' },
   { nombre: 'Saltar la soga', categoria: 'Cardio', tipo: 'funcional' },
   { nombre: 'Escalador', categoria: 'Cardio', tipo: 'funcional' },
+
+  // ── HIIT ──────────────────────────────────
+  { nombre: 'Tabata', categoria: 'HIIT', tipo: 'funcional' },
+  { nombre: 'EMOM', categoria: 'HIIT', tipo: 'funcional' },
+  { nombre: 'AMRAP', categoria: 'HIIT', tipo: 'funcional' },
+  { nombre: 'Circuito HIIT', categoria: 'HIIT', tipo: 'funcional' },
+  { nombre: 'Intervalos de alta intensidad', categoria: 'HIIT', tipo: 'funcional' },
+  { nombre: 'Kettlebell swings', categoria: 'HIIT', tipo: 'funcional' },
+  { nombre: 'Battle ropes', categoria: 'HIIT', tipo: 'funcional' },
 ];
 
 // ── Custom exercises (user-created, persisted in localStorage) ──

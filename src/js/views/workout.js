@@ -634,7 +634,11 @@ function renderRestOverlay() {
 
 export function render(params) {
   initState(params.id);
-  if (!state) return '';
+  if (!state) {
+    // If state couldn't be initialized (deleted routine, etc.), redirect home
+    setTimeout(() => navigate('/'), 0);
+    return '<div class="view-loader"><div class="loader"></div></div>';
+  }
 
   const circ = state.resultados[state.circuitoActual];
   const isLast = state.circuitoActual === state.resultados.length - 1;
@@ -1197,6 +1201,7 @@ function scrollToActiveSegment() {
 }
 
 export function mount(params) {
+  if (!state) return () => {}; // Guard: render failed, cleanup is a no-op
   startTimer();
   const app = document.getElementById('app');
 
