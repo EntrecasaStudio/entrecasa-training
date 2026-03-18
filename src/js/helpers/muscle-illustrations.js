@@ -161,6 +161,7 @@ const GRUPO_MAP = {
   Espalda:    { front: [],                                                                     back: ['trapezius', 'upper_back', 'back_deltoids', 'lower_back'] },
   'Glúteos':  { front: [],                                                                     back: ['gluteal', 'abductor'] },
   Cardio:     { front: ['chest', 'abs'],                                                       back: ['upper_back'] },
+  HIIT:       { front: ['chest', 'abs', 'quadriceps', 'front_deltoids'],                       back: ['upper_back', 'hamstring', 'gluteal'] },
 };
 
 // ── Cropped viewBox per grupo (zoomed to relevant area) ──
@@ -173,6 +174,7 @@ const GRUPO_VIEWBOX = {
   Piernas:   { vb: '15 85 70 115',  view: 'front' },
   Espalda:   { vb: '10 12 80 100',  view: 'back'  },
   'Glúteos': { vb: '20 88 60 85',   view: 'back'  },
+  HIIT:      { vb: '5 10 90 190',   view: 'front' },
 };
 
 /**

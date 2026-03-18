@@ -51,7 +51,7 @@ const CATEGORY_COLORS = {
   'Glúteos': 'var(--color-tag-gluteos)',
   Hombros: 'var(--color-tag-hombros)',
   Cardio: 'var(--color-tag-cardio)',
-  HIIT: '#ef4444',
+  HIIT: 'var(--color-tag-hiit)',
 };
 
 function renderCategorySection(cat, ejercicios, collapsed, lastUsedMap = {}) {
