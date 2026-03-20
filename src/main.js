@@ -7,7 +7,7 @@ import './styles/workout.css';
 import './styles/animations.css';
 import './styles/skeleton.css';
 
-import { initRouter, navigate } from './router.js';
+import { initRouter, navigate, clearViewCache } from './router.js';
 import { seedIfEmpty } from './seed.js';
 import { mountNavBar } from '@js/components/nav-bar.js';
 import { mountVoiceFab } from '@js/components/voice-fab.js';
@@ -169,6 +169,7 @@ onAuth(async (user) => {
   if (user) {
     stopRealtimeSync();
     clearSyncState();
+    clearViewCache(); // clear stale views from previous account
     // Keep stored profile or default to 'Lean'
     if (!localStorage.getItem('gym_usuario')) setUsuarioActivo('Lean');
     // Sync data for this account
@@ -188,6 +189,7 @@ onAuth(async (user) => {
   } else {
     stopRealtimeSync();
     clearSyncState();
+    clearViewCache(); // prevent cross-user cached data leaks
     updateAvatarMenu();
     navigate('/login');
   }

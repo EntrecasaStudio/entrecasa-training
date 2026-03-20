@@ -45,6 +45,8 @@ export function loginWithGoogle() {
   if (!_auth || !googleProvider) {
     return Promise.reject(new Error('Firebase not configured. Add your config to firebase.js'));
   }
+  // Always show account picker so user can choose a different account
+  googleProvider.setCustomParameters({ prompt: 'select_account' });
   return signInWithPopup(_auth, googleProvider);
 }
 

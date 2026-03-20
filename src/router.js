@@ -30,6 +30,16 @@ let currentCleanup = null;
 let currentViewEl = null;
 let isTransitioning = false;
 
+/** Clear cached views (call on logout to prevent cross-user data leaks) */
+export function clearViewCache() {
+  for (const [, entry] of viewCache) {
+    if (entry.cleanup) try { entry.cleanup(); } catch {}
+  }
+  viewCache.clear();
+  currentCleanup = null;
+  currentViewEl = null;
+}
+
 // ── Transition direction tracking ────────────
 // 'tab' = tab-to-tab crossfade, 'push' = slide from right, 'pop' = slide from left
 let transitionDirection = 'tab';
