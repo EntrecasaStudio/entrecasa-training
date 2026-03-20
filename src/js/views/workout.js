@@ -7,7 +7,7 @@ import { getExerciseProgressData } from '@js/helpers/stats-helpers.js';
 import { haptic } from '@js/helpers/haptics.js';
 import { showExerciseDetail } from '@js/helpers/ejercicio-detail.js';
 import { icon } from '@js/icons.js';
-import { formatNumero } from '@js/helpers/rutina-helpers.js';
+import { formatNumero, autoGruposFromEjercicios } from '@js/helpers/rutina-helpers.js';
 import { showExercisePickerModal } from '@js/components/exercise-picker-modal.js';
 
 let state = null;
@@ -1065,56 +1065,7 @@ function transitionCircuit(container, params, direction) {
   }, { once: true });
 }
 
-// ── Muscle group chooser modal ────────────
-
-const GRUPOS_MUSCULARES = ['Pecho', 'Espalda', 'Piernas', 'Core', 'Brazos', 'Hombros', 'Glúteos', 'Cardio'];
-
-function showMuscleGroupChooser(onSelect) {
-  const existing = document.getElementById('muscle-group-modal');
-  if (existing) existing.remove();
-
-  const overlay = document.createElement('div');
-  overlay.id = 'muscle-group-modal';
-  overlay.className = 'modal-overlay';
-  overlay.innerHTML = `
-    <div class="modal-box" role="dialog" aria-modal="true">
-      <div class="modal-title">Grupo muscular</div>
-      <div class="modal-actions-vertical">
-        ${GRUPOS_MUSCULARES.map((g) => `<button class="btn btn-ghost btn-full" data-grupo="${g}">${g}</button>`).join('')}
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-
-  let grupoClosed = false;
-  overlay.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-grupo]');
-    if (btn) {
-      if (grupoClosed) return;
-      grupoClosed = true;
-      const grupo = btn.dataset.grupo;
-      overlay.classList.add('modal-closing');
-      let done = false;
-      const finish = () => {
-        if (done) return;
-        done = true;
-        if (overlay.parentNode) overlay.remove();
-        onSelect(grupo);
-      };
-      overlay.addEventListener('animationend', finish, { once: true });
-      setTimeout(finish, 250);
-      return;
-    }
-    if (e.target === overlay) {
-      if (grupoClosed) return;
-      grupoClosed = true;
-      overlay.classList.add('modal-closing');
-      const rm = () => { if (overlay.parentNode) overlay.remove(); };
-      overlay.addEventListener('animationend', rm, { once: true });
-      setTimeout(rm, 250);
-    }
-  });
-}
+// showMuscleGroupChooser removed — grupos auto-derived from exercises
 
 // ── Exit workout modal (3-option) ─────────
 
@@ -1312,14 +1263,15 @@ export function mount(params) {
         syncInputs();
         const ejIdx = parseInt(btn.dataset.ej);
         const circ = state.resultados[state.circuitoActual];
-        const grupoMuscular = circ.grupoMuscular;
         showExercisePickerModal({
-          grupoMuscular,
+          grupoMuscular: null, // show ALL exercises
           onSelect: (nombre) => {
             const ej = circ.ejercicios[ejIdx];
             if (ej) {
               ej.nombre = nombre;
               ej.vueltas = [{ repsReal: ej.repsObjetivo, pesoRealKg: ej.pesoObjetivoKg, done: false }];
+              // Re-derive grupo for this circuit
+              circ.grupoMuscular = autoGruposFromEjercicios(circ);
               state.modified = true;
               saveWorkoutActivo(state);
               haptic.medium();
@@ -1632,31 +1584,32 @@ export function mount(params) {
 
       case 'add-circuit': {
         syncInputs();
-        showMuscleGroupChooser((grupo) => {
-          showExercisePickerModal({
-            grupoMuscular: grupo,
-            onSelect: (nombre) => {
-              state.resultados.push({
-                grupoMuscular: [grupo],
-                ejercicios: [{
-                  nombre,
-                  repsObjetivo: 10,
-                  pesoObjetivoKg: 0,
-                  chaleco: false,
-                  pesoChalecoKg: 0,
-                  vueltas: [{ repsReal: 10, pesoRealKg: 0, done: false }],
-                }],
-              });
-              state.modified = true;
-              // Navigate to the new circuit
-              state.circuitoActual = state.resultados.length - 1;
-              saveWorkoutActivo(state);
-              haptic.medium();
-              const container = getWorkoutContainer();
-              container.innerHTML = render(params);
-              scrollToActiveSegment();
-            },
-          });
+        showExercisePickerModal({
+          grupoMuscular: null, // show ALL exercises
+          onSelect: (nombre) => {
+            const newCirc = {
+              grupoMuscular: [],
+              ejercicios: [{
+                nombre,
+                repsObjetivo: 10,
+                pesoObjetivoKg: 0,
+                chaleco: false,
+                pesoChalecoKg: 0,
+                vueltas: [{ repsReal: 10, pesoRealKg: 0, done: false }],
+              }],
+            };
+            // Auto-derive grupo from selected exercise
+            const derived = autoGruposFromEjercicios(newCirc);
+            if (derived.length > 0) newCirc.grupoMuscular = derived;
+            state.resultados.push(newCirc);
+            state.modified = true;
+            state.circuitoActual = state.resultados.length - 1;
+            saveWorkoutActivo(state);
+            haptic.medium();
+            const container = getWorkoutContainer();
+            container.innerHTML = render(params);
+            scrollToActiveSegment();
+          },
         });
         break;
       }
