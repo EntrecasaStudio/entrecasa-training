@@ -1439,3 +1439,45 @@ select.input {
 .offline-banner--visible {
   transform: translateY(0);
 }
+
+/* ── Date picker modal ─────────────────────── */
+
+.date-picker-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.date-picker-overlay.visible {
+  opacity: 1;
+}
+.date-picker-box {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  width: min(340px, 90vw);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+.date-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+}
+.date-picker-title {
+  font-size: var(--text-base);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+}
+.date-picker-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border);
+}

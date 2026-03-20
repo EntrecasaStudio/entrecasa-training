@@ -1,6 +1,7 @@
 import { getSesionById, getSesionesByRutina, getPersonalRecords, calcVolumenSesion, getUsuarioActivo, getEjVueltas, getEjBestRound, updateSesion } from '@/store.js';
 import { navigate } from '@/router.js';
 import { icon } from '@js/icons.js';
+import { showDatePickerModal } from '@js/components/date-picker-modal.js';
 
 const TAG_CLASS = {
   Core: 'tag-core',
@@ -203,42 +204,20 @@ export function mount() {
       return;
     }
 
-    // Inline editing for date
+    // Date editing via calendar modal
     const fechaEl = e.target.closest('.detalle-fecha-editable');
-    if (fechaEl && !fechaEl.querySelector('input')) {
+    if (fechaEl) {
       const sesionId = fechaEl.dataset.sesionId;
       const currentISO = fechaEl.dataset.fecha;
-      const currentDate = currentISO ? currentISO.split('T')[0] : new Date().toISOString().split('T')[0];
-
-      const input = document.createElement('input');
-      input.type = 'date';
-      input.className = 'detalle-fecha-inline-input';
-      input.value = currentDate;
-      fechaEl.textContent = '';
-      fechaEl.appendChild(input);
-      input.focus();
-
-      const save = () => {
-        const newDate = input.value;
-        if (newDate) {
-          const sesion = getSesionById(sesionId);
-          if (sesion) {
-            // Preserve time, change only the date portion
-            const oldDate = new Date(sesion.fecha);
-            const [y, m, d] = newDate.split('-').map(Number);
-            oldDate.setFullYear(y, m - 1, d);
-            sesion.fecha = oldDate.toISOString();
-            updateSesion(sesion);
-            fechaEl.dataset.fecha = sesion.fecha;
-            fechaEl.textContent = formatDate(sesion.fecha);
-          }
-        } else {
-          fechaEl.textContent = formatDate(currentISO);
+      showDatePickerModal(currentISO, (newISO) => {
+        const sesion = getSesionById(sesionId);
+        if (sesion) {
+          sesion.fecha = newISO;
+          updateSesion(sesion);
+          fechaEl.dataset.fecha = newISO;
+          fechaEl.textContent = formatDate(newISO);
         }
-      };
-
-      input.addEventListener('blur', save, { once: true });
-      input.addEventListener('change', () => input.blur());
+      });
       return;
     }
 
