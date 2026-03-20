@@ -334,11 +334,36 @@
 
 /* Collapsed summary line */
 .workout-ej-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: var(--text-sm);
   color: var(--color-text-muted);
   padding: var(--space-xs) 0 0;
   letter-spacing: 0.2px;
   font-variant-numeric: tabular-nums;
+}
+
+.workout-check-all-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--text-base);
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+.workout-check-all-btn.all-done {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-bg);
+  font-weight: var(--fw-bold);
 }
 
 /* Collapsible body */

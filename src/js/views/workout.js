@@ -323,7 +323,10 @@ function renderEjercicio(ej, ejIdx) {
           ${icon.chevronDown}
         </button>
       </div>
-      <div class="workout-ej-summary" data-ej-summary="${ejIdx}" ${expandedEjs.has(ejIdx) ? 'style="display:none"' : ''}>${summaryText}</div>
+      <div class="workout-ej-summary" data-ej-summary="${ejIdx}" ${expandedEjs.has(ejIdx) ? 'style="display:none"' : ''}>
+        <span>${summaryText}</span>
+        <button class="workout-check-all-btn ${doneCount === totalVueltas ? 'all-done' : ''}" data-action="check-all-vueltas" data-ej="${ejIdx}" aria-label="Marcar todas">${doneCount === totalVueltas ? '✓' : '○'}</button>
+      </div>
       <div class="workout-ej-collapsible" data-ej-body="${ejIdx}" ${expandedEjs.has(ejIdx) ? '' : 'style="display:none"'}>
         ${overload ? `<div class="workout-overload-hint">${icon.arrowUp} Subir peso</div>` : ''}
         ${renderExerciseHistory(ej.nombre)}
@@ -1345,6 +1348,22 @@ export function mount(params) {
             if (doneCount > 0) parts.push(`${doneCount}/${totalV} ✓`);
             summaryEl.textContent = parts.join(' · ');
           }
+        }
+        break;
+      }
+
+      case 'check-all-vueltas': {
+        syncInputs();
+        const ejIdx = parseInt(btn.dataset.ej);
+        const circ = state.resultados[state.circuitoActual];
+        const ej = circ?.ejercicios[ejIdx];
+        if (ej) {
+          const allDone = ej.vueltas.every((v) => v.done);
+          // Toggle: if all done → uncheck all, otherwise check all
+          for (const v of ej.vueltas) v.done = !allDone;
+          saveWorkoutActivo(state);
+          haptic.medium();
+          reRenderWorkout(params, { preserveScroll: true });
         }
         break;
       }
