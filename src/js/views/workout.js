@@ -8,6 +8,37 @@ import { haptic } from '@js/helpers/haptics.js';
 import { showExerciseDetail } from '@js/helpers/ejercicio-detail.js';
 import { icon } from '@js/icons.js';
 import { formatNumero, autoGruposFromEjercicios } from '@js/helpers/rutina-helpers.js';
+import { getTodosLosEjercicios } from '@js/ejercicios-catalogo.js';
+
+const CARDIO_CATS = ['Cardio'];
+const HIIT_CATS = ['HIIT'];
+
+/** Create the right exercise template based on catalog category */
+function crearEjercicioWorkout(nombre) {
+  const catEntry = getTodosLosEjercicios().find((e) => e.nombre === nombre);
+  const cat = catEntry?.categoria;
+
+  if (cat && CARDIO_CATS.includes(cat)) {
+    return {
+      nombre, tipo: 'velocidad',
+      velocidad: 12, tiempo: 30, descanso: 60, cantidadPasadas: 6,
+      pasadas: Array.from({ length: 6 }, () => ({ completada: false, tiempoReal: 30 })),
+    };
+  }
+  if (cat && HIIT_CATS.includes(cat)) {
+    return {
+      nombre, tipo: 'hiit',
+      workTime: 40, restTime: 20, rounds: 3,
+      roundResults: Array.from({ length: 3 }, () => ({ completada: false })),
+    };
+  }
+  return {
+    nombre,
+    repsObjetivo: 10, pesoObjetivoKg: 0,
+    chaleco: false, pesoChalecoKg: 0,
+    vueltas: [{ repsReal: 10, pesoRealKg: 0, done: false }],
+  };
+}
 import { showExercisePickerModal } from '@js/components/exercise-picker-modal.js';
 
 let state = null;
@@ -1286,17 +1317,13 @@ export function mount(params) {
         showExercisePickerModal({
           grupoMuscular: null, // show ALL exercises
           onSelect: (nombre) => {
-            const ej = circ.ejercicios[ejIdx];
-            if (ej) {
-              ej.nombre = nombre;
-              ej.vueltas = [{ repsReal: ej.repsObjetivo, pesoRealKg: ej.pesoObjetivoKg, done: false }];
-              // Re-derive grupo for this circuit
-              circ.grupoMuscular = autoGruposFromEjercicios(circ);
-              state.modified = true;
-              saveWorkoutActivo(state);
-              haptic.medium();
-              reRenderWorkout(params, { preserveScroll: true });
-            }
+            // Replace with correct template (normal/cardio/hiit)
+            circ.ejercicios[ejIdx] = crearEjercicioWorkout(nombre);
+            circ.grupoMuscular = autoGruposFromEjercicios(circ);
+            state.modified = true;
+            saveWorkoutActivo(state);
+            haptic.medium();
+            reRenderWorkout(params, { preserveScroll: true });
           },
         });
         break;
@@ -1643,14 +1670,7 @@ export function mount(params) {
         showExercisePickerModal({
           grupoMuscular: null,
           onSelect: (nombre) => {
-            circ.ejercicios.push({
-              nombre,
-              repsObjetivo: 10,
-              pesoObjetivoKg: 0,
-              chaleco: false,
-              pesoChalecoKg: 0,
-              vueltas: [{ repsReal: 10, pesoRealKg: 0, done: false }],
-            });
+            circ.ejercicios.push(crearEjercicioWorkout(nombre));
             circ.grupoMuscular = autoGruposFromEjercicios(circ);
             state.modified = true;
             saveWorkoutActivo(state);
@@ -1692,14 +1712,7 @@ export function mount(params) {
           onSelect: (nombre) => {
             const newCirc = {
               grupoMuscular: [],
-              ejercicios: [{
-                nombre,
-                repsObjetivo: 10,
-                pesoObjetivoKg: 0,
-                chaleco: false,
-                pesoChalecoKg: 0,
-                vueltas: [{ repsReal: 10, pesoRealKg: 0, done: false }],
-              }],
+              ejercicios: [crearEjercicioWorkout(nombre)],
             };
             // Auto-derive grupo from selected exercise
             const derived = autoGruposFromEjercicios(newCirc);

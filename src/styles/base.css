@@ -1,7 +1,17 @@
+/* Force emoji fonts to render before custom font claims emoji codepoints */
+@font-face {
+  font-family: "EmojiOverride";
+  src: local("Apple Color Emoji"), local("Segoe UI Emoji"), local("Noto Color Emoji");
+  unicode-range: U+200D, U+2600-26FF, U+2700-27BF, U+FE00-FE0F, U+1F000-1F02F,
+    U+1F0A0-1F0FF, U+1F100-1F64F, U+1F680-1F6FF, U+1F900-1F9FF, U+1FA00-1FAF5,
+    U+1FA70-1FAFF, U+E0020-E007F, U+FE00-FE0F, U+231A-23FF, U+2B50, U+2934-2935,
+    U+25AA-25FE, U+2194-21AA, U+23CF-23F3;
+}
+
 html {
   background-color: var(--color-bg);
   color: var(--color-text);
-  font-family: var(--font-main);
+  font-family: "EmojiOverride", var(--font-main);
   font-weight: var(--fw-normal);
   font-size: calc(16px * var(--text-scale, 1));
   line-height: var(--lh-normal);
