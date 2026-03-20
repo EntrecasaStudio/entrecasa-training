@@ -287,7 +287,11 @@ export function showDayAssignmentModal(usuario, dia, tipoActual, onDone, { date,
   function renderList() {
     let rutinas = getRoutinesForTipo(currentTipo);
     if (searchQuery) {
-      rutinas = rutinas.filter((r) => getDisplayName(r).toLowerCase().includes(searchQuery));
+      rutinas = rutinas.filter((r) => {
+        const name = getDisplayName(r).toLowerCase();
+        const code = formatNumero(r.numero, r).toLowerCase();
+        return name.includes(searchQuery) || code.includes(searchQuery) || String(r.numero || '').includes(searchQuery);
+      });
     }
     const tipoNombre = currentTipo === 'gimnasio' ? 'Gimnasio' : 'Cross';
 
