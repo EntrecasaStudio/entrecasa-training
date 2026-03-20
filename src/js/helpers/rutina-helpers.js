@@ -110,8 +110,11 @@ export function getTipoIcon(tipo) {
 // ── Shared render helpers ────────────────────
 
 export function renderTags(rutina, small = false) {
-  // Auto-derive from exercises, ordered by frequency
-  const grupos = [...new Set(rutina.circuitos.flatMap((c) => autoGruposFromEjercicios(c)))];
+  // Auto-derive from exercises, fallback to stored grupoMuscular per circuit
+  const grupos = [...new Set(rutina.circuitos.flatMap((c) => {
+    const derived = autoGruposFromEjercicios(c);
+    return derived.length > 0 ? derived : normalizeGrupos(c);
+  }))];
   const sizeClass = small ? 'tag-sm' : '';
   return grupos
     .map((g) => `<span class="tag ${sizeClass} ${TAG_CLASS[g] || ''}">${g}</span>`)
@@ -138,7 +141,9 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
       (c, i) => {
         const chalecoBadge = c.chaleco ? `<span class="preview-chaleco-badge">🦺${c.chalecoPeso ? ` ${c.chalecoPeso}` : ''}</span>` : '';
 
-        const grupos = autoGruposFromEjercicios(c);
+        // Auto-derive from exercises, fallback to stored grupoMuscular
+        const derivedGrupos = autoGruposFromEjercicios(c);
+        const grupos = derivedGrupos.length > 0 ? derivedGrupos : normalizeGrupos(c);
         const tagsHtml = grupos.map((g) => `<span class="tag tag-sm ${TAG_CLASS[g] || ''}">${g}</span>`).join('');
 
         const exercisesHtml = c.ejercicios.map((ej) => {
