@@ -136,14 +136,15 @@ select.input {
   letter-spacing: 0.5px;
 }
 
-.tag-core { background-color: color-mix(in srgb, var(--color-tag-core) 85%, black); color: #fff; }
-.tag-piernas { background-color: color-mix(in srgb, var(--color-tag-piernas) 85%, black); color: #fff; }
-.tag-pecho { background-color: color-mix(in srgb, var(--color-tag-pecho) 85%, black); color: #fff; }
-.tag-espalda { background-color: color-mix(in srgb, var(--color-tag-espalda) 85%, black); color: #fff; }
-.tag-brazos { background-color: color-mix(in srgb, var(--color-tag-brazos) 85%, black); color: #fff; }
-.tag-gluteos { background-color: color-mix(in srgb, var(--color-tag-gluteos) 85%, black); color: #fff; }
-.tag-hombros { background-color: color-mix(in srgb, var(--color-tag-hombros) 85%, black); color: #fff; }
-.tag-cardio { background-color: color-mix(in srgb, var(--color-tag-cardio) 85%, black); color: #fff; }
+.tag-core { background-color: color-mix(in srgb, var(--color-tag-core) 55%, black); color: #fff; }
+.tag-piernas { background-color: color-mix(in srgb, var(--color-tag-piernas) 55%, black); color: #fff; }
+.tag-pecho { background-color: color-mix(in srgb, var(--color-tag-pecho) 55%, black); color: #fff; }
+.tag-espalda { background-color: color-mix(in srgb, var(--color-tag-espalda) 55%, black); color: #fff; }
+.tag-brazos { background-color: color-mix(in srgb, var(--color-tag-brazos) 55%, black); color: #fff; }
+.tag-gluteos { background-color: color-mix(in srgb, var(--color-tag-gluteos) 55%, black); color: #fff; }
+.tag-hombros { background-color: color-mix(in srgb, var(--color-tag-hombros) 55%, black); color: #fff; }
+.tag-cardio { background-color: color-mix(in srgb, var(--color-tag-cardio) 55%, black); color: #fff; }
+.tag-hiit { background-color: color-mix(in srgb, var(--color-tag-hiit) 55%, black); color: #fff; }
 
 /* ── Modal ───────────────────────────────── */
 

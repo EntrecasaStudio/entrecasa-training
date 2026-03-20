@@ -110,7 +110,8 @@ export function getTipoIcon(tipo) {
 // ── Shared render helpers ────────────────────
 
 export function renderTags(rutina, small = false) {
-  const grupos = [...new Set(rutina.circuitos.flatMap((c) => normalizeGrupos(c)))];
+  // Auto-derive from exercises, ordered by frequency
+  const grupos = [...new Set(rutina.circuitos.flatMap((c) => autoGruposFromEjercicios(c)))];
   const sizeClass = small ? 'tag-sm' : '';
   return grupos
     .map((g) => `<span class="tag ${sizeClass} ${TAG_CLASS[g] || ''}">${g}</span>`)
@@ -137,9 +138,8 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
       (c, i) => {
         const chalecoBadge = c.chaleco ? `<span class="preview-chaleco-badge">🦺${c.chalecoPeso ? ` ${c.chalecoPeso}` : ''}</span>` : '';
 
-        const grupos = normalizeGrupos(c);
+        const grupos = autoGruposFromEjercicios(c);
         const tagsHtml = grupos.map((g) => `<span class="tag tag-sm ${TAG_CLASS[g] || ''}">${g}</span>`).join('');
-        const colorSlug = (TAG_CLASS[grupos[0]] || 'tag-core').replace('tag-', '');
 
         const exercisesHtml = c.ejercicios.map((ej) => {
           const ejTipo = ej.tipo || 'normal';
@@ -148,7 +148,7 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
         }).join('');
 
         return `
-          <div class="preview-circuit preview-circuit-color-${colorSlug}">
+          <div class="preview-circuit">
             <div class="preview-circuit-bar"></div>
             <div class="preview-circuit-content">
               <div class="preview-circuit-header">
