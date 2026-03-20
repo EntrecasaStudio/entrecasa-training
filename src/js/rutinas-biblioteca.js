@@ -52,16 +52,42 @@ function parseGrupos(titulo) {
   return [...new Set(result)];
 }
 
-// ── Assign muscle group to each circuit ─────────
+// ── Derive muscle groups from exercise names in a circuit ─────────
 
-function assignCircuitGrupo(circuitName, routineGrupos, circuitIndex) {
+function deriveGruposFromExercises(exercises) {
+  const freq = new Map();
+  for (const name of exercises) {
+    const n = name.toLowerCase();
+    const groups = [];
+    if (n.includes('pecho') || n.includes('press de pecho') || n.includes('banco') || n.includes('fondos de pecho')) groups.push('Pecho');
+    if (n.includes('espalda') || n.includes('serrucho') || n.includes('remo') || n.includes('pullup') || n.includes('dominada')) groups.push('Espalda');
+    if (n.includes('pierna') || n.includes('sentadilla') || n.includes('bulgara') || n.includes('estocada') || n.includes('sumo') || n.includes('cuádricep') || n.includes('isquio')) groups.push('Piernas');
+    if (n.includes('core') || n.includes('abdom') || n.includes('abmat') || n.includes('plancha') || n.includes('deadbug') || n.includes('hollow') || n.includes('copenha')) groups.push('Core');
+    if (n.includes('bíceps') || n.includes('biceps') || n.includes('tríceps') || n.includes('triceps') || n.includes('curl') || n.includes('martillo') || n.includes('inflador') || n.includes('francés')) groups.push('Brazos');
+    if (n.includes('glúteo') || n.includes('gluteo') || n.includes('hip thrust') || n.includes('puente')) groups.push('Glúteos');
+    if (n.includes('hombro') || n.includes('lateral') || n.includes('frontal') || n.includes('vuelo')) groups.push('Hombros');
+    if (n.includes('corrida') || n.includes('cinta') || n.includes('bici') || n.includes('remo ergo')) groups.push('Cardio');
+    if (n.includes('burpee') || n.includes('wall ball') || n.includes('trineo') || n.includes('salto')) groups.push('Piernas');
+    for (const g of groups) freq.set(g, (freq.get(g) || 0) + 1);
+  }
+  // Sort by frequency, return as array
+  return [...freq.entries()].sort((a, b) => b[1] - a[1]).map(([g]) => g);
+}
+
+function assignCircuitGrupos(circuitName, exercises, routineGrupos, circuitIndex) {
   const cn = circuitName.toLowerCase();
-  if (cn.includes('core')) return 'Core';
 
-  // Distribute non-Core groups across non-Core circuits
+  // Try to derive from exercise names first
+  const derived = deriveGruposFromExercises(exercises);
+  if (derived.length > 0) return derived;
+
+  // Fallback: parse circuit name
+  if (cn.includes('core')) return ['Core'];
+
+  // Fallback: distribute routine-level groups across circuits
   const nonCore = routineGrupos.filter((g) => g !== 'Core');
-  if (nonCore.length === 0) return 'Core';
-  return nonCore[(circuitIndex - 1) % nonCore.length] || nonCore[0];
+  if (nonCore.length === 0) return ['Core'];
+  return [nonCore[(circuitIndex - 1) % nonCore.length] || nonCore[0]];
 }
 
 // ── Parse chaleco (vest) info from circuit name ──
@@ -87,7 +113,7 @@ function buildFromNotion(entry, usuario) {
   const routineGrupos = parseGrupos(entry.n);
 
   const circuitos = variant.map((c, i) => {
-    const grupo = assignCircuitGrupo(c.n, routineGrupos, i);
+    const grupos = assignCircuitGrupos(c.n, c.e, routineGrupos, i);
     const { chaleco, chalecoPeso } = parseChalecoFromName(c.n);
 
     const ejercicios = c.e.map((name) => ({
@@ -97,7 +123,7 @@ function buildFromNotion(entry, usuario) {
       pesoKg: 0,
     }));
 
-    const circ = { id: generateId(), grupoMuscular: grupo, ejercicios };
+    const circ = { id: generateId(), grupoMuscular: grupos, ejercicios };
     if (chaleco) {
       circ.chaleco = true;
       if (chalecoPeso) circ.chalecoPeso = chalecoPeso;

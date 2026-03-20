@@ -190,7 +190,7 @@ function rutinasNat() {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '15'; // 15 = cardio mode per-exercise (not per-circuit)
+  const CURRENT_SEED_V = '16'; // 16 = circuit grupoMuscular derived from exercise names
 
   const seedRutinas = [
     ...rutinasLean(),
