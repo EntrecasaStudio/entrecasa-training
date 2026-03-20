@@ -1255,34 +1255,8 @@
   transition: border-color 200ms ease;
 }
 
-/* ── Circuit color coding — unified yellow ── */
-
-.circuito-color-pecho,
-.circuito-color-espalda,
-.circuito-color-piernas,
-.circuito-color-core,
-.circuito-color-brazos,
-.circuito-color-gluteos,
-.circuito-color-hombros,
-.circuito-color-cardio,
-.circuito-color-none { border-left-color: #FFCD00; }
-
-.circuito-num-pecho,
-.circuito-num-espalda,
-.circuito-num-piernas,
-.circuito-num-core,
-.circuito-num-brazos,
-.circuito-num-gluteos,
-.circuito-num-hombros,
-.circuito-num-none { color: #FFCD00; }
-
-.circuito-select-pecho { border-color: color-mix(in srgb, var(--color-tag-pecho) 40%, var(--color-border)); color: var(--color-tag-pecho); }
-.circuito-select-espalda { border-color: color-mix(in srgb, var(--color-tag-espalda) 40%, var(--color-border)); color: var(--color-tag-espalda); }
-.circuito-select-piernas { border-color: color-mix(in srgb, var(--color-tag-piernas) 40%, var(--color-border)); color: var(--color-tag-piernas); }
-.circuito-select-core { border-color: color-mix(in srgb, var(--color-tag-core) 40%, var(--color-border)); color: var(--color-tag-core); }
-.circuito-select-brazos { border-color: color-mix(in srgb, var(--color-tag-brazos) 40%, var(--color-border)); color: var(--color-tag-brazos); }
-.circuito-select-gluteos { border-color: color-mix(in srgb, var(--color-tag-gluteos) 40%, var(--color-border)); color: var(--color-tag-gluteos); }
-.circuito-select-hombros { border-color: color-mix(in srgb, var(--color-tag-hombros) 40%, var(--color-border)); color: var(--color-tag-hombros); }
+/* ── Circuit styling — always accent yellow ── */
+.circuito-form-card { border-left-color: var(--color-accent); }
 
 .circuito-form-header {
   display: flex;
@@ -1931,8 +1905,8 @@
   justify-content: center;
   font-size: var(--text-xs);
   font-weight: var(--fw-bold);
-  background: var(--color-border);
-  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-accent) 20%, transparent);
+  color: var(--color-accent);
   flex-shrink: 0;
 }
 

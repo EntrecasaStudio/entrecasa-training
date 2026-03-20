@@ -3,6 +3,7 @@ import { navigate, refreshCurrentTab } from '@/router.js';
 import { icon } from '@js/icons.js';
 import { showToastAction } from '@js/components/toast.js';
 import { showModal } from '@js/components/modal.js';
+import { ejerciciosCatalogo, getEjerciciosCustom, CATEGORIAS } from '@js/ejercicios-catalogo.js';
 
 // ── Helpers ──────────────────────────────────
 
@@ -11,6 +12,28 @@ export function normalizeGrupos(circuit) {
   const g = circuit.grupoMuscular;
   if (!g) return [];
   return Array.isArray(g) ? g : [g];
+}
+
+/**
+ * Auto-derive muscle groups from exercises in a circuit.
+ * Returns groups ordered by frequency (most exercises first), then insertion order on tie.
+ */
+export function autoGruposFromEjercicios(circuito) {
+  const allEj = [...ejerciciosCatalogo, ...getEjerciciosCustom()];
+  const catMap = new Map(allEj.map((e) => [e.nombre, e.categoria]));
+  const freq = new Map(); // categoria → count
+  for (const ej of circuito.ejercicios) {
+    if (ej.nombre) {
+      const cat = catMap.get(ej.nombre);
+      if (cat && CATEGORIAS.includes(cat)) {
+        freq.set(cat, (freq.get(cat) || 0) + 1);
+      }
+    }
+  }
+  // Sort by frequency descending, then by insertion order
+  return [...freq.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([cat]) => cat);
 }
 
 // ── Tag class mapping ────────────────────────
@@ -24,6 +47,7 @@ export const TAG_CLASS = {
   'Glúteos': 'tag-gluteos',
   Hombros: 'tag-hombros',
   Cardio: 'tag-cardio',
+  HIIT: 'tag-hiit',
 };
 
 // ── Day labels ───────────────────────────────

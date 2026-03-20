@@ -6,20 +6,7 @@ import { buscarEjerciciosPorCategorias, addEjercicioCustom, CATEGORIAS, ejercici
 import { showModal } from '@js/components/modal.js';
 import { showToast } from '@js/components/toast.js';
 import { showExerciseDetail } from '@js/helpers/ejercicio-detail.js';
-import { formatNumero } from '@js/helpers/rutina-helpers.js';
-
-const GRUPOS_MUSCULARES = ['Pecho', 'Espalda', 'Piernas', 'Core', 'Brazos', 'Glúteos', 'Hombros', 'Cardio', 'HIIT'];
-const GRUPO_COLOR_SLUG = {
-  Pecho: 'pecho',
-  Espalda: 'espalda',
-  Piernas: 'piernas',
-  Core: 'core',
-  Brazos: 'brazos',
-  'Glúteos': 'gluteos',
-  Hombros: 'hombros',
-  Cardio: 'cardio',
-  HIIT: 'hiit',
-};
+import { formatNumero, autoGruposFromEjercicios, TAG_CLASS } from '@js/helpers/rutina-helpers.js';
 
 // Categories that auto-detect as cardio/hiit exercise type
 const CARDIO_CATEGORIES = ['Cardio'];
@@ -30,33 +17,6 @@ const MIN_REPS = 6;
 const MAX_REPS = 99;
 
 let returnTo = '/rutinas';
-
-// Map form grupoMuscular → catalog categorías
-const GRUPO_A_CATEGORIAS = {
-  Pecho: ['Pecho'],
-  Espalda: ['Espalda'],
-  Piernas: ['Piernas', 'Glúteos'],
-  Core: ['Core'],
-  Brazos: ['Brazos', 'Hombros'],
-  'Glúteos': ['Glúteos'],
-  Hombros: ['Hombros'],
-  Cardio: ['Cardio'],
-  HIIT: ['HIIT'],
-};
-
-// ── Auto-derive grupoMuscular from exercise categories ──
-function autoGruposFromEjercicios(circuito) {
-  const allEj = [...ejerciciosCatalogo, ...getEjerciciosCustom()];
-  const catMap = new Map(allEj.map((e) => [e.nombre, e.categoria]));
-  const grupos = new Set();
-  for (const ej of circuito.ejercicios) {
-    if (ej.nombre) {
-      const cat = catMap.get(ej.nombre);
-      if (cat && GRUPOS_MUSCULARES.includes(cat)) grupos.add(cat);
-    }
-  }
-  return [...grupos];
-}
 
 function syncGruposFromEjercicios(circIdx) {
   const circ = rutina.circuitos[circIdx];
@@ -152,8 +112,8 @@ function renderPicker(circIdx, ejIdx) {
   // Category filter chips — all categories, toggleable
   const catChips = CATEGORIAS.map((cat) => {
     const isOn = !pickerDisabledCats.has(cat);
-    const slug = GRUPO_COLOR_SLUG[cat] || cat.toLowerCase();
-    return `<button class="picker-cat-chip tag tag-${slug} ${isOn ? '' : 'picker-cat-off'}"
+    const cls = TAG_CLASS[cat] || '';
+    return `<button class="picker-cat-chip tag ${cls} ${isOn ? '' : 'picker-cat-off'}"
                     data-action="toggle-picker-cat" data-cat="${cat}">${cat}</button>`;
   }).join('');
 
@@ -334,14 +294,13 @@ function renderEjercicio(ej, circIdx, ejIdx, totalEj) {
 }
 
 function renderCircuito(circ, idx) {
-  // Auto-derive grupos from exercises (read-only, no manual selection)
+  // Auto-derive grupos from exercises (frequency-ordered, read-only)
   const grupos = autoGruposFromEjercicios(circ);
   if (grupos.length > 0) circ.grupoMuscular = grupos;
-  const colorSlug = grupos.length > 0 ? (GRUPO_COLOR_SLUG[grupos[0]] || 'pecho') : 'none';
 
   const tagsHtml = grupos.map((g) => {
-    const slug = GRUPO_COLOR_SLUG[g] || 'pecho';
-    return `<span class="tag tag-${slug} circuito-grupo-tag">${g}</span>`;
+    const cls = TAG_CLASS[g] || '';
+    return `<span class="tag ${cls} circuito-grupo-tag">${g}</span>`;
   }).join('');
 
   const totalEj = circ.ejercicios.length;
@@ -354,10 +313,10 @@ function renderCircuito(circ, idx) {
     : '';
 
   return `
-    <div class="card circuito-form-card circuito-color-${colorSlug}" data-circuito-idx="${idx}">
+    <div class="card circuito-form-card" data-circuito-idx="${idx}">
       <div class="circuito-form-header">
         ${circDragHandle}
-        <span class="circuito-form-number circuito-num-${colorSlug}">${idx + 1}</span>
+        <span class="circuito-form-number">${idx + 1}</span>
         <div class="circuito-grupo-tags">
           ${tagsHtml}
         </div>

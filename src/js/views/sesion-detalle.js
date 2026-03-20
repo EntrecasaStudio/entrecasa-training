@@ -63,7 +63,6 @@ function renderStatsStrip(sesion) {
 
 function renderCircuito(circ, circIdx, prevCirc) {
   const grupos = (Array.isArray(circ.grupoMuscular) ? circ.grupoMuscular : [circ.grupoMuscular]).filter(Boolean);
-  const colorSlug = grupos.length > 0 ? (TAG_CLASS[grupos[0]] || '').replace('tag-', '') : '';
 
   const ejercicios = circ.ejercicios
     .map((ej, ejIdx) => {
@@ -120,7 +119,7 @@ function renderCircuito(circ, circIdx, prevCirc) {
   return `
     <div class="card circuito-detalle-card animate-in" style="animation-delay:${100 + circIdx * 80}ms">
       <div class="circuito-detalle-header">
-        <span class="circuito-detalle-number${colorSlug ? ' circuito-num-' + colorSlug : ''}">${circIdx + 1}</span>
+        <span class="circuito-detalle-number">${circIdx + 1}</span>
         <div class="circuito-detalle-tags">
           ${grupos.map(g => `<span class="tag ${TAG_CLASS[g] || ''}">${g}</span>`).join('')}
         </div>
