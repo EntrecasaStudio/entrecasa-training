@@ -201,6 +201,16 @@ export function stopRealtimeSync() {
   }
 }
 
+/** Clear all pending sync state (call on logout to prevent cross-account data leaks) */
+export function clearSyncState() {
+  for (const key of Object.keys(_timers)) {
+    clearTimeout(_timers[key]);
+    delete _timers[key];
+  }
+  _dirtyKeys.clear();
+  _suppressSync = false;
+}
+
 // ── Debounced sync trigger ──────────────
 
 /**

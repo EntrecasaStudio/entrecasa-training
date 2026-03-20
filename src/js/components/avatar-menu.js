@@ -159,7 +159,7 @@ function handleDropdownClick(e) {
     case 'logout':
       closeMenu();
       if (confirm('¿Cerrar sesion?')) {
-        logout();
+        logout().catch((err) => console.warn('[auth] Logout error:', err.message));
       }
       break;
   }

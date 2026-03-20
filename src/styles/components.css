@@ -369,8 +369,15 @@ select.input {
 
 .day-assign-option.active {
   border-color: var(--color-accent);
+  background-color: color-mix(in srgb, var(--color-accent) 10%, transparent);
   color: var(--color-accent);
   font-weight: var(--fw-semibold);
+}
+.day-assign-check {
+  font-size: var(--text-base);
+  font-weight: var(--fw-bold);
+  color: var(--color-accent);
+  flex-shrink: 0;
 }
 
 .day-assign-option-code {

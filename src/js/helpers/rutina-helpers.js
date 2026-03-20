@@ -273,10 +273,12 @@ export function showDayAssignmentModal(usuario, dia, tipoActual, onDone, { date,
 
     return rutinas.map((r) => {
       const isActive = r.id === selectedRutinaId ? ' active' : '';
+      const check = r.id === selectedRutinaId ? '<span class="day-assign-check">✓</span>' : '';
       const code = formatNumero(r.numero, r);
       const name = getDisplayName(r);
       return `
         <div class="day-assign-option${isActive}" data-assign-rutina="${r.id}">
+          ${check}
           ${code ? `<span class="day-assign-option-code">${code}</span>` : ''}
           <span class="day-assign-option-name">${name}</span>
           <button class="day-assign-option-info" data-assign-info="${r.id}" title="Ver detalle">
@@ -306,7 +308,14 @@ export function showDayAssignmentModal(usuario, dia, tipoActual, onDone, { date,
 
   function updateList() {
     const listEl = overlay.querySelector('.day-assign-list');
-    if (listEl) listEl.innerHTML = renderList();
+    if (listEl) {
+      listEl.innerHTML = renderList();
+      // Auto-scroll to active routine so user can see it
+      const activeEl = listEl.querySelector('.day-assign-option.active');
+      if (activeEl) {
+        requestAnimationFrame(() => activeEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
+      }
+    }
     overlay.querySelectorAll('[data-assign-tipo]').forEach((b) => {
       b.classList.toggle('active', b.dataset.assignTipo === currentTipo);
     });

@@ -14,19 +14,29 @@ import { mountVoiceFab } from '@js/components/voice-fab.js';
 import { mountAvatarMenu, updateAvatarMenu } from '@js/components/avatar-menu.js';
 import { loadSavedTheme, applyUserAccent } from '@js/services/theme-manager.js';
 import { onAuth, auth } from '@js/services/firebase.js';
-import { startRealtimeSync, stopRealtimeSync, downloadAllData, uploadAllData } from '@js/services/sync.js';
-import { setUsuarioActivo, getUsuarioActivo, purgeDeleted } from './store.js';
+import { startRealtimeSync, stopRealtimeSync, downloadAllData, uploadAllData, clearSyncState } from '@js/services/sync.js';
+import { setUsuarioActivo, getUsuarioActivo, purgeDeleted, getWorkoutActivo, saveWorkoutActivo } from './store.js';
 import { initSwipeBack } from '@js/helpers/swipe-back.js';
 import { initPullToRefresh } from '@js/helpers/pull-to-refresh.js';
 import { mountOfflineBanner } from '@js/components/offline-banner.js';
+
+// ── Global error handler — prevent silent crashes ──────────
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('[app] Unhandled promise rejection:', e.reason);
+  e.preventDefault(); // Don't crash the app
+});
+window.addEventListener('error', (e) => {
+  console.error('[app] Uncaught error:', e.message, e.filename, e.lineno);
+});
 
 // ── Splash 3D kettlebell (loaded immediately) ──────────────
 const splashStart = Date.now();
 const MIN_SPLASH_MS = 2200; // minimum time to show splash so kettlebell is visible
 const splashReadyP = import('@js/helpers/splash-3d.js').then(({ mountSplash3D }) => mountSplash3D()).catch(() => {});
 
-// Seed initial rutinas from Notion data (only if empty)
-seedIfEmpty();
+// NOTE: seedIfEmpty() is NOT called here anymore — deferred until after Firestore sync
+// to prevent overwriting cloud data on deploy/reload.
+
 // Purge soft-deleted items older than 30 days
 purgeDeleted();
 
@@ -45,6 +55,9 @@ if ('serviceWorker' in navigator) {
       if (newSW) {
         newSW.addEventListener('statechange', () => {
           if (newSW.state === 'activated') {
+            // Save active workout before reload to prevent data loss
+            const workout = getWorkoutActivo();
+            if (workout) saveWorkoutActivo(workout);
             // New SW activated — reload to get fresh assets
             window.location.reload();
           }
@@ -76,6 +89,7 @@ initPullToRefresh(async () => {
 // ── Auth-aware initialization ──────────────
 
 let authResolved = false;
+let routerInitialized = false;
 
 async function hideSplash() {
   // Wait for 3D kettlebell to render + minimum display time
@@ -96,6 +110,21 @@ async function hideSplash() {
   }
 }
 
+function safeInitRouter() {
+  if (!routerInitialized) {
+    routerInitialized = true;
+    initRouter();
+  }
+}
+
+/** Refresh current view unless user is actively editing/training */
+function refreshViewIfSafe() {
+  const hash = window.location.hash || '#/';
+  const path = hash.replace('#', '') || '/';
+  if (path.includes('/editar/') || path.includes('/nueva') || path.startsWith('/entrenamiento')) return;
+  navigate(path);
+}
+
 onAuth(async (user) => {
   if (!authResolved) {
     authResolved = true;
@@ -104,40 +133,34 @@ onAuth(async (user) => {
     if (user) {
       // Keep stored profile or default to 'Lean'
       if (!localStorage.getItem('gym_usuario')) setUsuarioActivo('Lean');
-      // Sync with Firestore: download cloud data, upload local data
+      // Sync with Firestore: download cloud data, then seed, then upload
       try {
         const hadCloud = await downloadAllData();
+        // Seed AFTER download so we don't overwrite cloud data
+        seedIfEmpty();
         if (hadCloud) {
-          // Re-run seed to apply migrations to downloaded data
-          seedIfEmpty();
           // Upload migrated data back to cloud so other devices get the fix
           await uploadAllData();
         } else {
           await uploadAllData();
         }
       } catch (err) {
+        // Sync failed — still seed locally so app isn't empty
+        seedIfEmpty();
         console.warn('[app] Initial sync failed:', err.message);
       }
       startRealtimeSync(() => {
-        // Re-apply seed migrations in case remote data reverted local changes
-        seedIfEmpty();
-        // Push migrated data back so other devices get the fix
-        uploadAllData().catch(() => {});
-        // Remote data changed — refresh current view (but not during active edits/workouts)
-        const hash = window.location.hash || '#/';
-        const path = hash.replace('#', '') || '/';
-        if (path.includes('/editar/') || path.includes('/nueva') || path.startsWith('/entrenamiento')) return;
-        navigate(path);
+        // Remote data changed — refresh current view
+        refreshViewIfSafe();
       });
     } else if (!auth) {
-      // No Firebase — keep stored user or default to 'Lean'
+      // No Firebase — seed locally, keep stored user or default to 'Lean'
+      seedIfEmpty();
       if (!localStorage.getItem('gym_usuario')) setUsuarioActivo('Lean');
     }
 
     updateAvatarMenu();
-
-    // Init router now that auth state is known
-    initRouter();
+    safeInitRouter();
     hideSplash();
     return;
   }
@@ -145,29 +168,26 @@ onAuth(async (user) => {
   // ── Subsequent auth state changes (login / logout) ──────
   if (user) {
     stopRealtimeSync();
+    clearSyncState();
     // Keep stored profile or default to 'Lean'
     if (!localStorage.getItem('gym_usuario')) setUsuarioActivo('Lean');
     // Sync data for this account
     try {
       await uploadAllData();
       await downloadAllData();
-      seedIfEmpty(); // re-apply migrations to downloaded data
+      seedIfEmpty();
     } catch (err) {
+      seedIfEmpty();
       console.warn('[app] Sync after login failed:', err.message);
     }
     startRealtimeSync(() => {
-      // Re-apply seed migrations in case remote data reverted local changes
-      seedIfEmpty();
-      uploadAllData().catch(() => {});
-      const hash = window.location.hash || '#/';
-      const path = hash.replace('#', '') || '/';
-      if (path.includes('/editar/') || path.includes('/nueva') || path.startsWith('/entrenamiento')) return;
-      navigate(path);
+      refreshViewIfSafe();
     });
     updateAvatarMenu();
     navigate('/');
   } else {
     stopRealtimeSync();
+    clearSyncState();
     updateAvatarMenu();
     navigate('/login');
   }
@@ -178,7 +198,8 @@ setTimeout(() => {
   if (!authResolved) {
     authResolved = true;
     console.warn('[app] Auth timeout — proceeding without Firebase');
-    initRouter();
+    seedIfEmpty();
+    safeInitRouter();
     hideSplash();
   }
 }, 10000);
