@@ -1,4 +1,4 @@
-import { getRutinaById, getRutinas, saveRutina, getUsuarioActivo, getEjercicioMeta } from '@/store.js';
+import { getRutinaById, getRutinas, saveRutina, getUsuarioActivo, getEjercicioMeta, assignRutinaADia, setPlanDia } from '@/store.js';
 import { generateId } from '@/id.js';
 import { navigate } from '@/router.js';
 import { icon } from '@js/icons.js';
@@ -352,13 +352,16 @@ export function render(params) {
     rutina = {
       id: generateId(),
       nombre: '',
-      tipo: 'gimnasio',
-      usuario: getUsuarioActivo(),
+      tipo: params.tipo || 'gimnasio',
+      usuario: params.usuario || getUsuarioActivo(),
       diaSemana: null,
       creada: new Date().toISOString(),
       circuitos: [crearCircuitoVacio()],
     };
   }
+
+  // If coming from calendar with a day, auto-assign on save
+  const assignDay = params.day != null ? Number(params.day) : null;
 
   activePicker = null;
   pickerQuery = '';
@@ -1073,6 +1076,11 @@ export function mount(params) {
           }
           rutina.custom = true;
           saveRutina(rutina);
+          // Auto-assign to calendar day if created from day-assignment modal
+          if (assignDay != null) {
+            assignRutinaADia(rutina.id, assignDay, rutina.usuario);
+            setPlanDia(rutina.usuario, assignDay, rutina.tipo);
+          }
           isDirty = false;
           showToast('Rutina guardada');
           navigate(returnTo);

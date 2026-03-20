@@ -426,8 +426,20 @@ select.input {
   font-size: var(--text-sm);
 }
 
+.day-assign-search-row {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: center;
+  margin-bottom: var(--space-xs);
+}
+.day-assign-crear-btn {
+  flex-shrink: 0;
+  font-size: var(--text-xs);
+  padding: 6px 10px;
+  white-space: nowrap;
+}
 .day-assign-search {
-  width: 100%;
+  flex: 1;
   box-sizing: border-box;
   padding: 8px var(--space-sm);
   font-size: var(--text-sm);
@@ -437,7 +449,6 @@ select.input {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   outline: none;
-  margin-bottom: var(--space-xs);
 }
 .day-assign-search:focus {
   border-color: var(--color-accent);

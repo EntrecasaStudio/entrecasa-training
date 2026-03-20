@@ -382,7 +382,10 @@ export function showDayAssignmentModal(usuario, dia, tipoActual, onDone, { date,
                 Cross <span class="day-assign-tipo-count">(${crossCount})</span>
               </button>
             </div>
-            <input type="text" class="day-assign-search" placeholder="Buscar rutina..." autocomplete="off">
+            <div class="day-assign-search-row">
+              <input type="text" class="day-assign-search" placeholder="Buscar rutina..." autocomplete="off">
+              <button class="btn btn-sm day-assign-crear-btn" data-assign-crear>+ Nueva</button>
+            </div>
             <div class="day-assign-list">${renderList()}</div>
           </div>
         </div>
@@ -438,6 +441,13 @@ export function showDayAssignmentModal(usuario, dia, tipoActual, onDone, { date,
 
     // Close X
     if (e.target.closest('[data-assign-close]')) { applyAndClose(); return; }
+
+    // "Crear nueva" → navigate to new routine form with day info
+    if (e.target.closest('[data-assign-crear]')) {
+      overlay.remove();
+      navigate(`/rutina/nueva?from=home&day=${dia}&usuario=${usuario}&tipo=${currentTipo}`);
+      return;
+    }
 
     // Info button → open preview on top
     const infoBtn = e.target.closest('[data-assign-info]');
