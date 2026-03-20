@@ -237,6 +237,33 @@
 }
 .circuit-confirm-seg svg { width: 18px; height: 18px; }
 
+/* Edit mode action buttons */
+.workout-add-ej-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: var(--space-sm);
+  margin-bottom: var(--space-xs);
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text-muted);
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.workout-add-ej-btn svg { width: 14px; height: 14px; }
+.workout-add-ej-btn:active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+.workout-edit-btn { opacity: 0.7; }
+.workout-remove-ej-btn:active { color: var(--color-danger); }
+
 /* Remove circuit button */
 .workout-remove-circuit-btn {
   display: flex;

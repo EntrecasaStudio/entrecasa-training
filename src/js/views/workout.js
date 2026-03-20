@@ -312,13 +312,22 @@ function renderEjercicio(ej, ejIdx) {
   if (doneCount > 0) summaryParts.push(`${doneCount}/${totalVueltas} ✓`);
   const summaryText = summaryParts.join(' · ');
 
+  const isEditMode = state?.editMode;
+  const circ = state?.resultados?.[state.circuitoActual];
+  const canRemoveEj = isEditMode && circ && circ.ejercicios.length > 1;
+
   return `
     <div class="workout-ejercicio animate-in" style="animation-delay:${ejIdx * 60}ms">
       <div class="workout-ejercicio-header" data-action="toggle-ej-expand" data-ej="${ejIdx}" style="cursor:pointer">
         <div class="workout-ejercicio-name">${ej.nombre}</div>
-        <button class="workout-info-btn" data-action="replace-exercise" data-ej="${ejIdx}" aria-label="Cambiar ${ej.nombre}">
-          ${icon.swap}
-        </button>
+        ${isEditMode ? `
+          <button class="workout-info-btn workout-edit-btn" data-action="replace-exercise" data-ej="${ejIdx}" aria-label="Cambiar ${ej.nombre}">
+            ${icon.swap}
+          </button>
+          ${canRemoveEj ? `<button class="workout-info-btn workout-edit-btn workout-remove-ej-btn" data-action="remove-exercise" data-ej="${ejIdx}" aria-label="Quitar ${ej.nombre}">
+            ${icon.trash}
+          </button>` : ''}
+        ` : ''}
         <button class="workout-info-btn" data-action="show-detail" data-nombre="${ej.nombre}" aria-label="Info de ${ej.nombre}">
           ${icon.info}
         </button>
@@ -693,11 +702,16 @@ export function render(params) {
 
     ${ejercicios}
 
-    ${state.editMode && state.resultados.length > 1
-      ? `<button class="workout-remove-circuit-btn" data-action="remove-circuit">
-           ${icon.trash} Quitar circuito
-         </button>`
-      : ''}
+    ${state.editMode ? `
+      <button class="workout-add-ej-btn" data-action="add-exercise-to-circuit">
+        ${icon.plus} Agregar ejercicio
+      </button>
+      ${state.resultados.length > 1
+        ? `<button class="workout-remove-circuit-btn" data-action="remove-circuit">
+             ${icon.trash} Quitar circuito
+           </button>`
+        : ''}
+    ` : ''}
 
     ${pesoStepHtml}
 
@@ -1620,6 +1634,54 @@ export function mount(params) {
         saveWorkoutActivo(state);
         haptic.medium();
         reRenderWorkout(params, { preserveScroll: true });
+        break;
+      }
+
+      case 'add-exercise-to-circuit': {
+        syncInputs();
+        const circ = state.resultados[state.circuitoActual];
+        showExercisePickerModal({
+          grupoMuscular: null,
+          onSelect: (nombre) => {
+            circ.ejercicios.push({
+              nombre,
+              repsObjetivo: 10,
+              pesoObjetivoKg: 0,
+              chaleco: false,
+              pesoChalecoKg: 0,
+              vueltas: [{ repsReal: 10, pesoRealKg: 0, done: false }],
+            });
+            circ.grupoMuscular = autoGruposFromEjercicios(circ);
+            state.modified = true;
+            saveWorkoutActivo(state);
+            haptic.medium();
+            reRenderWorkout(params, { preserveScroll: true });
+          },
+        });
+        break;
+      }
+
+      case 'remove-exercise': {
+        syncInputs();
+        const ejIdx = parseInt(btn.dataset.ej);
+        const circ2 = state.resultados[state.circuitoActual];
+        if (circ2 && circ2.ejercicios.length > 1) {
+          const removed = circ2.ejercicios.splice(ejIdx, 1)[0];
+          circ2.grupoMuscular = autoGruposFromEjercicios(circ2);
+          state.modified = true;
+          saveWorkoutActivo(state);
+          haptic.medium();
+          reRenderWorkout(params, { preserveScroll: true });
+          // Show undo toast
+          import('@js/components/toast.js').then(({ showToastAction }) => {
+            showToastAction('Ejercicio eliminado', 'Deshacer', () => {
+              circ2.ejercicios.splice(ejIdx, 0, removed);
+              circ2.grupoMuscular = autoGruposFromEjercicios(circ2);
+              saveWorkoutActivo(state);
+              reRenderWorkout(params, { preserveScroll: true });
+            }, { duration: 5000 });
+          });
+        }
         break;
       }
 
