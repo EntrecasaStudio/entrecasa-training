@@ -184,7 +184,7 @@ export function render(params) {
       <div class="view-header-title">${sesion.rutinaNombre}</div>
     </div>
 
-    <div class="sesion-detalle-fecha animate-in">${formatDate(sesion.fecha)}</div>
+    <div class="sesion-detalle-fecha animate-in detalle-fecha-editable" data-sesion-id="${sesion.id}" data-fecha="${sesion.fecha}" title="Tocar para editar fecha">${formatDate(sesion.fecha)}</div>
 
     ${renderStatsStrip(sesion)}
 
@@ -200,6 +200,45 @@ export function mount() {
   const handleClick = (e) => {
     if (e.target.closest('[data-action="back"]')) {
       navigate('/historial');
+      return;
+    }
+
+    // Inline editing for date
+    const fechaEl = e.target.closest('.detalle-fecha-editable');
+    if (fechaEl && !fechaEl.querySelector('input')) {
+      const sesionId = fechaEl.dataset.sesionId;
+      const currentISO = fechaEl.dataset.fecha;
+      const currentDate = currentISO ? currentISO.split('T')[0] : new Date().toISOString().split('T')[0];
+
+      const input = document.createElement('input');
+      input.type = 'date';
+      input.className = 'detalle-fecha-inline-input';
+      input.value = currentDate;
+      fechaEl.textContent = '';
+      fechaEl.appendChild(input);
+      input.focus();
+
+      const save = () => {
+        const newDate = input.value;
+        if (newDate) {
+          const sesion = getSesionById(sesionId);
+          if (sesion) {
+            // Preserve time, change only the date portion
+            const oldDate = new Date(sesion.fecha);
+            const [y, m, d] = newDate.split('-').map(Number);
+            oldDate.setFullYear(y, m - 1, d);
+            sesion.fecha = oldDate.toISOString();
+            updateSesion(sesion);
+            fechaEl.dataset.fecha = sesion.fecha;
+            fechaEl.textContent = formatDate(sesion.fecha);
+          }
+        } else {
+          fechaEl.textContent = formatDate(currentISO);
+        }
+      };
+
+      input.addEventListener('blur', save, { once: true });
+      input.addEventListener('change', () => input.blur());
       return;
     }
 
