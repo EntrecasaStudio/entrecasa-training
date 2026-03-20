@@ -252,7 +252,8 @@ export function render() {
     filtered = filtered.filter((r) => {
       const name = (r.nombre || '').toLowerCase();
       const num = formatNumero(r.numero, r).toLowerCase();
-      return name.includes(q) || num.includes(q);
+      const rawNum = String(r.numero || '');
+      return name.includes(q) || num.includes(q) || rawNum.includes(q);
     });
   }
 
@@ -333,7 +334,8 @@ export function mount() {
       filtered = filtered.filter((r) => {
         const name = (r.nombre || '').toLowerCase();
         const num = formatNumero(r.numero, r).toLowerCase();
-        return name.includes(q) || num.includes(q);
+        const rawNum = String(r.numero || '');
+        return name.includes(q) || num.includes(q) || rawNum.includes(q);
       });
     }
 
