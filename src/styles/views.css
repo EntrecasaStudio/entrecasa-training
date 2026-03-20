@@ -1922,10 +1922,27 @@
   margin-bottom: var(--space-md);
 }
 
-.ejercicio-detalle-row {
+.circuito-detalle-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: center;
+  font-size: var(--text-xs);
+  font-weight: var(--fw-bold);
+  background: var(--color-border);
+  color: var(--color-text);
+  flex-shrink: 0;
+}
+
+.circuito-detalle-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ejercicio-detalle-row {
   padding: var(--space-sm) 0;
   border-bottom: 1px solid var(--color-border);
 }
@@ -1936,46 +1953,43 @@
 
 .ejercicio-detalle-name {
   font-weight: var(--fw-medium);
-  flex: 1;
+  margin-bottom: var(--space-xs);
 }
 
-.ejercicio-detalle-values {
-  display: flex;
-  gap: var(--space-md);
+.ejercicio-detalle-summary {
   font-size: var(--text-sm);
-  text-align: right;
-}
-
-.ejercicio-detalle-col {
-  min-width: 60px;
-}
-
-.ejercicio-detalle-col-label {
-  font-size: var(--text-xs);
   color: var(--color-text-muted);
 }
 
-.ejercicio-detalle-col-value {
-  font-weight: var(--fw-semibold);
-}
-
-/* Per-round rows in session detail */
-.detalle-vueltas {
+/* Series table in session detail */
+.detalle-series-table {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   margin-top: var(--space-xs);
 }
 
-.detalle-vuelta-row {
+.detalle-serie-row {
   display: flex;
+  align-items: center;
   gap: var(--space-md);
-  padding: 2px 0;
   font-size: var(--text-sm);
+  padding: 2px 0;
 }
 
-.detalle-vuelta-label {
+.detalle-serie-num {
   width: 24px;
   font-weight: var(--fw-semibold);
   color: var(--color-text-muted);
   font-size: var(--text-xs);
+}
+
+.detalle-serie-reps {
+  min-width: 50px;
+}
+
+.detalle-serie-peso {
+  color: var(--color-text-muted);
 }
 
 .vest-badge {
