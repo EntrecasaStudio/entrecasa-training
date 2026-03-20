@@ -210,6 +210,33 @@
   color: var(--color-accent);
 }
 
+/* Edit mode button (pencil) */
+.circuit-edit-seg {
+  flex: 0 0 auto;
+  min-width: 44px;
+  max-width: 44px;
+  border: 1.5px solid var(--color-border);
+  color: var(--color-text-muted);
+  opacity: 0.6;
+}
+.circuit-edit-seg svg { width: 16px; height: 16px; }
+.circuit-edit-seg:active {
+  opacity: 1;
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* Confirm edit button (checkmark) */
+.circuit-confirm-seg {
+  flex: 0 0 auto;
+  min-width: 44px;
+  max-width: 44px;
+  border: 1.5px solid var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+.circuit-confirm-seg svg { width: 18px; height: 18px; }
+
 /* Remove circuit button */
 .workout-remove-circuit-btn {
   display: flex;

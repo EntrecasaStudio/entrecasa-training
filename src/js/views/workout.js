@@ -181,17 +181,20 @@ function renderCircuitSelector() {
       } else {
         numHtml = `<span class="circuit-seg-num">${i + 1}</span>`;
       }
-      const label = Array.isArray(circ.grupoMuscular) ? circ.grupoMuscular.join(', ') : (circ.grupoMuscular || '');
       const chalecoIcon = circ.chaleco ? '<span class="circuit-seg-chaleco">🦺</span>' : '';
-      return `<button class="${cls}" data-action="goto-circuit" data-idx="${i}">${numHtml}<span class="circuit-seg-label">${label}</span>${chalecoIcon}</button>`;
+      return `<button class="${cls}" data-action="goto-circuit" data-idx="${i}">${numHtml}${chalecoIcon}</button>`;
     })
     .join('');
 
-  const addCircuitBtn = `<button class="circuit-seg circuit-add-seg" data-action="add-circuit" aria-label="Agregar circuito">${icon.plus}</button>`;
+  // Edit mode: show + for add circuit and ✓ to confirm. Normal mode: show edit pencil.
+  const editModeBtn = state.editMode
+    ? `<button class="circuit-seg circuit-add-seg" data-action="add-circuit" aria-label="Agregar circuito">${icon.plus}</button>
+       <button class="circuit-seg circuit-confirm-seg" data-action="confirm-edit" aria-label="Confirmar">${icon.check}</button>`
+    : `<button class="circuit-seg circuit-edit-seg" data-action="toggle-edit-mode" aria-label="Editar rutina">${icon.edit}</button>`;
 
   return `
     <div class="circuit-selector-wrap">
-      <div class="circuit-selector" id="circuit-selector">${segments}${addCircuitBtn}</div>
+      <div class="circuit-selector" id="circuit-selector">${segments}${editModeBtn}</div>
       <div class="workout-progress-bar">
         <div class="workout-progress-fill" style="width:${pct}%"></div>
       </div>
@@ -690,7 +693,7 @@ export function render(params) {
 
     ${ejercicios}
 
-    ${state.resultados.length > 1
+    ${state.editMode && state.resultados.length > 1
       ? `<button class="workout-remove-circuit-btn" data-action="remove-circuit">
            ${icon.trash} Quitar circuito
          </button>`
@@ -1598,6 +1601,25 @@ export function mount(params) {
           haptic.light();
           reRenderWorkout(params);
         }
+        break;
+      }
+
+      case 'toggle-edit-mode': {
+        syncInputs();
+        state.editMode = true;
+        saveWorkoutActivo(state);
+        haptic.light();
+        reRenderWorkout(params, { preserveScroll: true });
+        break;
+      }
+
+      case 'confirm-edit': {
+        syncInputs();
+        state.editMode = false;
+        state.modified = true;
+        saveWorkoutActivo(state);
+        haptic.medium();
+        reRenderWorkout(params, { preserveScroll: true });
         break;
       }
 
