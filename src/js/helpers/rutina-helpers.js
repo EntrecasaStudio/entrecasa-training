@@ -17,7 +17,7 @@ export function normalizeGrupos(circuit) {
 /**
  * Auto-derive muscle groups from exercises in a circuit.
  * Returns groups ordered by frequency (most exercises first), then insertion order on tie.
- * Uses fuzzy matching: exact match first, then partial match (name contains catalog name or vice versa).
+ * Uses best-match strategy: exact → case-insensitive → best partial (shortest name distance).
  */
 export function autoGruposFromEjercicios(circuito) {
   const allEj = [...ejerciciosCatalogo, ...getEjerciciosCustom()];
@@ -29,8 +29,42 @@ export function autoGruposFromEjercicios(circuito) {
     let match = allEj.find((e) => e.nombre === ej.nombre);
     // 2) Case-insensitive exact
     if (!match) match = allEj.find((e) => e.nombre.toLowerCase() === nombreLower);
-    // 3) Partial: catalog name contained in exercise name or vice versa
-    if (!match) match = allEj.find((e) => nombreLower.includes(e.nombre.toLowerCase()) || e.nombre.toLowerCase().includes(nombreLower));
+    // 3) Best partial: find all catalog entries that contain the exercise name or vice versa,
+    //    then pick the one with the shortest name (most specific match).
+    //    e.g. "Remo" → "Remo en maquina" (Espalda, 15 chars) beats "Remo ergometro" (Cardio, 14 chars)
+    //    but "Fondos" → "Fondos de pecho en maquina" (Pecho) vs "Fondos de triceps con disco" (Brazos)
+    //    We prefer the entry where the exercise name is a prefix of the catalog name.
+    if (!match) {
+      const candidates = allEj.filter((e) => {
+        const catLower = e.nombre.toLowerCase();
+        return catLower.startsWith(nombreLower) || nombreLower.startsWith(catLower);
+      });
+      if (candidates.length > 0) {
+        // Pick the candidate with the closest name length (most similar)
+        match = candidates.reduce((best, c) =>
+          Math.abs(c.nombre.length - ej.nombre.length) < Math.abs(best.nombre.length - ej.nombre.length) ? c : best
+        );
+      }
+    }
+    // 4) Fallback: word-based containment (any word overlap)
+    if (!match) {
+      const words = nombreLower.split(/\s+/).filter((w) => w.length > 3);
+      if (words.length > 0) {
+        const candidates = allEj.filter((e) => {
+          const catLower = e.nombre.toLowerCase();
+          return words.some((w) => catLower.includes(w));
+        });
+        if (candidates.length > 0) {
+          // Score by number of matching words, pick highest
+          match = candidates.reduce((best, c) => {
+            const catLower = c.nombre.toLowerCase();
+            const score = words.filter((w) => catLower.includes(w)).length;
+            const bestScore = words.filter((w) => best.nombre.toLowerCase().includes(w)).length;
+            return score > bestScore ? c : best;
+          });
+        }
+      }
+    }
     if (match && CATEGORIAS.includes(match.categoria)) {
       freq.set(match.categoria, (freq.get(match.categoria) || 0) + 1);
     }
@@ -179,7 +213,8 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
   overlay.innerHTML = `
     <div class="modal-box preview-modal" role="dialog" aria-modal="true">
       <button class="ej-detail-close-x" data-preview-cancel>${icon.close}</button>
-      <div class="modal-title">${rutina.nombre}</div>
+      ${rutina.numero ? `<div class="preview-code">${formatNumero(rutina.numero, rutina)}</div>` : ''}
+      <div class="modal-title">${getDisplayName(rutina)}</div>
       ${renderRutinaStatsLine(rutina.id)}
       <div class="modal-body"><div class="preview-body">${circuitsHtml}</div></div>
       <div class="preview-modal-actions">

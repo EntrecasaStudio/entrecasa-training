@@ -1983,6 +1983,15 @@
   max-height: 80vh;
 }
 
+.preview-code {
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
 .preview-modal .modal-title {
   line-height: 1.1;
   margin-bottom: var(--space-sm);
