@@ -113,7 +113,7 @@ function capitalizeFirst(str) {
 }
 
 function renderCompactCard(rutina) {
-  const displayName = capitalizeFirst(getDisplayName(rutina));
+  const displayName = capitalizeFirst(getDisplayName(rutina, { withEmoji: true }));
   const meta = getMetaText(rutina);
   const num = rutina.numero ? formatNumero(rutina.numero, rutina) : '';
   const delay = cardCounter++ * 40;
@@ -135,7 +135,7 @@ function renderCompactCard(rutina) {
 }
 
 function renderRutinaCard(rutina) {
-  const displayName = capitalizeFirst(getDisplayName(rutina));
+  const displayName = capitalizeFirst(getDisplayName(rutina, { withEmoji: true }));
   const num = rutina.numero ? formatNumero(rutina.numero, rutina) : '';
   const { numCirc, numEj } = getRoutineStats(rutina);
   const picanteHtml = renderPicante(rutina.picante);

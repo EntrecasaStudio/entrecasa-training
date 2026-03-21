@@ -110,10 +110,11 @@ export const DIAS_ORDEN = [1, 2, 3, 4, 5, 6, 0]; // Lun→Dom
 // ── Display name helpers ────────────────────
 
 /** Strip "Día X - " prefix from routine name for cleaner display */
-export function getDisplayName(rutina) {
+export function getDisplayName(rutina, { withEmoji = false } = {}) {
   if (!rutina || !rutina.nombre) return '';
   const match = rutina.nombre.match(/^Día \d+ [-–] (.+)$/i);
-  return match ? match[1] : rutina.nombre;
+  const name = match ? match[1] : rutina.nombre;
+  return withEmoji ? name + getRoutineEmoji(rutina) : name;
 }
 
 /** Format routine number as coded string: G#001-H, C#005-M, etc. */
@@ -122,6 +123,15 @@ export function formatNumero(n, rutina) {
   const prefix = rutina?.tipo === 'cross' ? 'C' : 'G';
   const suffix = rutina?.usuario === 'Nat' ? 'M' : 'H';
   return `${prefix}#${String(n).padStart(3, '0')}-${suffix}`;
+}
+
+/** Get emoji suffix for a routine based on type + user */
+export function getRoutineEmoji(rutina) {
+  if (!rutina) return '';
+  if (rutina.tipo === 'cross') return ''; // cross already ok
+  // Gimnasio
+  if (rutina.usuario === 'Nat') return ' 💪🏋️‍♀️';
+  return ' 💪🏋️';
 }
 
 /** Render difficulty peppers */
@@ -210,7 +220,7 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
     <div class="modal-box preview-modal" role="dialog" aria-modal="true">
       <button class="ej-detail-close-x" data-preview-cancel>${icon.close}</button>
       ${rutina.numero ? `<div class="preview-code">${formatNumero(rutina.numero, rutina)}</div>` : ''}
-      <div class="modal-title">${getDisplayName(rutina)}</div>
+      <div class="modal-title">${getDisplayName(rutina, { withEmoji: true })}</div>
       ${renderRutinaStatsLine(rutina.id)}
       <div class="modal-body"><div class="preview-body">${circuitsHtml}</div></div>
       <div class="preview-modal-actions">
@@ -344,7 +354,7 @@ export function showDayAssignmentModal(usuario, dia, tipoActual, onDone, { date,
       const isActive = r.id === selectedRutinaId ? ' active' : '';
       const check = r.id === selectedRutinaId ? '<span class="day-assign-check">✓</span>' : '';
       const code = formatNumero(r.numero, r);
-      const name = getDisplayName(r);
+      const name = getDisplayName(r, { withEmoji: true });
       return `
         <div class="day-assign-option${isActive}" data-assign-rutina="${r.id}">
           ${check}
