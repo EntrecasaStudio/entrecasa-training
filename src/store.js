@@ -44,6 +44,7 @@ export function getRutinaById(id) {
 }
 
 export function saveRutina(rutina) {
+  rutina.updatedAt = new Date().toISOString();
   const rutinas = _allRutinas();
   const idx = rutinas.findIndex((r) => r.id === rutina.id);
   if (idx >= 0) {
@@ -111,6 +112,7 @@ export function getSesionesByRutina(rutinaId) {
 }
 
 export function saveSesion(sesion) {
+  sesion.updatedAt = new Date().toISOString();
   const sesiones = _allSesiones();
   sesiones.push(sesion);
   write(KEYS.sesiones, sesiones);
@@ -118,6 +120,7 @@ export function saveSesion(sesion) {
 }
 
 export function updateSesion(sesion) {
+  sesion.updatedAt = new Date().toISOString();
   const sesiones = _allSesiones();
   const idx = sesiones.findIndex((s) => s.id === sesion.id);
   if (idx >= 0) {
@@ -218,16 +221,18 @@ export function saveEjercicioMeta(nombre, meta) {
 // ── Routine-day assignment ──────────────────
 
 export function assignRutinaADia(rutinaId, dia, usuario) {
+  const now = new Date().toISOString();
   const rutinas = _allRutinas();
   // Clear any routine currently assigned to this day for this user
   for (const r of rutinas) {
     if (!r.deleted && Number(r.diaSemana) === Number(dia) && r.usuario === usuario) {
       r.diaSemana = null;
+      r.updatedAt = now;
     }
   }
   // Assign the new one
   const target = rutinas.find((r) => r.id === rutinaId && !r.deleted);
-  if (target) target.diaSemana = Number(dia);
+  if (target) { target.diaSemana = Number(dia); target.updatedAt = now; }
   write(KEYS.rutinas, rutinas);
   bumpVersion();
 }

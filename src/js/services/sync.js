@@ -2,6 +2,9 @@
  * Sync service — bidirectional localStorage ↔ Firestore.
  * Offline-first: localStorage is the local source of truth.
  * Firestore syncs in background when online.
+ *
+ * Array fields (rutinas, sesiones) use item-level merge by ID
+ * to support concurrent usage from multiple devices.
  */
 import { db, getCurrentUser } from './firebase.js';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
@@ -16,6 +19,9 @@ const SYNC_KEYS = {
   gym_ejercicio_meta: 'ejercicioMeta',
   gym_day_overrides: 'dayOverrides',
 };
+
+// Keys that are arrays of items with `id` field — use item-level merge
+const MERGEABLE_KEYS = new Set(['gym_rutinas', 'gym_sesiones']);
 
 // Debounce timers per key
 const _timers = {};
@@ -94,6 +100,49 @@ export async function uploadAllData() {
   }
 }
 
+// ── Item-level merge for arrays ─────────
+
+/**
+ * Merge two arrays of items by `id` field.
+ * - Items only in remote → added to result
+ * - Items only in local → kept in result
+ * - Items in both → use the one with newer `updatedAt` (or `creada` / `deletedAt`);
+ *   if no timestamps, remote wins (it's the latest uploaded from another device)
+ *
+ * Returns the merged array, or null if no merge was needed (arrays are identical).
+ */
+function mergeArraysById(localArr, remoteArr) {
+  if (!Array.isArray(localArr) || !Array.isArray(remoteArr)) return remoteArr;
+
+  const localMap = new Map(localArr.map((item) => [item.id, item]));
+  const remoteMap = new Map(remoteArr.map((item) => [item.id, item]));
+  const merged = new Map();
+
+  // Add all remote items
+  for (const [id, item] of remoteMap) {
+    merged.set(id, item);
+  }
+
+  // Merge local items
+  for (const [id, localItem] of localMap) {
+    const remoteItem = remoteMap.get(id);
+    if (!remoteItem) {
+      // Only in local — keep it (will be uploaded on next sync)
+      merged.set(id, localItem);
+    } else {
+      // In both — pick the newer one by comparing timestamps
+      const localTs = localItem.updatedAt || localItem.deletedAt || localItem.creada || '';
+      const remoteTs = remoteItem.updatedAt || remoteItem.deletedAt || remoteItem.creada || '';
+      if (localTs > remoteTs) {
+        merged.set(id, localItem);
+      }
+      // else remote wins (already set above)
+    }
+  }
+
+  return [...merged.values()];
+}
+
 // ── Download ────────────────────────────
 
 /**
@@ -135,7 +184,15 @@ export async function downloadAllData() {
     for (const [key, field] of Object.entries(SYNC_KEYS)) {
       // Skip keys with pending local changes to avoid overwriting
       if (_dirtyKeys.has(key)) continue;
-      if (data[field] !== undefined && data[field] !== null) {
+      if (data[field] === undefined || data[field] === null) continue;
+
+      if (MERGEABLE_KEYS.has(key) && Array.isArray(data[field])) {
+        // Item-level merge for arrays (rutinas, sesiones)
+        const localRaw = localStorage.getItem(key);
+        const localArr = localRaw ? JSON.parse(localRaw) : [];
+        const merged = mergeArraysById(localArr, data[field]);
+        localStorage.setItem(key, JSON.stringify(merged));
+      } else {
         localStorage.setItem(key, JSON.stringify(data[field]));
       }
     }
@@ -175,12 +232,23 @@ export function startRealtimeSync(onUpdate) {
       // Skip keys with pending local changes to avoid overwriting with stale data
       if (_dirtyKeys.has(key)) continue;
 
-      const remoteJSON = JSON.stringify(data[field]);
-      const localJSON = localStorage.getItem(key);
-
-      if (remoteJSON !== localJSON) {
-        localStorage.setItem(key, remoteJSON);
-        changed = true;
+      if (MERGEABLE_KEYS.has(key) && Array.isArray(data[field])) {
+        // Item-level merge for arrays (rutinas, sesiones)
+        const localRaw = localStorage.getItem(key);
+        const localArr = localRaw ? JSON.parse(localRaw) : [];
+        const merged = mergeArraysById(localArr, data[field]);
+        const mergedJSON = JSON.stringify(merged);
+        if (mergedJSON !== localRaw) {
+          localStorage.setItem(key, mergedJSON);
+          changed = true;
+        }
+      } else {
+        const remoteJSON = JSON.stringify(data[field]);
+        const localJSON = localStorage.getItem(key);
+        if (remoteJSON !== localJSON) {
+          localStorage.setItem(key, remoteJSON);
+          changed = true;
+        }
       }
     }
 
