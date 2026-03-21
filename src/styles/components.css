@@ -136,15 +136,15 @@ select.input {
   letter-spacing: 0.5px;
 }
 
-.tag-core { background-color: color-mix(in srgb, var(--color-tag-core) 55%, black); color: #fff; }
-.tag-piernas { background-color: color-mix(in srgb, var(--color-tag-piernas) 55%, black); color: #fff; }
-.tag-pecho { background-color: color-mix(in srgb, var(--color-tag-pecho) 55%, black); color: #fff; }
-.tag-espalda { background-color: color-mix(in srgb, var(--color-tag-espalda) 55%, black); color: #fff; }
-.tag-brazos { background-color: color-mix(in srgb, var(--color-tag-brazos) 55%, black); color: #fff; }
-.tag-gluteos { background-color: color-mix(in srgb, var(--color-tag-gluteos) 55%, black); color: #fff; }
-.tag-hombros { background-color: color-mix(in srgb, var(--color-tag-hombros) 55%, black); color: #fff; }
-.tag-cardio { background-color: color-mix(in srgb, var(--color-tag-cardio) 55%, black); color: #fff; }
-.tag-hiit { background-color: color-mix(in srgb, var(--color-tag-hiit) 55%, black); color: #fff; }
+.tag-core { background-color: color-mix(in srgb, var(--color-tag-core) 30%, var(--color-surface)); color: var(--color-tag-core); }
+.tag-piernas { background-color: color-mix(in srgb, var(--color-tag-piernas) 30%, var(--color-surface)); color: var(--color-tag-piernas); }
+.tag-pecho { background-color: color-mix(in srgb, var(--color-tag-pecho) 30%, var(--color-surface)); color: var(--color-tag-pecho); }
+.tag-espalda { background-color: color-mix(in srgb, var(--color-tag-espalda) 30%, var(--color-surface)); color: var(--color-tag-espalda); }
+.tag-brazos { background-color: color-mix(in srgb, var(--color-tag-brazos) 30%, var(--color-surface)); color: var(--color-tag-brazos); }
+.tag-gluteos { background-color: color-mix(in srgb, var(--color-tag-gluteos) 30%, var(--color-surface)); color: var(--color-tag-gluteos); }
+.tag-hombros { background-color: color-mix(in srgb, var(--color-tag-hombros) 30%, var(--color-surface)); color: var(--color-tag-hombros); }
+.tag-cardio { background-color: color-mix(in srgb, var(--color-tag-cardio) 30%, var(--color-surface)); color: var(--color-tag-cardio); }
+.tag-hiit { background-color: color-mix(in srgb, var(--color-tag-hiit) 30%, var(--color-surface)); color: var(--color-tag-hiit); }
 
 /* ── Modal ───────────────────────────────── */
 

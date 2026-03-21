@@ -17,17 +17,22 @@ export function normalizeGrupos(circuit) {
 /**
  * Auto-derive muscle groups from exercises in a circuit.
  * Returns groups ordered by frequency (most exercises first), then insertion order on tie.
+ * Uses fuzzy matching: exact match first, then partial match (name contains catalog name or vice versa).
  */
 export function autoGruposFromEjercicios(circuito) {
   const allEj = [...ejerciciosCatalogo, ...getEjerciciosCustom()];
-  const catMap = new Map(allEj.map((e) => [e.nombre, e.categoria]));
   const freq = new Map(); // categoria → count
   for (const ej of circuito.ejercicios) {
-    if (ej.nombre) {
-      const cat = catMap.get(ej.nombre);
-      if (cat && CATEGORIAS.includes(cat)) {
-        freq.set(cat, (freq.get(cat) || 0) + 1);
-      }
+    if (!ej.nombre) continue;
+    const nombreLower = ej.nombre.toLowerCase();
+    // 1) Exact match
+    let match = allEj.find((e) => e.nombre === ej.nombre);
+    // 2) Case-insensitive exact
+    if (!match) match = allEj.find((e) => e.nombre.toLowerCase() === nombreLower);
+    // 3) Partial: catalog name contained in exercise name or vice versa
+    if (!match) match = allEj.find((e) => nombreLower.includes(e.nombre.toLowerCase()) || e.nombre.toLowerCase().includes(nombreLower));
+    if (match && CATEGORIAS.includes(match.categoria)) {
+      freq.set(match.categoria, (freq.get(match.categoria) || 0) + 1);
     }
   }
   // Sort by frequency descending, then by insertion order
