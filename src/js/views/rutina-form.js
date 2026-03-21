@@ -89,6 +89,7 @@ function migrateCircuitCardioToExercise(circ) {
 
 // State local to this view
 let rutina = null;
+let assignDay = null; // day number to auto-assign on save (from calendar)
 let activePicker = null; // { circIdx, ejIdx } or null
 let pickerQuery = '';
 let pickerDisabledCats = new Set(); // categories the user toggled OFF in the picker
@@ -361,7 +362,7 @@ export function render(params) {
   }
 
   // If coming from calendar with a day, auto-assign on save
-  const assignDay = params.day != null ? Number(params.day) : null;
+  assignDay = params.day != null ? Number(params.day) : null;
 
   activePicker = null;
   pickerQuery = '';
@@ -620,6 +621,11 @@ function showSaveOptionsModal() {
           copia.diaSemana = null;
           copia.custom = true;
           saveRutina(copia);
+          // Auto-assign to calendar day if created from calendar
+          if (assignDay != null) {
+            assignRutinaADia(copia.id, assignDay, copia.usuario);
+            setPlanDia(copia.usuario, assignDay, copia.tipo);
+          }
           isDirty = false;
           showToast(`Rutina ${formatNumero(copia.numero, copia)} creada`);
           navigate(returnTo);
