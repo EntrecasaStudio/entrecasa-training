@@ -730,6 +730,17 @@ select.input {
   min-height: var(--touch-comfortable);
 }
 
+.view-header-title-wrap {
+  flex: 1;
+  min-width: 0;
+}
+.view-header-code {
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--color-accent);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
 .view-header-title {
   font-size: var(--text-xl);
   font-weight: var(--fw-bold);

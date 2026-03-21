@@ -1,7 +1,8 @@
-import { getSesionById, getSesionesByRutina, calcVolumenSesion, getEjVueltas, updateSesion } from '@/store.js';
+import { getSesionById, getSesionesByRutina, getRutinaById, calcVolumenSesion, getEjVueltas, updateSesion } from '@/store.js';
 import { navigate } from '@/router.js';
 import { icon } from '@js/icons.js';
 import { showDatePickerModal } from '@js/components/date-picker-modal.js';
+import { autoGruposFromEjercicios, formatNumero } from '@js/helpers/rutina-helpers.js';
 
 const TAG_CLASS = {
   Core: 'tag-core',
@@ -62,7 +63,11 @@ function renderStatsStrip(sesion) {
 }
 
 function renderCircuito(circ, circIdx, prevCirc) {
-  const grupos = (Array.isArray(circ.grupoMuscular) ? circ.grupoMuscular : [circ.grupoMuscular]).filter(Boolean);
+  // Auto-derive grupos from exercises, fallback to stored value
+  const derived = autoGruposFromEjercicios(circ);
+  const grupos = derived.length > 0
+    ? derived
+    : (Array.isArray(circ.grupoMuscular) ? circ.grupoMuscular : [circ.grupoMuscular]).filter(Boolean);
 
   const ejercicios = circ.ejercicios
     .map((ej, ejIdx) => {
@@ -137,6 +142,8 @@ export function render(params) {
   }
 
   const prev = findPreviousSession(sesion);
+  const rutina = getRutinaById(sesion.rutinaId);
+  const codeStr = rutina ? formatNumero(rutina.numero, rutina) : '';
 
   const circuitos = sesion.circuitos
     .map((c, i) => renderCircuito(c, i, prev?.circuitos?.[i]))
@@ -145,7 +152,10 @@ export function render(params) {
   return `
     <div class="view-header">
       <button class="btn-back" data-action="back">${icon.back}</button>
-      <div class="view-header-title">${sesion.rutinaNombre}</div>
+      <div class="view-header-title-wrap">
+        ${codeStr ? `<div class="view-header-code">${codeStr}</div>` : ''}
+        <div class="view-header-title">${sesion.rutinaNombre}</div>
+      </div>
     </div>
 
     <div class="sesion-detalle-fecha animate-in detalle-fecha-editable" data-sesion-id="${sesion.id}" data-fecha="${sesion.fecha}" title="Tocar para editar fecha">${formatDate(sesion.fecha)}</div>
