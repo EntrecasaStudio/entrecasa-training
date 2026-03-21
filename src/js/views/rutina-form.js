@@ -280,7 +280,8 @@ function renderEjercicio(ej, circIdx, ejIdx, totalEj) {
           ${dragHandle}
           <div class="ej-picker-field">
             <button class="${triggerClass}" data-action="open-picker"
-                    data-circ="${circIdx}" data-ej="${ejIdx}">
+                    data-circ="${circIdx}" data-ej="${ejIdx}"
+                    title="${ej.nombre || ''}">
               ${ej.nombre || 'Seleccionar ejercicio...'}
             </button>
             ${infoInside}

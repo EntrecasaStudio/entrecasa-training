@@ -327,13 +327,17 @@ function renderUserDayRow(u, selectedDate, isToday, isPast, dow, isActive) {
 
   // Actions (for any user)
   let actionHtml = '';
+  const dateISO = selectedDate ? selectedDate.toISOString() : '';
   if (sessions.length > 0) {
     actionHtml = `<button class="btn btn-ghost btn-xs" data-action="cal-view-session" data-id="${sessions[0].id}">Ver</button>`;
-  } else if (planned && planned.routine && (isToday || !isPast)) {
-    actionHtml = isToday && isActive
-      ? `<button class="btn btn-ghost btn-xs" data-action="cal-change-routine" data-day="${dow}" data-user="${u}">Cambiar</button>
-         <button class="btn btn-primary btn-play-circle" data-action="start" data-id="${planned.routine.id}">${icon.play}</button>`
-      : `<button class="btn btn-ghost btn-xs" data-action="cal-change-routine" data-day="${dow}" data-user="${u}">Cambiar</button>`;
+  } else if (planned && planned.routine && isToday && isActive) {
+    actionHtml = `<button class="btn btn-ghost btn-xs" data-action="cal-change-routine" data-day="${dow}" data-user="${u}">Cambiar</button>
+       <button class="btn btn-primary btn-play-circle" data-action="start" data-id="${planned.routine.id}">${icon.play}</button>`;
+  } else if (planned && planned.routine && !isPast) {
+    actionHtml = `<button class="btn btn-ghost btn-xs" data-action="cal-change-routine" data-day="${dow}" data-user="${u}">Cambiar</button>`;
+  } else if (planned && planned.routine && isPast) {
+    // Past day with planned routine but no session — allow retroactive registration
+    actionHtml = `<button class="btn btn-ghost btn-xs" data-action="start-backdate" data-id="${planned.routine.id}" data-date="${dateISO}">Registrar</button>`;
   } else if (!isPast) {
     actionHtml = `<button class="btn btn-ghost btn-xs" data-action="cal-assign-training" data-day="${dow}" data-user="${u}">+</button>`;
   }
@@ -342,8 +346,10 @@ function renderUserDayRow(u, selectedDate, isToday, isPast, dow, isActive) {
   let rowAction = '';
   if (sessions.length > 0) {
     rowAction = `data-action="cal-view-session" data-id="${sessions[0].id}"`;
-  } else if (planned && planned.routine) {
+  } else if (planned && planned.routine && !isPast) {
     rowAction = `data-action="start" data-id="${planned.routine.id}"`;
+  } else if (planned && planned.routine && isPast) {
+    rowAction = `data-action="start-backdate" data-id="${planned.routine.id}" data-date="${dateISO}"`;
   } else if (!isPast) {
     rowAction = `data-action="cal-assign-training" data-day="${dow}" data-user="${u}"`;
   }
@@ -500,6 +506,12 @@ export function mount() {
       case 'preview-routine':
         showPreview(id, { from: 'home', dia: selectedDate.getDay() });
         break;
+
+      case 'start-backdate': {
+        const backdateISO = btn.dataset.date;
+        navigate(`/workout/${id}?date=${encodeURIComponent(backdateISO)}`);
+        break;
+      }
 
       case 'resume-workout': {
         const workout = getWorkoutActivo();

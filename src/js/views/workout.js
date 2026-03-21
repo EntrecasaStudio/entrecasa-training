@@ -58,7 +58,7 @@ const expandedEjs = new Set(); // Track which exercises are expanded
 let activeTimer = null;     // { type, ejIdx, phase, remaining, pasadaIdx?, roundIdx? }
 let activeTimerInterval = null;
 
-function initState(rutinaId) {
+function initState(rutinaId, opts = {}) {
   const activo = getWorkoutActivo();
   if (activo && activo.rutinaId === rutinaId) {
     // Backward-compat: ensure all vueltas have `done` field
@@ -108,7 +108,7 @@ function initState(rutinaId) {
     rutinaNumero: rutina.numero || null,
     rutinaTipo: rutina.tipo || 'gimnasio',
     usuario: rutina.usuario || getUsuarioActivo(),
-    inicioISO: new Date().toISOString(),
+    inicioISO: opts.date || new Date().toISOString(),
     circuitoActual: 0,
     resultados: rutina.circuitos.map((circ) => {
       // Backward compat: migrate old circuit-level cardio to exercise-level
@@ -679,7 +679,7 @@ function renderRestOverlay() {
 }
 
 export function render(params) {
-  initState(params.id);
+  initState(params.id, { date: params.date });
   if (!state) {
     // If state couldn't be initialized (deleted routine, etc.), redirect home
     setTimeout(() => navigate('/'), 0);
