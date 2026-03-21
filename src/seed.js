@@ -185,12 +185,33 @@ function rutinasNat() {
 }
 
 
+// ── Derive muscle groups from exercise names (for migration) ──
+
+function deriveGruposFromNames(exerciseNames) {
+  const freq = new Map();
+  for (const name of exerciseNames) {
+    const n = name.toLowerCase();
+    const groups = [];
+    if (n.includes('pecho') || n.includes('press de pecho') || n.includes('banco') || n.includes('fondos de pecho')) groups.push('Pecho');
+    if (n.includes('espalda') || n.includes('serrucho') || n.includes('remo') || n.includes('pullup') || n.includes('dominada')) groups.push('Espalda');
+    if (n.includes('pierna') || n.includes('sentadilla') || n.includes('bulgara') || n.includes('estocada') || n.includes('sumo') || n.includes('cuádricep') || n.includes('cuadricep') || n.includes('isquio') || n.includes('peso muerto') || n.includes('aductor')) groups.push('Piernas');
+    if (n.includes('core') || n.includes('abdom') || n.includes('abmat') || n.includes('plancha') || n.includes('deadbug') || n.includes('hollow') || n.includes('copenha') || n.includes('espinal') || n.includes('complex') || n.includes('estrella') || n.includes('crunch') || n.includes('ruedita') || n.includes('ballwall')) groups.push('Core');
+    if (n.includes('bíceps') || n.includes('biceps') || n.includes('tríceps') || n.includes('triceps') || n.includes('curl') || n.includes('martillo') || n.includes('inflador') || n.includes('francés')) groups.push('Brazos');
+    if (n.includes('glúteo') || n.includes('gluteo') || n.includes('hip thrust') || n.includes('puente') || n.includes('cadera')) groups.push('Glúteos');
+    if (n.includes('hombro') || n.includes('lateral') || n.includes('frontal') || n.includes('vuelo')) groups.push('Hombros');
+    if (n.includes('corrida') || n.includes('cinta') || n.includes('bici') || n.includes('remo ergo')) groups.push('Cardio');
+    if (n.includes('burpee') || n.includes('wall ball') || n.includes('trineo') || n.includes('salto')) groups.push('Piernas');
+    for (const g of groups) freq.set(g, (freq.get(g) || 0) + 1);
+  }
+  return [...freq.entries()].sort((a, b) => b[1] - a[1]).map(([g]) => g);
+}
+
 // ── Seed ──────────────────────────────────────
 
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '16'; // 16 = circuit grupoMuscular derived from exercise names
+  const CURRENT_SEED_V = '17'; // 17 = recalculate grupoMuscular + protect user-modified routines
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -247,6 +268,17 @@ export function seedIfEmpty() {
             }
           }
 
+          // ── Migration v14b: protect user-modified library routines ──
+          // If a library routine was edited (has different name/circuitos), mark as custom
+          for (const r of parsed) {
+            if (r.numero && !r.custom) {
+              const seed = seedRutinas.find((s) => s.numero === r.numero && s.tipo === r.tipo && s.usuario === r.usuario);
+              if (seed && r.nombre !== seed.nombre) {
+                r.custom = true; // user renamed it — protect from replacement
+              }
+            }
+          }
+
           // ── Migration v15: cardio mode per-exercise (not per-circuit) ──
           for (const r of parsed) {
             for (const circ of (r.circuitos || [])) {
@@ -272,6 +304,16 @@ export function seedIfEmpty() {
               // Ensure all exercises have tipo
               for (const ej of circ.ejercicios) {
                 if (!ej.tipo) ej.tipo = 'normal';
+              }
+            }
+          }
+
+          // ── Migration v16: recalculate grupoMuscular from exercise names ──
+          for (const r of parsed) {
+            for (const circ of (r.circuitos || [])) {
+              const derived = deriveGruposFromNames(circ.ejercicios.map((e) => e.nombre).filter(Boolean));
+              if (derived.length > 0) {
+                circ.grupoMuscular = derived;
               }
             }
           }
