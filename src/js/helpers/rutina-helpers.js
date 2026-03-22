@@ -14,60 +14,66 @@ export function normalizeGrupos(circuit) {
   return Array.isArray(g) ? g : [g];
 }
 
+// ── Exercise name → category cache (avoid repeated fuzzy matching) ──
+const _catCache = new Map(); // nombre → categoria | null
+
+function _lookupCategoria(nombre) {
+  if (_catCache.has(nombre)) return _catCache.get(nombre);
+
+  const allEj = [...ejerciciosCatalogo, ...getEjerciciosCustom()];
+  const nombreLower = nombre.toLowerCase();
+
+  // 1) Exact match
+  let match = allEj.find((e) => e.nombre === nombre);
+  // 2) Case-insensitive exact
+  if (!match) match = allEj.find((e) => e.nombre.toLowerCase() === nombreLower);
+  // 3) Prefix-based partial match
+  if (!match) {
+    const candidates = allEj.filter((e) => {
+      const catLower = e.nombre.toLowerCase();
+      return catLower.startsWith(nombreLower) || nombreLower.startsWith(catLower);
+    });
+    if (candidates.length > 0) {
+      match = candidates.reduce((best, c) =>
+        Math.abs(c.nombre.length - nombre.length) < Math.abs(best.nombre.length - nombre.length) ? c : best
+      );
+    }
+  }
+  // 4) Word-based containment
+  if (!match) {
+    const words = nombreLower.split(/\s+/).filter((w) => w.length > 3);
+    if (words.length > 0) {
+      const candidates = allEj.filter((e) => {
+        const catLower = e.nombre.toLowerCase();
+        return words.some((w) => catLower.includes(w));
+      });
+      if (candidates.length > 0) {
+        match = candidates.reduce((best, c) => {
+          const catLower = c.nombre.toLowerCase();
+          const score = words.filter((w) => catLower.includes(w)).length;
+          const bestScore = words.filter((w) => best.nombre.toLowerCase().includes(w)).length;
+          return score > bestScore ? c : best;
+        });
+      }
+    }
+  }
+
+  const cat = match?.categoria && CATEGORIAS.includes(match.categoria) ? match.categoria : null;
+  _catCache.set(nombre, cat);
+  return cat;
+}
+
 /**
  * Auto-derive muscle groups from exercises in a circuit.
  * Returns groups ordered by frequency (most exercises first), then insertion order on tie.
- * Uses best-match strategy: exact → case-insensitive → best partial (shortest name distance).
+ * Uses cached fuzzy matching: exact → case-insensitive → prefix → word overlap.
  */
 export function autoGruposFromEjercicios(circuito) {
-  const allEj = [...ejerciciosCatalogo, ...getEjerciciosCustom()];
   const freq = new Map(); // categoria → count
   for (const ej of circuito.ejercicios) {
     if (!ej.nombre) continue;
-    const nombreLower = ej.nombre.toLowerCase();
-    // 1) Exact match
-    let match = allEj.find((e) => e.nombre === ej.nombre);
-    // 2) Case-insensitive exact
-    if (!match) match = allEj.find((e) => e.nombre.toLowerCase() === nombreLower);
-    // 3) Best partial: find all catalog entries that contain the exercise name or vice versa,
-    //    then pick the one with the shortest name (most specific match).
-    //    e.g. "Remo" → "Remo en maquina" (Espalda, 15 chars) beats "Remo ergometro" (Cardio, 14 chars)
-    //    but "Fondos" → "Fondos de pecho en maquina" (Pecho) vs "Fondos de triceps con disco" (Brazos)
-    //    We prefer the entry where the exercise name is a prefix of the catalog name.
-    if (!match) {
-      const candidates = allEj.filter((e) => {
-        const catLower = e.nombre.toLowerCase();
-        return catLower.startsWith(nombreLower) || nombreLower.startsWith(catLower);
-      });
-      if (candidates.length > 0) {
-        // Pick the candidate with the closest name length (most similar)
-        match = candidates.reduce((best, c) =>
-          Math.abs(c.nombre.length - ej.nombre.length) < Math.abs(best.nombre.length - ej.nombre.length) ? c : best
-        );
-      }
-    }
-    // 4) Fallback: word-based containment (any word overlap)
-    if (!match) {
-      const words = nombreLower.split(/\s+/).filter((w) => w.length > 3);
-      if (words.length > 0) {
-        const candidates = allEj.filter((e) => {
-          const catLower = e.nombre.toLowerCase();
-          return words.some((w) => catLower.includes(w));
-        });
-        if (candidates.length > 0) {
-          // Score by number of matching words, pick highest
-          match = candidates.reduce((best, c) => {
-            const catLower = c.nombre.toLowerCase();
-            const score = words.filter((w) => catLower.includes(w)).length;
-            const bestScore = words.filter((w) => best.nombre.toLowerCase().includes(w)).length;
-            return score > bestScore ? c : best;
-          });
-        }
-      }
-    }
-    if (match && CATEGORIAS.includes(match.categoria)) {
-      freq.set(match.categoria, (freq.get(match.categoria) || 0) + 1);
-    }
+    const cat = _lookupCategoria(ej.nombre);
+    if (cat) freq.set(cat, (freq.get(cat) || 0) + 1);
   }
   // Sort by frequency descending, then by insertion order
   return [...freq.entries()]
