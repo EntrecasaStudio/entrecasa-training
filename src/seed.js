@@ -18,12 +18,17 @@ function circ(grupoMuscular, ejercicios) {
   return { id: generateId(), grupoMuscular, ejercicios };
 }
 
+let _seedNumero = 0; // auto-increment for seed routines
+
 function rutina(nombre, usuario, diaSemana, circuitos) {
+  _seedNumero++;
   return {
     id: generateId(),
     nombre,
     usuario,
     diaSemana,
+    tipo: 'gimnasio',
+    numero: _seedNumero,
     creada: new Date().toISOString(),
     circuitos,
   };
@@ -211,7 +216,7 @@ function deriveGruposFromNames(exerciseNames) {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '17'; // 17 = recalculate grupoMuscular + protect user-modified routines
+  const CURRENT_SEED_V = '18'; // 18 = assign numero to routines missing it
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -304,6 +309,19 @@ export function seedIfEmpty() {
               // Ensure all exercises have tipo
               for (const ej of circ.ejercicios) {
                 if (!ej.tipo) ej.tipo = 'normal';
+              }
+            }
+          }
+
+          // ── Migration v18: assign numero to routines missing it ──
+          {
+            const maxNum = parsed.reduce((m, r) => Math.max(m, r.numero || 0), 0);
+            let next = Math.max(maxNum, seedRutinas.reduce((m, r) => Math.max(m, r.numero || 0), 0)) + 1;
+            for (const r of parsed) {
+              if (!r.numero) {
+                r.numero = next++;
+                r.tipo = r.tipo || 'gimnasio';
+                r.updatedAt = new Date().toISOString();
               }
             }
           }
