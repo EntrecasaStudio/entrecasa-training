@@ -19,14 +19,20 @@ import { setUsuarioActivo, getUsuarioActivo, purgeDeleted, getWorkoutActivo, sav
 import { initSwipeBack } from '@js/helpers/swipe-back.js';
 import { initPullToRefresh } from '@js/helpers/pull-to-refresh.js';
 import { mountOfflineBanner } from '@js/components/offline-banner.js';
+import { initErrorReporting, setErrorUser, captureError } from '@js/services/error-reporting.js';
+
+// ── Error reporting (Sentry) — init before anything else ──────
+initErrorReporting();
 
 // ── Global error handler — prevent silent crashes ──────────
 window.addEventListener('unhandledrejection', (e) => {
   console.error('[app] Unhandled promise rejection:', e.reason);
+  captureError(e.reason instanceof Error ? e.reason : new Error(String(e.reason)));
   e.preventDefault(); // Don't crash the app
 });
 window.addEventListener('error', (e) => {
   console.error('[app] Uncaught error:', e.message, e.filename, e.lineno);
+  if (e.error) captureError(e.error);
 });
 
 // ── Splash 3D kettlebell (loaded immediately) ──────────────
@@ -39,6 +45,9 @@ const splashReadyP = import('@js/helpers/splash-3d.js').then(({ mountSplash3D })
 
 // Purge soft-deleted items older than 30 days
 purgeDeleted();
+
+// Set error reporting user context
+setErrorUser(getUsuarioActivo());
 
 // Load saved theme customizations + per-user accent
 loadSavedTheme();
