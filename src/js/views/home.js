@@ -453,12 +453,20 @@ export function render() {
   const mainBtnId = isMyWorkout ? workoutActivo.rutinaId : (rutinaHoy ? rutinaHoy.id : null);
   updateMainButton(mainBtnId);
 
+  const planBtn = `
+    <div style="padding:0 var(--space-md);margin-top:var(--space-md)">
+      <a href="#/plan/nuevo" class="btn btn-ghost btn-full" style="border:1.5px dashed var(--color-border);gap:6px">
+        📋 Generar plan de entrenamiento
+      </a>
+    </div>`;
+
   return `
     ${greeting}
     ${dayDetail}
     ${calendar}
     ${banner}
     <div id="hero-section">${rest}</div>
+    ${planBtn}
   `;
 }
 
