@@ -34,6 +34,8 @@ export const ejerciciosCatalogo = [
   { nombre: 'Abdominal de pie con banda cruzada', categoria: 'Core', tipo: 'funcional' },
   { nombre: 'Abdominales con elevacion de piernas', categoria: 'Core', tipo: 'funcional' },
   { nombre: 'Ballwall', categoria: 'Core', tipo: 'funcional' },
+  { nombre: 'Pallof press', categoria: 'Core', tipo: 'maquina' },
+  { nombre: 'Plancha', categoria: 'Core', tipo: 'funcional' },
 
   // ── Piernas ───────────────────────────────────
   { nombre: 'Sentadilla con barra', categoria: 'Piernas', tipo: 'funcional' },
@@ -65,12 +67,18 @@ export const ejerciciosCatalogo = [
   { nombre: 'Trineo ida y vuelta', categoria: 'Piernas', tipo: 'funcional' },
   { nombre: 'Burpees', categoria: 'Piernas', tipo: 'funcional' },
   { nombre: 'Bandita dura con rodilla externa', categoria: 'Piernas', tipo: 'funcional' },
+  { nombre: 'Peso muerto rumano', categoria: 'Piernas', tipo: 'funcional' },
+  { nombre: 'Zancadas con mancuernas', categoria: 'Piernas', tipo: 'funcional' },
+  { nombre: 'Prensa de piernas', categoria: 'Piernas', tipo: 'maquina' },
+  { nombre: 'Bulgarian split squat', categoria: 'Piernas', tipo: 'funcional' },
 
   // ── Glúteos ───────────────────────────────────
   { nombre: 'Gluteos en maquina', categoria: 'Glúteos', tipo: 'maquina' },
   { nombre: 'Gluteo en maquina por pierna', categoria: 'Glúteos', tipo: 'maquina' },
   { nombre: 'Gluteos patada en polea', categoria: 'Glúteos', tipo: 'maquina' },
   { nombre: 'Gluteos patada lateral en polea', categoria: 'Glúteos', tipo: 'maquina' },
+  { nombre: 'Hip thrust con barra', categoria: 'Glúteos', tipo: 'funcional' },
+  { nombre: 'Sentadilla sumo con mancuerna', categoria: 'Glúteos', tipo: 'funcional' },
 
   // ── Pecho ─────────────────────────────────────
   { nombre: 'Press de pecho', categoria: 'Pecho', tipo: 'maquina' },
@@ -84,6 +92,10 @@ export const ejerciciosCatalogo = [
   { nombre: 'Fondos de pecho suspendido en maquina', categoria: 'Pecho', tipo: 'maquina' },
   { nombre: 'Flexiones en paralelas', categoria: 'Pecho', tipo: 'funcional' },
   { nombre: 'Caminata a plancha con salto', categoria: 'Pecho', tipo: 'funcional' },
+  { nombre: 'Press de banca con barra', categoria: 'Pecho', tipo: 'funcional' },
+  { nombre: 'Press de banca con mancuernas', categoria: 'Pecho', tipo: 'funcional' },
+  { nombre: 'Press inclinado con mancuernas', categoria: 'Pecho', tipo: 'funcional' },
+  { nombre: 'Aperturas en polea', categoria: 'Pecho', tipo: 'maquina' },
 
   // ── Espalda ───────────────────────────────────
   { nombre: 'Remo en maquina', categoria: 'Espalda', tipo: 'maquina' },
@@ -98,6 +110,9 @@ export const ejerciciosCatalogo = [
   { nombre: 'Espalda trayendo en maquina dividida', categoria: 'Espalda', tipo: 'maquina' },
   { nombre: 'Espalda abriendo brazos en maquina', categoria: 'Espalda', tipo: 'maquina' },
   { nombre: 'Serrucho', categoria: 'Espalda', tipo: 'funcional' },
+  { nombre: 'Jalon al pecho', categoria: 'Espalda', tipo: 'maquina' },
+  { nombre: 'Remo en polea baja', categoria: 'Espalda', tipo: 'maquina' },
+  { nombre: 'Remo con mancuerna', categoria: 'Espalda', tipo: 'funcional' },
 
   // ── Hombros ───────────────────────────────────
   { nombre: 'Empuje de hombro en maquina', categoria: 'Hombros', tipo: 'maquina' },
@@ -115,6 +130,10 @@ export const ejerciciosCatalogo = [
   { nombre: 'Elevacion de hombros frontal con disco', categoria: 'Hombros', tipo: 'funcional' },
   { nombre: 'Vuelos laterales', categoria: 'Hombros', tipo: 'funcional' },
   { nombre: 'Vuelos frontales', categoria: 'Hombros', tipo: 'funcional' },
+  { nombre: 'Press militar con barra', categoria: 'Hombros', tipo: 'funcional' },
+  { nombre: 'Press militar con mancuernas', categoria: 'Hombros', tipo: 'funcional' },
+  { nombre: 'Face pulls', categoria: 'Hombros', tipo: 'maquina' },
+  { nombre: 'Elevaciones laterales con mancuernas', categoria: 'Hombros', tipo: 'funcional' },
 
   // ── Brazos (Bíceps) ───────────────────────────
   { nombre: 'Biceps en banco con barra', categoria: 'Brazos', tipo: 'funcional' },
@@ -139,6 +158,9 @@ export const ejerciciosCatalogo = [
   { nombre: 'Fondos de triceps en anillas', categoria: 'Brazos', tipo: 'funcional' },
   { nombre: 'Fondos de triceps en suspension', categoria: 'Brazos', tipo: 'funcional' },
   { nombre: 'Fondos de triceps entre cajas con disco', categoria: 'Brazos', tipo: 'funcional' },
+  { nombre: 'Curl martillo', categoria: 'Brazos', tipo: 'funcional' },
+  { nombre: 'Extension de triceps sobre cabeza', categoria: 'Brazos', tipo: 'funcional' },
+  { nombre: 'Curl de biceps con mancuernas', categoria: 'Brazos', tipo: 'funcional' },
 
   // ── Cardio ──────────────────────────────────
   { nombre: 'Pasadas de velocidad', categoria: 'Cardio', tipo: 'funcional' },
