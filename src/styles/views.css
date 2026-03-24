@@ -4042,3 +4042,256 @@
   margin-top: var(--space-sm);
   border-radius: var(--radius-sm);
 }
+
+/* ── Plan Wizard ─────────────────────────── */
+
+.plan-wizard {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--color-bg);
+}
+.wiz-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  padding-top: calc(var(--space-md) + env(safe-area-inset-top, 0px));
+}
+.wiz-close {
+  background: none; border: none; color: var(--color-text-muted);
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.wiz-close svg { width: 20px; height: 20px; }
+.wiz-header-title {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-muted);
+}
+
+/* Progress dots */
+.wiz-progress {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: var(--space-sm) var(--space-md);
+}
+.wiz-progress-dot {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: var(--fw-bold);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  transition: all 200ms;
+}
+.wiz-progress-dot.active {
+  background: var(--color-accent);
+  color: var(--color-bg);
+  transform: scale(1.15);
+}
+.wiz-progress-dot.done {
+  background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+  color: var(--color-accent);
+}
+
+/* Content area */
+.wiz-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md);
+}
+.wiz-step { max-width: 400px; margin: 0 auto; }
+.wiz-title {
+  font-size: var(--text-lg);
+  font-weight: var(--fw-bold);
+  margin-bottom: var(--space-xs);
+}
+.wiz-subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-lg);
+}
+.wiz-hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  text-align: center;
+  margin-top: var(--space-sm);
+}
+
+/* Chips */
+.wiz-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.wiz-chips-lg { gap: 12px; }
+.wiz-chip {
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  transition: all 150ms;
+  -webkit-tap-highlight-color: transparent;
+}
+.wiz-chip.active {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  color: var(--color-accent);
+  font-weight: var(--fw-bold);
+}
+.wiz-chip-sm {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+.wiz-day-chips { gap: 6px; }
+.wiz-day-chip { min-width: 44px; padding: 10px 6px; text-align: center; }
+.wiz-day-chips-sm { gap: 4px; justify-content: flex-start; }
+
+/* Form fields */
+.wiz-form { display: flex; flex-direction: column; gap: var(--space-md); }
+.wiz-field { display: flex; flex-direction: column; gap: 4px; }
+.wiz-field span { font-size: var(--text-xs); color: var(--color-text-muted); font-weight: var(--fw-medium); }
+.wiz-field input, .wiz-input {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: var(--text-base);
+}
+.wiz-field input:focus, .wiz-input:focus { border-color: var(--color-accent); outline: none; }
+.wiz-field-row { display: flex; gap: var(--space-md); }
+.wiz-field-row .wiz-field { flex: 1; }
+.wiz-field-sm { margin-top: 8px; }
+.wiz-field-sm span { font-size: 10px; }
+.wiz-field-sm input { padding: 6px 10px; font-size: var(--text-sm); }
+
+/* Activities */
+.wiz-activities { display: flex; flex-direction: column; gap: var(--space-sm); }
+.wiz-activity {
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: border-color 200ms;
+}
+.wiz-activity-on { border-color: var(--color-accent); }
+.wiz-activity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px var(--space-md);
+  cursor: pointer;
+  font-weight: var(--fw-medium);
+  -webkit-tap-highlight-color: transparent;
+}
+.wiz-toggle {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  transition: all 200ms;
+}
+.wiz-toggle.on {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+.wiz-activity-body {
+  padding: 0 var(--space-md) var(--space-md);
+}
+
+/* Footer */
+.wiz-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md);
+  padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--color-border);
+}
+.wiz-btn { min-width: 120px; }
+
+/* ── Plan Preview ────────────────────────── */
+
+.plan-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--space-md); padding: var(--space-xl); min-height: 50vh;
+  color: var(--color-text-muted);
+}
+.plan-preview { padding: var(--space-md); padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+.plan-preview-header {
+  display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-lg);
+}
+.plan-preview-header h1 { font-size: var(--text-lg); font-weight: var(--fw-bold); }
+.plan-status {
+  font-size: var(--text-xs); font-weight: var(--fw-bold); text-transform: uppercase;
+  padding: 2px 8px; border-radius: var(--radius-full);
+}
+.plan-status-draft { background: color-mix(in srgb, var(--color-accent) 20%, transparent); color: var(--color-accent); }
+.plan-status-active { background: color-mix(in srgb, #4caf50 20%, transparent); color: #4caf50; }
+
+/* Baseline card */
+.plan-baseline { padding: var(--space-md); margin-bottom: var(--space-lg); }
+.plan-baseline h3 { font-size: var(--text-sm); font-weight: var(--fw-semibold); margin-bottom: var(--space-sm); }
+.plan-baseline-grid {
+  display: flex; flex-wrap: wrap; gap: var(--space-md);
+}
+.plan-baseline-grid div { text-align: center; }
+.plan-baseline-grid strong { display: block; font-size: var(--text-lg); font-weight: var(--fw-bold); }
+.plan-baseline-grid span { font-size: var(--text-xs); color: var(--color-text-muted); }
+
+/* Calendar */
+.plan-calendar { display: flex; flex-direction: column; gap: var(--space-md); }
+.plan-week {
+  border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.plan-week-deload { border-color: var(--color-accent); }
+.plan-week-header {
+  padding: 8px var(--space-md);
+  font-size: var(--text-xs); font-weight: var(--fw-bold); text-transform: uppercase;
+  background: var(--color-surface);
+  display: flex; align-items: center; gap: var(--space-sm);
+}
+.plan-deload-tag {
+  font-size: 9px; padding: 1px 6px; border-radius: var(--radius-full);
+  background: var(--color-accent); color: var(--color-bg);
+}
+.plan-week-days { display: grid; grid-template-columns: repeat(7, 1fr); }
+.plan-day {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 6px 2px; gap: 2px; min-height: 70px;
+  border-right: 1px solid var(--color-border);
+  font-size: 10px;
+}
+.plan-day:last-child { border-right: none; }
+.plan-day-dow { font-size: 9px; font-weight: var(--fw-bold); color: var(--color-text-muted); }
+.plan-day-num { font-size: var(--text-sm); font-weight: var(--fw-bold); }
+.plan-day-icon { font-size: 16px; }
+.plan-day-name {
+  font-size: 8px; color: var(--color-text-muted); text-align: center;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
+}
+.plan-day-note { font-size: 7px; color: var(--color-text-muted); }
+.tipo-gym { background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
+.tipo-run { background: color-mix(in srgb, #4ecdc4 8%, transparent); }
+.tipo-ruck { background: color-mix(in srgb, #f5a623 8%, transparent); }
+.tipo-yoga { background: color-mix(in srgb, #a78bfa 8%, transparent); }
+.tipo-sauna { background: color-mix(in srgb, #ef4444 8%, transparent); }
+
+/* Actions */
+.plan-actions {
+  display: flex; flex-direction: column; gap: var(--space-sm);
+  margin-top: var(--space-xl); padding: var(--space-md) 0;
+}
+.plan-delete-btn { color: var(--color-danger); }
