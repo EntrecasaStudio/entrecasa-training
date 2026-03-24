@@ -20,6 +20,9 @@ const OTHER_ROUTES = [
   { pattern: /^#\/summary\/(.+)$/,         load: () => import('@js/views/workout-summary.js') },
   { pattern: /^#\/sesion\/(.+)$/,          load: () => import('@js/views/sesion-detalle.js') },
   { pattern: /^#\/login$/,                 load: () => import('@js/views/login.js'), fullscreen: true },
+  { pattern: /^#\/plan\/nuevo$/,          load: () => import('@js/views/plan-wizard.js'), fullscreen: true },
+  { pattern: /^#\/plan\/preview$/,        load: () => import('@js/views/plan-preview.js') },
+  { pattern: /^#\/plan\/reporte$/,        load: () => import('@js/views/plan-reporte.js') },
 ];
 
 // ── View cache for tabs ─────────────────────────

@@ -7,6 +7,7 @@ const KEYS = {
   usuario: 'gym_usuario',
   planSemanal: 'gym_plan_semanal',
   dayOverrides: 'gym_day_overrides',
+  planGenerado: 'gym_plan_generado',
 };
 
 // ── Data version (for router cache staleness) ──
@@ -454,6 +455,28 @@ export function checkCycleComplete(usuario, tipo) {
     return true;
   }
   return false;
+}
+
+// ── Plan generado (training plans) ────────────
+
+export function getPlanGenerado(usuario) {
+  const all = read(KEYS.planGenerado) || {};
+  return all[usuario] || null;
+}
+
+export function savePlanGenerado(usuario, plan) {
+  const all = read(KEYS.planGenerado) || {};
+  plan.updatedAt = new Date().toISOString();
+  all[usuario] = plan;
+  write(KEYS.planGenerado, all);
+  bumpVersion();
+}
+
+export function deletePlanGenerado(usuario) {
+  const all = read(KEYS.planGenerado) || {};
+  delete all[usuario];
+  write(KEYS.planGenerado, all);
+  bumpVersion();
 }
 
 // ── Soft-delete purge (remove items deleted > 30 days ago) ──
