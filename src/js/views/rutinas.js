@@ -23,6 +23,13 @@ import {
   renderTags,
 } from '@js/helpers/rutina-helpers.js';
 
+const LUGAR_LABELS = {
+  VILO_GYM: 'Vilo',
+  RIO: 'Río',
+  URUGUAY: '🇺🇾',
+  SPORT_FITNESS: 'Sport',
+};
+
 // ── Module-level state ───────────────────────
 let activeFilter = 'gimnasio';
 let compactView = false;
@@ -140,6 +147,7 @@ function renderRutinaCard(rutina) {
   const { numCirc, numEj } = getRoutineStats(rutina);
   const picanteHtml = renderPicante(rutina.picante);
 
+  const lugarBadge = rutina.lugar ? `<span class="lugar-badge lugar-${rutina.lugar.toLowerCase().replace(/_/g, '-')}">${LUGAR_LABELS[rutina.lugar] || rutina.lugar}</span>` : '';
   const volantaParts = [num, `${numCirc}c · ${numEj}ej`].filter(Boolean);
   const volanta = volantaParts.join(' · ');
 
@@ -158,7 +166,7 @@ function renderRutinaCard(rutina) {
       <div class="rutina-card card ${done ? 'rutina-card--done' : ''}" data-rutina-id="${rutina.id}">
         <div class="rutina-card-body" data-action="preview" data-id="${rutina.id}" style="cursor:pointer">
           <div class="rutina-card-info">
-            <div class="rutina-card-volanta">${volanta} ${picanteHtml}</div>
+            <div class="rutina-card-volanta">${volanta} ${picanteHtml} ${lugarBadge}</div>
             <div class="rutina-card-name">${displayName}</div>
             ${lastDone || statsText ? `<div class="rutina-card-last">${[lastDone, statsText].filter(Boolean).join(' · ')}</div>` : ''}
             <div class="rutina-card-tags">${tagsHtml}</div>

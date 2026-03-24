@@ -20,15 +20,16 @@ function circ(grupoMuscular, ejercicios) {
 
 let _seedNumero = 0; // auto-increment for seed routines
 
-function rutina(nombre, usuario, diaSemana, circuitos) {
+function rutina(nombre, usuario, diaSemana, circuitos, { tipo = 'gimnasio', lugar = 'VILO_GYM' } = {}) {
   _seedNumero++;
   return {
     id: generateId(),
     nombre,
     usuario,
     diaSemana,
-    tipo: 'gimnasio',
+    tipo,
     numero: _seedNumero,
+    lugar,
     creada: new Date().toISOString(),
     circuitos,
   };
@@ -216,7 +217,7 @@ function deriveGruposFromNames(exerciseNames) {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '18'; // 18 = assign numero to routines missing it
+  const CURRENT_SEED_V = '19'; // 19 = lugar tag on rutinas
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -322,6 +323,23 @@ export function seedIfEmpty() {
                 r.numero = next++;
                 r.tipo = r.tipo || 'gimnasio';
                 r.updatedAt = new Date().toISOString();
+              }
+            }
+          }
+
+          // ── Migration v19: assign lugar tag to rutinas ──
+          for (const r of parsed) {
+            if (r.lugar === undefined) {
+              const nombre = (r.nombre || '').toLowerCase();
+              const tipo = r.tipo || 'gimnasio';
+              if (nombre.includes('🇺🇾') || nombre.includes('uruguay')) {
+                r.lugar = 'URUGUAY';
+              } else if (tipo === 'cross' || nombre.includes('río') || nombre.includes('rio')) {
+                r.lugar = 'RIO';
+              } else if (tipo === 'gimnasio') {
+                r.lugar = 'VILO_GYM';
+              } else {
+                r.lugar = null;
               }
             }
           }
