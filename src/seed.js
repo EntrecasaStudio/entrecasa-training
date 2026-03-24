@@ -40,7 +40,7 @@ function rutina(nombre, usuario, diaSemana, circuitos, { tipo = 'gimnasio', luga
 function rutinasLean() {
   return [
     // Push = Lunes (1)
-    rutina('Push - Pecho / Triceps', 'Lean', 1, [
+    rutina('Push - Pecho / Triceps 🏋️', 'Lean', 1, [
       circ('Core', [
         ej('Espinales con disco', 15),
         ej('Complex', 10),
@@ -64,7 +64,7 @@ function rutinasLean() {
     ]),
 
     // Pull = Miercoles (3)
-    rutina('Pull - Espalda / Biceps', 'Lean', 3, [
+    rutina('Pull - Espalda / Biceps 🏋️', 'Lean', 3, [
       circ('Core', [
         ej('Complex', 10),
         ej('Estrella', 15),
@@ -87,7 +87,7 @@ function rutinasLean() {
     ]),
 
     // Full = Viernes (5)
-    rutina('Full - Piernas / Espalda', 'Lean', 5, [
+    rutina('Full - Piernas / Espalda 🏋️', 'Lean', 5, [
       circ('Core', [
         ej('Copenhague', 12),
         ej('Deadbug', 15),
@@ -120,7 +120,7 @@ function rutinasLean() {
 function rutinasNat() {
   return [
     // Push = Lunes (1)
-    rutina('Push - Pecho / Triceps', 'Nat', 1, [
+    rutina('Push - Pecho / Triceps 🏋️‍♀️', 'Nat', 1, [
       circ('Core', [
         ej('Espinales con disco', 15),
         ej('Complex', 10),
@@ -145,7 +145,7 @@ function rutinasNat() {
     ]),
 
     // Pull = Miercoles (3)
-    rutina('Pull - Espalda / Biceps', 'Nat', 3, [
+    rutina('Pull - Espalda / Biceps 🏋️‍♀️', 'Nat', 3, [
       circ('Core', [
         ej('Complex', 10),
         ej('Copenhague', 8),
@@ -166,7 +166,7 @@ function rutinasNat() {
     ]),
 
     // Full = Viernes (5)
-    rutina('Full - Piernas / Espalda', 'Nat', 5, [
+    rutina('Full - Piernas / Espalda 🏋️‍♀️', 'Nat', 5, [
       circ('Core', [
         ej('Copenhague', 12),
         ej('Deadbug', 15),
@@ -217,7 +217,7 @@ function deriveGruposFromNames(exerciseNames) {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '19'; // 19 = lugar tag on rutinas
+  const CURRENT_SEED_V = '20'; // 20 = emojis on routine names
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -350,6 +350,19 @@ export function seedIfEmpty() {
               const derived = deriveGruposFromNames(circ.ejercicios.map((e) => e.nombre).filter(Boolean));
               if (derived.length > 0) {
                 circ.grupoMuscular = derived;
+              }
+            }
+          }
+
+          // ── Migration v20: add emojis to routine names ──
+          for (const r of parsed) {
+            if (!r.nombre || r.custom) continue; // don't touch user-created
+            const hasEmoji = /[\u{1F300}-\u{1FAFF}]/u.test(r.nombre);
+            if (!hasEmoji && r.tipo === 'gimnasio') {
+              if (r.usuario === 'Nat') {
+                r.nombre = r.nombre + ' 🏋️‍♀️';
+              } else {
+                r.nombre = r.nombre + ' 🏋️';
               }
             }
           }

@@ -1898,16 +1898,16 @@
 }
 
 .circuito-detalle-number {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: var(--text-xs);
   font-weight: var(--fw-bold);
-  background: color-mix(in srgb, var(--color-accent) 20%, transparent);
-  color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-bg);
   flex-shrink: 0;
 }
 
