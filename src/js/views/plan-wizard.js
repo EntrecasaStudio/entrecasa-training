@@ -65,8 +65,8 @@ function renderStep0() {
       <p class="wiz-subtitle">Registrá tus medidas para medir tu progreso al final del plan</p>
       <div class="wiz-form">
         <label class="wiz-field">
-          <span>Peso (kg) *</span>
-          <input type="number" data-field="peso" value="${b.peso}" placeholder="78" inputmode="decimal" required>
+          <span>Peso (kg)</span>
+          <input type="number" data-field="peso" value="${b.peso}" placeholder="78" inputmode="decimal">
         </label>
         <label class="wiz-field">
           <span>Grasa corporal (%)</span>
@@ -224,15 +224,14 @@ function renderWizard(usuario) {
       <div class="wiz-footer">
         ${!isFirst ? `<button class="btn btn-ghost wiz-btn" data-action="prev">Anterior</button>` : '<div></div>'}
         ${isLast
-          ? `<button class="btn btn-primary wiz-btn" data-action="generate" ${canNext ? '' : 'disabled'}>Generar Plan</button>`
-          : `<button class="btn btn-primary wiz-btn" data-action="next" ${canNext ? '' : 'disabled'}>Siguiente</button>`}
+          ? `<button class="btn btn-primary wiz-btn ${canNext ? '' : 'wiz-btn-disabled'}" data-action="generate">Generar Plan</button>`
+          : `<button class="btn btn-primary wiz-btn" data-action="next">Siguiente</button>`}
       </div>
     </div>`;
 }
 
 function validateStep() {
   switch (step) {
-    case 0: return config.baseline.peso !== '';
     case 2: return config.diasGym.length >= 2;
     default: return true;
   }
