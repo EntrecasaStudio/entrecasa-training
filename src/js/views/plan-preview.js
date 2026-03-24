@@ -81,7 +81,12 @@ export function render() {
           <button class="btn btn-ghost btn-full" data-action="edit">Editar configuración</button>
           <button class="btn btn-ghost btn-full plan-delete-btn" data-action="delete">Eliminar plan</button>
         </div>
-      ` : ''}
+      ` : `
+        <div class="plan-actions">
+          <a href="#/plan/reporte" class="btn btn-primary btn-full">📊 Ver reporte de progreso</a>
+          <button class="btn btn-ghost btn-full plan-delete-btn" data-action="delete">Eliminar plan</button>
+        </div>
+      `}
     </div>`;
 }
 

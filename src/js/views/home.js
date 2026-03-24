@@ -9,6 +9,7 @@ import {
   setPlanDia,
   clearRutinaDelDia,
   clearDayOverride,
+  getPlanGenerado,
 } from '@/store.js';
 import { navigate } from '@/router.js';
 import { icon, iconLg } from '@js/icons.js';
@@ -453,15 +454,44 @@ export function render() {
   const mainBtnId = isMyWorkout ? workoutActivo.rutinaId : (rutinaHoy ? rutinaHoy.id : null);
   updateMainButton(mainBtnId);
 
-  const planBtn = `
-    <div style="padding:0 var(--space-md);margin-top:var(--space-md)">
-      <a href="#/plan/nuevo" class="btn btn-ghost btn-full" style="border:1.5px dashed var(--color-border);gap:6px">
-        📋 Generar plan de entrenamiento
-      </a>
-    </div>`;
+  // Show today's plan activity (running, sauna, etc.) if active plan
+  const todayStr = new Date().toISOString().split('T')[0];
+  const activePlan = getPlanGenerado(usuario);
+  let planActivity = '';
+  if (activePlan && activePlan.status === 'active' && activePlan.weeks && isSelectedToday) {
+    for (const week of activePlan.weeks) {
+      const day = (week.days || []).find((d) => d.date === todayStr);
+      if (day && day.tipo && day.tipo !== 'gym' && day.tipo !== 'rest') {
+        const ACTIVITY_ICONS = { running: '🏃', sauna: '🧖', rucking: '🎒', yoga: '🧘' };
+        const ACTIVITY_LABELS = { running: 'Running', sauna: 'Sauna', rucking: 'Rucking', yoga: 'Yoga' };
+        planActivity = `
+          <div class="plan-today-activity card animate-in">
+            <span class="plan-today-icon">${ACTIVITY_ICONS[day.tipo] || '📋'}</span>
+            <div class="plan-today-info">
+              <strong>${ACTIVITY_LABELS[day.tipo] || day.tipo}</strong>
+              ${day.notas ? `<span class="plan-today-note">${day.notas}</span>` : ''}
+              ${week.deload ? '<span class="plan-deload-tag">DELOAD</span>' : ''}
+            </div>
+          </div>`;
+        break;
+      }
+    }
+  }
+
+  // Plan button: show "Ver plan" if active, "Generar plan" if not
+  const planBtn = activePlan && activePlan.status === 'active'
+    ? `<div style="padding:0 var(--space-md);margin-top:var(--space-md)">
+        <a href="#/plan/preview" class="btn btn-ghost btn-full" style="gap:6px">📋 Ver mi plan</a>
+      </div>`
+    : `<div style="padding:0 var(--space-md);margin-top:var(--space-md)">
+        <a href="#/plan/nuevo" class="btn btn-ghost btn-full" style="border:1.5px dashed var(--color-border);gap:6px">
+          📋 Generar plan de entrenamiento
+        </a>
+      </div>`;
 
   return `
     ${greeting}
+    ${planActivity}
     ${dayDetail}
     ${calendar}
     ${banner}

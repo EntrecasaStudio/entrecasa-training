@@ -4222,6 +4222,19 @@
 .wiz-btn { min-width: 120px; }
 .wiz-btn-disabled { opacity: 0.35; pointer-events: none; }
 
+/* Plan today activity on home */
+.plan-today-activity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  margin: 0 var(--space-md) var(--space-sm);
+}
+.plan-today-icon { font-size: 28px; }
+.plan-today-info { display: flex; flex-direction: column; gap: 2px; }
+.plan-today-info strong { font-size: var(--text-base); }
+.plan-today-note { font-size: var(--text-xs); color: var(--color-text-muted); }
+
 /* ── Plan Preview ────────────────────────── */
 
 .plan-empty {
@@ -4296,3 +4309,30 @@
   margin-top: var(--space-xl); padding: var(--space-md) 0;
 }
 .plan-delete-btn { color: var(--color-danger); }
+
+/* ── Plan Report ─────────────────────────── */
+.plan-report { padding: var(--space-md); padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+.report-stats {
+  display: flex; flex-wrap: wrap; justify-content: space-around;
+  padding: var(--space-md); gap: var(--space-sm); margin-bottom: var(--space-md);
+}
+.report-stat {
+  display: flex; flex-direction: column; align-items: center; min-width: 60px;
+}
+.report-stat strong { font-size: var(--text-xl); font-weight: var(--fw-bold); color: var(--color-accent); }
+.report-stat span { font-size: var(--text-xs); color: var(--color-text-muted); }
+.report-metric {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid var(--color-border);
+}
+.report-metric:last-child { border-bottom: none; }
+.report-metric-label { font-size: var(--text-sm); color: var(--color-text-muted); }
+.report-metric-values { display: flex; align-items: center; gap: 8px; }
+.report-metric-val { font-weight: var(--fw-bold); font-size: var(--text-sm); }
+.report-metric-arrow { color: var(--color-text-muted); font-size: 12px; }
+.report-metric-diff {
+  font-size: var(--text-xs); font-weight: var(--fw-bold); padding: 2px 6px;
+  border-radius: var(--radius-full);
+}
+.report-metric-diff.positive { background: color-mix(in srgb, #4caf50 15%, transparent); color: #4caf50; }
+.report-metric-diff.negative { background: color-mix(in srgb, #ef4444 15%, transparent); color: #ef4444; }

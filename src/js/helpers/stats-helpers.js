@@ -1,4 +1,4 @@
-import { getSesiones, calcVolumenSesion, getEjBestRound, getEjVueltas, getPlanSemanal, getRutinas, getDayOverride, getRutinaById } from '@/store.js';
+import { getSesiones, calcVolumenSesion, getEjBestRound, getEjVueltas, getPlanSemanal, getRutinas, getDayOverride, getRutinaById, getPlanGenerado } from '@/store.js';
 
 /**
  * Weekly streak: consecutive weeks (Mon-Sun) with at least 1 session.
@@ -248,8 +248,27 @@ export function getMonthPlannedDays(usuario, year, month) {
   const plan = getPlanSemanal(usuario);
   const totalDays = new Date(year, month + 1, 0).getDate();
   const result = new Map();
+
+  // Check for active generated plan — its days take priority
+  const genPlan = getPlanGenerado(usuario);
+  const genDays = new Map();
+  if (genPlan && genPlan.status === 'active' && genPlan.weeks) {
+    for (const week of genPlan.weeks) {
+      for (const day of (week.days || [])) {
+        if (day.tipo && day.tipo !== 'rest') genDays.set(day.date, day.tipo);
+      }
+    }
+  }
+
   for (let d = 1; d <= totalDays; d++) {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+    // Generated plan days take priority
+    if (genDays.has(dateStr)) {
+      result.set(d, genDays.get(dateStr));
+      continue;
+    }
+
     const override = getDayOverride(usuario, dateStr);
     if (override) {
       if (override.tipo) result.set(d, override.tipo);
