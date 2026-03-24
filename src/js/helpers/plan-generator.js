@@ -164,11 +164,41 @@ function createCircuito(grupo, ejercicios) {
  * @param {string} usuario
  * @returns {object} rutina object ready for saveRutina()
  */
+// Mandatory starter circuit for Sport Fitness: 2 compound legs + 1 core
+const STARTER_LEGS = [
+  { nombre: 'Sentadilla con barra', reps: 8, peso: 0 },
+  { nombre: 'Peso muerto rumano', reps: 10, peso: 0 },
+  { nombre: 'Peso muerto con barra', reps: 6, peso: 0 },
+  { nombre: 'Zancadas con mancuernas', reps: 10, peso: 0 },
+];
+const STARTER_CORE = [
+  { nombre: 'Plancha', reps: 1, peso: 0 },
+  { nombre: 'Deadbug', reps: 12, peso: 0 },
+  { nombre: 'Pallof press', reps: 12, peso: 0 },
+  { nombre: 'Complex', reps: 10, peso: 0 },
+  { nombre: 'Espinales con disco', reps: 15, peso: 0 },
+];
+
 function generateRoutine(splitDay, config, usuario, numero) {
   const focos = config.objetivos?.focos || [];
   const circuitos = [];
+  const lugar = config.lugar || 'SPORT_FITNESS';
+
+  // Sport Fitness: all routines start with a legs + core circuit
+  if (lugar === 'SPORT_FITNESS') {
+    const legPicks = pick(STARTER_LEGS, 2);
+    const corePick = pick(STARTER_CORE, 1);
+    const starterEjs = [
+      ...legPicks.map((t) => createEjercicio(t, 3)),
+      ...corePick.map((t) => createEjercicio(t, 3)),
+    ];
+    circuitos.push(createCircuito('Piernas', starterEjs));
+  }
 
   for (const grupo of splitDay.groups) {
+    // Skip Piernas and Core if already covered by starter circuit (Sport Fitness)
+    if (lugar === 'SPORT_FITNESS' && (grupo === 'Piernas' || grupo === 'Core')) continue;
+
     const pool = EXERCISE_POOL[grupo];
     if (!pool) continue;
 
@@ -191,7 +221,7 @@ function generateRoutine(splitDay, config, usuario, numero) {
     nombre: splitDay.name,
     usuario,
     tipo: 'gimnasio',
-    lugar: config.lugar || 'SPORT_FITNESS',
+    lugar,
     numero,
     custom: true,
     diaSemana: null,
