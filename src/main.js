@@ -59,9 +59,11 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register(swPath).then((reg) => {
     // Check for updates every 60s
     setInterval(() => reg.update(), 60000);
+    // Only reload on UPDATE (not first install) to avoid infinite loop
+    const hadController = !!navigator.serviceWorker.controller;
     reg.addEventListener('updatefound', () => {
       const newSW = reg.installing;
-      if (newSW) {
+      if (newSW && hadController) {
         newSW.addEventListener('statechange', () => {
           if (newSW.state === 'activated') {
             // Save active workout before reload to prevent data loss
