@@ -276,10 +276,12 @@ export function seedIfEmpty() {
 
           // ── Migration v14b: protect user-modified library routines ──
           // If a library routine was edited (has different name/circuitos), mark as custom
+          // Compare names without emojis to avoid false positives from v20 migration
+          const stripEmoji = (s) => (s || '').replace(/[\u{1F300}-\u{1FAFF}\u{FE0F}\u{200D}]/gu, '').trim();
           for (const r of parsed) {
             if (r.numero && !r.custom) {
               const seed = seedRutinas.find((s) => s.numero === r.numero && s.tipo === r.tipo && s.usuario === r.usuario);
-              if (seed && r.nombre !== seed.nombre) {
+              if (seed && stripEmoji(r.nombre) !== stripEmoji(seed.nombre)) {
                 r.custom = true; // user renamed it — protect from replacement
               }
             }
@@ -354,19 +356,6 @@ export function seedIfEmpty() {
             }
           }
 
-          // ── Migration v20: add emojis to routine names ──
-          for (const r of parsed) {
-            if (!r.nombre || r.custom) continue; // don't touch user-created
-            const hasEmoji = /[\u{1F300}-\u{1FAFF}]/u.test(r.nombre);
-            if (!hasEmoji && r.tipo === 'gimnasio') {
-              if (r.usuario === 'Nat') {
-                r.nombre = r.nombre + ' 🏋️‍♀️';
-              } else {
-                r.nombre = r.nombre + ' 🏋️';
-              }
-            }
-          }
-
           // ── Migration v10-12: rebuild library routines ──
           // v10 = chaleco flag on cross circuits
           // v11 = proper H/M usuario field on ALL library routines
@@ -408,6 +397,16 @@ export function seedIfEmpty() {
           });
           // Merge: programmed + new library + user copies at the end
           const merged = [...parsed, ...newOnes, ...userCopies];
+
+          // ── Migration v20: add emojis to routine names (post-merge) ──
+          for (const r of merged) {
+            if (!r.nombre || r.custom) continue;
+            const hasEmoji = /[\u{1F300}-\u{1FAFF}]/u.test(r.nombre);
+            if (!hasEmoji && r.tipo === 'gimnasio') {
+              r.nombre += r.usuario === 'Nat' ? ' 🏋️‍♀️' : ' 🏋️';
+            }
+          }
+
           localStorage.setItem(KEY, JSON.stringify(merged));
           localStorage.setItem(SEED_VERSION, CURRENT_SEED_V);
           seedPlan(); // ensure plan exists
