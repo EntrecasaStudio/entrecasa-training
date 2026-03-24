@@ -1464,6 +1464,24 @@ select.input {
   transform: translateY(0);
 }
 
+/* ── Sync status dot ───────────────────────── */
+.sync-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-bg);
+  background: var(--color-success, #4caf50);
+  transition: background 300ms;
+}
+.sync-dot[data-status="offline"] { background: var(--color-danger); }
+.sync-dot[data-status="syncing"],
+.sync-dot[data-status="pending"] { background: var(--color-accent); animation: sync-pulse 1s infinite; }
+.sync-dot[data-status="synced"] { background: var(--color-success, #4caf50); }
+@keyframes sync-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
 /* ── Date picker modal ─────────────────────── */
 
 .date-picker-overlay {

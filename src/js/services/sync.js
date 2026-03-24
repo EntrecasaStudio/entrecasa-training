@@ -36,6 +36,52 @@ let _suppressSync = false;
 // Keys with pending local changes not yet uploaded — skip in onSnapshot
 const _dirtyKeys = new Set();
 
+// ── Connectivity & sync status ──────────
+// Status: 'synced' | 'offline' | 'syncing' | 'pending'
+let _syncStatus = navigator.onLine ? 'synced' : 'offline';
+const _statusListeners = new Set();
+
+export function getSyncStatus() { return _syncStatus; }
+
+export function onSyncStatusChange(fn) {
+  _statusListeners.add(fn);
+  return () => _statusListeners.delete(fn);
+}
+
+function _setSyncStatus(status) {
+  if (status === _syncStatus) return;
+  _syncStatus = status;
+  for (const fn of _statusListeners) try { fn(status); } catch {}
+}
+
+// Listen for online/offline events
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    console.log('[sync] Back online — flushing pending changes');
+    _setSyncStatus('syncing');
+    _flushOfflineQueue().then(() => {
+      _setSyncStatus(_dirtyKeys.size > 0 ? 'pending' : 'synced');
+    });
+  });
+  window.addEventListener('offline', () => {
+    console.log('[sync] Went offline');
+    _setSyncStatus('offline');
+  });
+}
+
+/** Flush all dirty keys that accumulated while offline */
+async function _flushOfflineQueue() {
+  if (!navigator.onLine) return;
+  const keys = [..._dirtyKeys];
+  if (keys.length === 0) return;
+  // Cancel debounce timers — upload immediately
+  for (const key of Object.keys(_timers)) {
+    clearTimeout(_timers[key]);
+    delete _timers[key];
+  }
+  await Promise.all(keys.map((key) => uploadKey(key)));
+}
+
 // ── Upload ──────────────────────────────
 
 function getDocRef() {
@@ -291,8 +337,21 @@ export function queueSync(key) {
   if (!getCurrentUser()) return;
 
   _dirtyKeys.add(key);
+
+  if (!navigator.onLine) {
+    // Offline — just mark as dirty, will flush when back online
+    _setSyncStatus('offline');
+    return;
+  }
+
+  _setSyncStatus('pending');
   clearTimeout(_timers[key]);
-  _timers[key] = setTimeout(() => uploadKey(key), DEBOUNCE_MS);
+  _timers[key] = setTimeout(() => {
+    _setSyncStatus('syncing');
+    uploadKey(key).then(() => {
+      if (_dirtyKeys.size === 0) _setSyncStatus('synced');
+    });
+  }, DEBOUNCE_MS);
 }
 
 /**

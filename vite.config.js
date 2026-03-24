@@ -1,8 +1,27 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
+import { join, relative } from 'path';
 
-/** Plugin: inject build hash into sw.js so cache busts on every deploy */
+/** Recursively list all files in a directory */
+function listFiles(dir, base = dir) {
+  const results = [];
+  for (const entry of readdirSync(dir)) {
+    const full = join(dir, entry);
+    if (statSync(full).isDirectory()) {
+      results.push(...listFiles(full, base));
+    } else {
+      results.push('/' + relative(base, full));
+    }
+  }
+  return results;
+}
+
+/**
+ * Plugin: inject build hash + asset manifest into sw.js.
+ * - Replaces CACHE_NAME with unique build hash
+ * - Replaces __PRECACHE_MANIFEST__ with full list of built assets
+ */
 function swVersionPlugin() {
   return {
     name: 'sw-version',
@@ -11,10 +30,21 @@ function swVersionPlugin() {
       try {
         let sw = readFileSync(swPath, 'utf-8');
         const hash = Date.now().toString(36);
-        sw = sw.replace(/gym-app-v\d+/, `gym-app-${hash}`);
+
+        // Collect all built assets for precaching
+        const allFiles = listFiles(dir).filter((f) =>
+          !f.endsWith('sw.js') && !f.includes('.DS_Store')
+        );
+        const base = '/entrecasa-training';
+        const manifest = allFiles.map((f) => `'${base}${f}'`).join(',\n  ');
+
+        sw = sw.replace(/'__BUILD_HASH__'/, `'gym-app-${hash}'`);
+        sw = sw.replace(/'__PRECACHE_MANIFEST__'/, `[\n  ${manifest}\n]`);
         writeFileSync(swPath, sw);
-        console.log(`[sw-version] Cache name → gym-app-${hash}`);
-      } catch {}
+        console.log(`[sw-version] Cache gym-app-${hash} — ${allFiles.length} assets precached`);
+      } catch (e) {
+        console.warn('[sw-version] Error:', e.message);
+      }
     },
   };
 }
