@@ -179,6 +179,27 @@ const STARTER_CORE = [
   { nombre: 'Espinales con disco', reps: 15, peso: 0 },
 ];
 
+// ── User-specific exercise adjustments ──────
+// Nat (45 years): avoid high-impact, prefer joint-safe, add rotator cuff work
+const NAT_REPLACEMENTS = {
+  'Sentadilla con salto': 'Sentadilla con barra',
+  'Bulgarian split squat': 'Prensa de piernas',
+  'Dominadas abiertas': 'Jalon al pecho',
+};
+const NAT_EXTRAS = [
+  { nombre: 'Face pulls', reps: 15, peso: 0 }, // rotator cuff health
+];
+
+function applyUserProfile(ejercicios, usuario) {
+  if (usuario !== 'Nat') return ejercicios;
+  // Replace high-impact exercises
+  return ejercicios.map((ej) => {
+    const replacement = NAT_REPLACEMENTS[ej.nombre];
+    if (replacement) return { ...ej, nombre: replacement };
+    return ej;
+  });
+}
+
 function generateRoutine(splitDay, config, usuario, numero) {
   const focos = config.objetivos?.focos || [];
   const circuitos = [];
@@ -188,10 +209,11 @@ function generateRoutine(splitDay, config, usuario, numero) {
   if (lugar === 'SPORT_FITNESS') {
     const legPicks = pick(STARTER_LEGS, 2);
     const corePick = pick(STARTER_CORE, 1);
-    const starterEjs = [
+    let starterEjs = [
       ...legPicks.map((t) => createEjercicio(t, 3)),
       ...corePick.map((t) => createEjercicio(t, 3)),
     ];
+    starterEjs = applyUserProfile(starterEjs, usuario);
     circuitos.push(createCircuito('Piernas', starterEjs));
   }
 
@@ -211,8 +233,18 @@ function generateRoutine(splitDay, config, usuario, numero) {
     const selected = [...compounds, ...isolations].filter(Boolean);
 
     if (selected.length > 0) {
-      const ejercicios = selected.map((t) => createEjercicio(t, series));
+      let ejercicios = selected.map((t) => createEjercicio(t, series));
+      ejercicios = applyUserProfile(ejercicios, usuario);
       circuitos.push(createCircuito(grupo, ejercicios));
+    }
+  }
+
+  // Nat: add face pulls to any routine with Hombros (rotator cuff health)
+  if (usuario === 'Nat' && splitDay.groups.includes('Hombros')) {
+    const hasHombroCirc = circuitos.find((c) => c.grupoMuscular.includes('Hombros'));
+    const hasFacePull = hasHombroCirc?.ejercicios.some((e) => e.nombre === 'Face pulls');
+    if (hasHombroCirc && !hasFacePull) {
+      hasHombroCirc.ejercicios.push(createEjercicio(NAT_EXTRAS[0], 3));
     }
   }
 

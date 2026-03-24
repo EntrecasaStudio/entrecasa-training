@@ -78,6 +78,14 @@ if ('serviceWorker' in navigator) {
   }).catch(() => {});
 }
 
+// Save workout state when app goes to background (prevents data loss on iOS kill)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    const workout = getWorkoutActivo();
+    if (workout) saveWorkoutActivo(workout);
+  }
+});
+
 // Mount persistent UI
 mountNavBar();
 mountVoiceFab();
