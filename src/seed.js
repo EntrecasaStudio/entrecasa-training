@@ -217,7 +217,7 @@ function deriveGruposFromNames(exerciseNames) {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '20'; // 20 = emojis on routine names
+  const CURRENT_SEED_V = '21'; // 21 = restructure Sport Fitness rutinas (5+1)
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -404,6 +404,39 @@ export function seedIfEmpty() {
             const hasEmoji = /[\u{1F300}-\u{1FAFF}]/u.test(r.nombre);
             if (!hasEmoji && r.tipo === 'gimnasio') {
               r.nombre += r.usuario === 'Nat' ? ' 🏋️‍♀️' : ' 🏋️';
+            }
+          }
+
+          // ── Migration v21: restructure Sport Fitness rutinas (5+1 circuits) ──
+          // Only touch rutinas with lugar=SPORT_FITNESS that have no sessions
+          if (!seedV || parseInt(seedV, 10) < 21) {
+            const sesiones = JSON.parse(localStorage.getItem('gym_sesiones') || '[]');
+            const doneIds = new Set(sesiones.map((s) => s.rutinaId));
+            for (const r of merged) {
+              if (r.lugar !== 'SPORT_FITNESS') continue;
+              if (doneIds.has(r.id)) continue; // don't touch completed
+              // Check if missing velocity circuit (6th)
+              const hasVelCirc = r.circuitos?.some((c) =>
+                c.ejercicios?.some((e) => e.tipo === 'velocidad')
+              );
+              if (!hasVelCirc && r.circuitos) {
+                // Add velocity circuit at the end
+                r.circuitos.push({
+                  id: generateId(),
+                  grupoMuscular: ['Cardio'],
+                  ejercicios: [{
+                    id: generateId(),
+                    nombre: 'Pasadas de velocidad',
+                    tipo: 'velocidad',
+                    velocidad: 12,
+                    tiempo: 60,
+                    descanso: 30,
+                    cantidadPasadas: 3,
+                    inclinacion: 0,
+                  }],
+                });
+                r.updatedAt = new Date().toISOString();
+              }
             }
           }
 

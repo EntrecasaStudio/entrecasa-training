@@ -239,13 +239,57 @@ function generateRoutine(splitDay, config, usuario, numero) {
     }
   }
 
-  // Nat: add face pulls to any routine with Hombros (rotator cuff health)
-  if (usuario === 'Nat' && splitDay.groups.includes('Hombros')) {
-    const hasHombroCirc = circuitos.find((c) => c.grupoMuscular.includes('Hombros'));
-    const hasFacePull = hasHombroCirc?.ejercicios.some((e) => e.nombre === 'Face pulls');
-    if (hasHombroCirc && !hasFacePull) {
-      hasHombroCirc.ejercicios.push(createEjercicio(NAT_EXTRAS[0], 3));
+  // Nat: extra glúteos/piernas circuit + face pulls for rotator cuff
+  if (usuario === 'Nat') {
+    if (splitDay.groups.includes('Hombros')) {
+      const hasHombroCirc = circuitos.find((c) => c.grupoMuscular.includes('Hombros'));
+      const hasFacePull = hasHombroCirc?.ejercicios.some((e) => e.nombre === 'Face pulls');
+      if (hasHombroCirc && !hasFacePull) {
+        hasHombroCirc.ejercicios.push(createEjercicio(NAT_EXTRAS[0], 3));
+      }
     }
+    // One extra glúteos/piernas circuit for Nat
+    if (lugar === 'SPORT_FITNESS' && !splitDay.groups.includes('Piernas')) {
+      const glutPool = EXERCISE_POOL['Glúteos'];
+      if (glutPool) {
+        const glutEjs = pick([...glutPool.compound, ...glutPool.isolation], 2);
+        circuitos.push(createCircuito('Glúteos', glutEjs.map((t) => createEjercicio(t, 3))));
+      }
+    }
+  }
+
+  // Sport Fitness: ensure exactly 5 training circuits
+  if (lugar === 'SPORT_FITNESS') {
+    // Pad with additional upper-body circuits if needed
+    while (circuitos.length < 5) {
+      const extraGroups = ['Pecho', 'Espalda', 'Hombros', 'Brazos'];
+      const usedGroups = new Set(circuitos.flatMap((c) => c.grupoMuscular));
+      const available = extraGroups.filter((g) => !usedGroups.has(g));
+      const nextGroup = available[0] || extraGroups[circuitos.length % extraGroups.length];
+      const pool = EXERCISE_POOL[nextGroup];
+      if (!pool) break;
+      let ejs = [...pick(pool.compound, 1), ...pick(pool.isolation, 1)].filter(Boolean);
+      ejs = applyUserProfile(ejs.map((t) => createEjercicio(t, 3)), usuario);
+      circuitos.push(createCircuito(nextGroup, ejs));
+    }
+    // Trim to 5 if too many
+    if (circuitos.length > 5) circuitos.length = 5;
+
+    // Circuit 6: Velocidad (3 pasadas, 60s run, 30s rest)
+    circuitos.push({
+      id: generateId(),
+      grupoMuscular: ['Cardio'],
+      ejercicios: [{
+        id: generateId(),
+        nombre: 'Pasadas de velocidad',
+        tipo: 'velocidad',
+        velocidad: 12,
+        tiempo: 60,
+        descanso: 30,
+        cantidadPasadas: 3,
+        inclinacion: 0,
+      }],
+    });
   }
 
   return {
