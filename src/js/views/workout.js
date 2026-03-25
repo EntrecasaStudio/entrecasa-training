@@ -642,7 +642,8 @@ function reRenderWorkout(params, { preserveScroll = false } = {}) {
   const container = getWorkoutContainer();
   if (container) {
     const savedScroll = preserveScroll ? window.scrollY : null;
-    container.innerHTML = render(params);
+    // Skip initState on re-render — use in-memory state to avoid sync race conditions
+    container.innerHTML = render(params, { skipInitState: true });
     if (savedScroll !== null) {
       requestAnimationFrame(() => window.scrollTo(0, savedScroll));
     }
@@ -678,8 +679,8 @@ function renderRestOverlay() {
   `;
 }
 
-export function render(params) {
-  initState(params.id, { date: params.date });
+export function render(params, { skipInitState = false } = {}) {
+  if (!skipInitState) initState(params.id, { date: params.date });
   if (!state) {
     // If state couldn't be initialized (deleted routine, etc.), redirect home
     setTimeout(() => navigate('/'), 0);
@@ -1303,9 +1304,16 @@ export function mount(params) {
       }
 
       case 'show-detail': {
+        // Save current state before opening modal (prevents loss from sync race)
+        syncInputs();
         const nombre = btn.dataset.nombre;
         if (nombre) showExerciseDetail(nombre, {
-          onSave: () => reRenderWorkout(params, { preserveScroll: true }),
+          onSave: () => {
+            // Re-read state from localStorage in case sync modified it
+            // but preserve our in-memory state which has the latest user edits
+            saveWorkoutActivo(state);
+            reRenderWorkout(params, { preserveScroll: true });
+          },
         });
         break;
       }

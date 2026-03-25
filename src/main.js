@@ -136,11 +136,18 @@ function safeInitRouter() {
   }
 }
 
-/** Refresh current view unless user is actively editing/training */
+/** Refresh current view unless user is actively editing/training/viewing results */
 function refreshViewIfSafe() {
   const hash = window.location.hash || '#/';
   const path = hash.replace('#', '') || '/';
-  if (path.includes('/editar/') || path.includes('/nueva') || path.startsWith('/entrenamiento')) return;
+  // Don't refresh during: editing, creating, training, workout summary, plan wizard/preview
+  if (path.includes('/editar/') || path.includes('/nueva') || path.startsWith('/entrenamiento')
+    || path.startsWith('/summary/') || path.startsWith('/workout/')
+    || path.startsWith('/plan/nuevo') || path.startsWith('/plan/preview')
+    || path.startsWith('/plan/reporte')) return;
+  // Don't refresh if user has focus on an input (avoid losing typed data)
+  const activeEl = document.activeElement;
+  if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)) return;
   navigate(path);
 }
 
