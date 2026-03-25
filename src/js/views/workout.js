@@ -8,7 +8,7 @@ import { haptic } from '@js/helpers/haptics.js';
 import { showExerciseDetail } from '@js/helpers/ejercicio-detail.js';
 import { icon } from '@js/icons.js';
 import { formatNumero, autoGruposFromEjercicios } from '@js/helpers/rutina-helpers.js';
-import { getTodosLosEjercicios } from '@js/ejercicios-catalogo.js';
+import { getTodosLosEjercicios, defaultUsaPeso } from '@js/ejercicios-catalogo.js';
 
 const CARDIO_CATS = ['Cardio'];
 const HIIT_CATS = ['HIIT'];
@@ -253,9 +253,10 @@ function shouldSuggestOverload(nombre, ej) {
 function renderEjercicio(ej, ejIdx) {
   const overload = shouldSuggestOverload(ej.nombre, ej);
   const meta = getEjercicioMeta(ej.nombre);
-  const isBodyweight = ej.pesoObjetivoKg === 0;
-  // Show weight column if exercise has weight configured OR meta says usaPeso
-  const showPeso = !isBodyweight || meta.usaPeso;
+  // Show peso if: meta explicitly set, or exercise has non-zero weight, or catalog default says so
+  const catEntry = getTodosLosEjercicios().find((e) => e.nombre === ej.nombre);
+  const usaPesoDefault = catEntry ? defaultUsaPeso(catEntry.nombre, catEntry.tipo) : false;
+  const showPeso = meta.usaPeso || usaPesoDefault || ej.pesoObjetivoKg > 0 || ej.vueltas?.some((v) => v.pesoRealKg > 0);
 
   // Vest: only show if meta.usaChaleco is enabled
   const vestHtml = meta.usaChaleco ? `

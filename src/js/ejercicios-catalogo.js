@@ -220,6 +220,24 @@ export function getTodosLosEjercicios() {
   return [...ejerciciosCatalogo, ...getEjerciciosCustom()];
 }
 
+/** Keywords in exercise names that indicate weight is used */
+const PESO_KEYWORDS = ['barra', 'mancuerna', 'rusas', 'disco', 'peso', 'polea', 'maquina', 'máquina', 'press', 'curl', 'remo', 'fondos', 'aductores', 'elevaciones', 'vuelos', 'biceps', 'triceps', 'sentadilla', 'sumo', 'empuje'];
+const NO_PESO_NAMES = ['burpees', 'plancha', 'copenhague', 'deadbug', 'salto', 'sentadilla con salto', 'sentadilla con estocada y salto', 'complex', 'estrella', 'ruedita', 'ballwall'];
+
+/**
+ * Determine if an exercise uses weight by default.
+ * All "maquina" type exercises use weight. For "funcional", check keywords.
+ */
+export function defaultUsaPeso(nombre, tipo) {
+  if (tipo === 'maquina') return true;
+  if (!nombre) return false;
+  const lower = nombre.toLowerCase();
+  // Explicit no-weight exercises
+  if (NO_PESO_NAMES.some((n) => lower === n || lower.startsWith(n))) return false;
+  // Check for weight keywords
+  return PESO_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
 /**
  * Search exercises filtered by an array of categories and optional query.
  * @param {string[]} categorias
