@@ -434,16 +434,40 @@ function renderEjercicioVelocidad(ej, ejIdx) {
         <div class="workout-ejercicio-name">${ej.nombre}</div>
         <span class="workout-circuit-type-badge ${tipo}">${tipo === 'caminata' ? 'Caminata' : 'Velocidad'}</span>
       </div>
-      <div class="workout-ejercicio-target">
-        ${total} pasadas &middot; ${ej.velocidad} km/h &middot; ${ej.tiempo}s / ${ej.descanso}s desc
+      <div class="workout-vel-params">
+        <label class="workout-vel-param">
+          <span>Vel</span>
+          <input type="number" inputmode="decimal" value="${ej.velocidad}" data-vel-param="velocidad" data-ej="${ejIdx}" step="0.5" class="workout-vel-input">
+          <span>km/h</span>
+        </label>
+        <label class="workout-vel-param">
+          <span>Tiempo</span>
+          <input type="number" inputmode="numeric" value="${ej.tiempo}" data-vel-param="tiempo" data-ej="${ejIdx}" class="workout-vel-input">
+          <span>s</span>
+        </label>
+        <label class="workout-vel-param">
+          <span>Desc</span>
+          <input type="number" inputmode="numeric" value="${ej.descanso}" data-vel-param="descanso" data-ej="${ejIdx}" class="workout-vel-input">
+          <span>s</span>
+        </label>
+        <label class="workout-vel-param">
+          <span>Incl</span>
+          <input type="number" inputmode="decimal" value="${ej.inclinacion || 0}" data-vel-param="inclinacion" data-ej="${ejIdx}" step="0.5" class="workout-vel-input">
+          <span>%</span>
+        </label>
       </div>
       <div class="workout-pasada-progress">${completadas}/${total} completadas ${allDone ? icon.check : ''}</div>
       ${timerHtml}
       <div class="workout-vueltas">
         ${pasadasHtml}
-        <button class="workout-add-vuelta-btn" data-action="add-pasada" data-ej="${ejIdx}">
-          ${icon.plus} Pasada
-        </button>
+        <div class="workout-pasada-btns">
+          <button class="workout-add-vuelta-btn" data-action="add-pasada" data-ej="${ejIdx}">
+            ${icon.plus} Pasada
+          </button>
+          ${total > 1 ? `<button class="workout-add-vuelta-btn workout-remove-vuelta-btn" data-action="remove-pasada" data-ej="${ejIdx}">
+            ${icon.close} Quitar
+          </button>` : ''}
+        </div>
       </div>
       ${startBtn}
     </div>
@@ -1638,6 +1662,21 @@ export function mount(params) {
         break;
       }
 
+      case 'remove-pasada': {
+        const ejIdx6r = parseInt(btn.dataset.ej);
+        const circ6r = state.resultados[state.circuitoActual];
+        const ej6r = circ6r?.ejercicios[ejIdx6r];
+        if (ej6r?.pasadas && ej6r.pasadas.length > 1) {
+          ej6r.pasadas.pop();
+          ej6r.cantidadPasadas = ej6r.pasadas.length;
+          state.modified = true;
+          saveWorkoutActivo(state);
+          haptic.light();
+          reRenderWorkout(params);
+        }
+        break;
+      }
+
       case 'add-round': {
         const ejIdx7 = parseInt(btn.dataset.ej);
         const circ7 = state.resultados[state.circuitoActual];
@@ -1775,6 +1814,18 @@ export function mount(params) {
     }
     if (e.target.matches('.workout-vest-input')) {
       syncInputs();
+    }
+    // Velocity/cardio parameter edits
+    if (e.target.matches('.workout-vel-input')) {
+      const ejIdx = parseInt(e.target.dataset.ej);
+      const param = e.target.dataset.velParam;
+      const circ = state.resultados[state.circuitoActual];
+      const ej = circ?.ejercicios[ejIdx];
+      if (ej && param) {
+        ej[param] = parseFloat(e.target.value) || 0;
+        state.modified = true;
+        saveWorkoutActivo(state);
+      }
     }
   };
 
