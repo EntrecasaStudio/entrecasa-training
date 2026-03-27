@@ -191,6 +191,111 @@ function rutinasNat() {
 }
 
 
+// ── Sport Fitness rutinas (5+1 structure) ──────
+
+function sportCirc(grupo, ejercicios) {
+  return { id: generateId(), grupoMuscular: Array.isArray(grupo) ? grupo : [grupo], ejercicios };
+}
+
+function velCirc() {
+  return sportCirc('Cardio', [{
+    id: generateId(), nombre: 'Pasadas de velocidad', tipo: 'velocidad',
+    velocidad: 12, tiempo: 60, descanso: 30, cantidadPasadas: 3, inclinacion: 0,
+  }]);
+}
+
+function rutinasSportLean() {
+  const SF = { tipo: 'gimnasio', lugar: 'SPORT_FITNESS' };
+  return [
+    rutina('Pecho + Espalda', 'Lean', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Sentadilla con barra', 8, 70), ej('Peso muerto rumano', 10, 50), ej('Plancha', 1)]),
+      sportCirc('Pecho', [ej('Press de pecho', 8, 55), ej('Pecho con polea doble', 12, 10)]),
+      sportCirc('Espalda', [ej('Remo en maquina', 10, 65), ej('Dominadas abiertas', 8)]),
+      sportCirc('Hombros', [ej('Empuje de hombros con barra en banco', 8, 25), ej('Face pulls', 15, 10)]),
+      sportCirc('Brazos', [ej('Biceps en banco', 10, 25), ej('Triceps con polea', 10, 30)]),
+      velCirc(),
+    ], SF),
+    rutina('Espalda + Hombros', 'Lean', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Peso muerto con barra', 6, 80), ej('Sumo con barra', 8, 70), ej('Deadbug', 12)]),
+      sportCirc('Espalda', [ej('Dominadas abiertas', 8), ej('Remo alto en polea', 10, 40)]),
+      sportCirc('Hombros', [ej('Elevaciones de hombro adelante', 10, 10), ej('Vuelos laterales', 12, 8)]),
+      sportCirc('Pecho', [ej('Fondos de pecho en maquina', 10, 50), ej('Pecho con polea doble', 12, 10)]),
+      sportCirc('Brazos', [ej('Biceps alto en polea', 10, 25), ej('Triceps con polea', 10, 30)]),
+      velCirc(),
+    ], SF),
+    rutina('Pecho + Brazos', 'Lean', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Sentadilla con barra', 8, 70), ej('Zancadas con mancuernas', 10, 16), ej('Complex', 10)]),
+      sportCirc('Pecho', [ej('Press de pecho', 8, 55), ej('Fondos de pecho en maquina', 10, 50)]),
+      sportCirc('Brazos', [ej('Biceps en banco', 10, 25), ej('Biceps alto en polea', 10, 25)]),
+      sportCirc('Espalda', [ej('Remo en maquina', 10, 65), ej('Remo alto en polea', 10, 40)]),
+      sportCirc('Hombros', [ej('Empuje de hombros con barra en banco', 8, 25), ej('Elevaciones de hombro adelante', 10, 10)]),
+      velCirc(),
+    ], SF),
+    rutina('Espalda + Brazos', 'Lean', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Peso muerto rumano', 10, 50), ej('Sumo con barra', 8, 70), ej('Pallof press', 12)]),
+      sportCirc('Espalda', [ej('Dominadas abiertas', 8), ej('Remo en maquina', 10, 65)]),
+      sportCirc('Brazos', [ej('Triceps con polea', 10, 30), ej('Biceps en banco', 10, 25)]),
+      sportCirc('Pecho', [ej('Press de pecho', 8, 55), ej('Pecho con polea doble', 12, 10)]),
+      sportCirc('Hombros', [ej('Face pulls', 15, 10), ej('Vuelos laterales', 12, 8)]),
+      velCirc(),
+    ], SF),
+    rutina('Full Upper', 'Lean', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Sentadilla con barra', 8, 70), ej('Peso muerto con barra', 6, 80), ej('Espinales con disco', 15)]),
+      sportCirc('Pecho', [ej('Press de pecho', 8, 55), ej('Fondos de pecho en maquina', 10, 50)]),
+      sportCirc('Espalda', [ej('Dominadas abiertas', 8), ej('Remo alto en polea', 10, 40)]),
+      sportCirc('Hombros', [ej('Empuje de hombros con barra en banco', 8, 25), ej('Elevaciones de hombro adelante', 10, 10)]),
+      sportCirc('Brazos', [ej('Biceps alto en polea', 10, 25), ej('Triceps con polea', 10, 30)]),
+      velCirc(),
+    ], SF),
+  ];
+}
+
+function rutinasSportNat() {
+  const SF = { tipo: 'gimnasio', lugar: 'SPORT_FITNESS' };
+  return [
+    rutina('Glúteos + Espalda', 'Nat', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Sentadilla con barra', 8, 40), ej('Peso muerto dividido con barra', 10, 30), ej('Plancha', 1)]),
+      sportCirc('Glúteos', [ej('Empuje de cadera en cajon', 12, 30), ej('Aductores en maquina', 15, 30)]),
+      sportCirc('Espalda', [ej('Remo en maquina', 10, 40), ej('Dominada en maquina ascensor', 8, 35)]),
+      sportCirc('Hombros', [ej('Elevaciones de hombro adelante', 10, 5), ej('Face pulls', 15, 5)]),
+      sportCirc('Brazos', [ej('Triceps con polea', 10, 20), ej('Biceps con mancuerna', 10, 8)]),
+      velCirc(),
+    ], SF),
+    rutina('Glúteos + Pecho', 'Nat', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Sumo con rusas', 10, 20), ej('Peso muerto rumano', 10, 30), ej('Deadbug', 12)]),
+      sportCirc('Glúteos', [ej('Empuje de cadera en cajon', 12, 30), ej('Gluteos patada en polea', 12, 15)]),
+      sportCirc('Pecho', [ej('Pecho con polea doble', 12, 5), ej('Fondos de pecho suspendido en maquina', 10, 25)]),
+      sportCirc('Espalda', [ej('Remo en maquina separado', 10, 30), ej('Dominada sentada en maquina', 8, 30)]),
+      sportCirc('Brazos', [ej('Triceps con polea', 10, 20), ej('Biceps polea con bolitas', 10, 10)]),
+      velCirc(),
+    ], SF),
+    rutina('Glúteos + Hombros', 'Nat', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Sentadilla con barra', 8, 40), ej('Zancadas con mancuernas', 10, 10), ej('Complex', 10)]),
+      sportCirc('Glúteos', [ej('Aductores en maquina', 15, 30), ej('Empuje de cadera en cajon', 12, 30)]),
+      sportCirc('Hombros', [ej('Elevaciones de hombro hacia arriba', 10, 5), ej('Face pulls', 15, 5)]),
+      sportCirc('Espalda', [ej('Dominada en maquina ascensor', 8, 35), ej('Remo en maquina', 10, 40)]),
+      sportCirc('Brazos', [ej('Biceps con mancuerna', 10, 8), ej('Triceps con polea', 10, 20)]),
+      velCirc(),
+    ], SF),
+    rutina('Glúteos + Brazos', 'Nat', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Peso muerto dividido con barra', 10, 30), ej('Sumo con rusas', 10, 20), ej('Pallof press', 12)]),
+      sportCirc('Glúteos', [ej('Gluteos patada en polea', 12, 15), ej('Empuje de cadera en cajon', 12, 30)]),
+      sportCirc('Brazos', [ej('Triceps con polea', 10, 20), ej('Biceps polea con bolitas', 10, 10)]),
+      sportCirc('Pecho', [ej('Pecho con polea doble', 12, 5), ej('Fondos de pecho suspendido en maquina', 10, 25)]),
+      sportCirc('Hombros', [ej('Elevaciones de hombro adelante', 10, 5), ej('Face pulls', 15, 5)]),
+      velCirc(),
+    ], SF),
+    rutina('Full Body', 'Nat', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Sentadilla con barra', 8, 40), ej('Peso muerto rumano', 10, 30), ej('Espinales con disco', 15)]),
+      sportCirc('Glúteos', [ej('Empuje de cadera en cajon', 12, 30), ej('Aductores en maquina', 15, 30)]),
+      sportCirc('Pecho', [ej('Pecho con polea doble', 12, 5), ej('Fondos de pecho suspendido en maquina', 10, 25)]),
+      sportCirc('Espalda', [ej('Remo en maquina', 10, 40), ej('Dominada en maquina ascensor', 8, 35)]),
+      sportCirc('Brazos', [ej('Triceps con polea', 10, 20), ej('Biceps con mancuerna', 10, 8)]),
+      velCirc(),
+    ], SF),
+  ];
+}
+
 // ── Derive muscle groups from exercise names (for migration) ──
 
 function deriveGruposFromNames(exerciseNames) {
@@ -217,11 +322,13 @@ function deriveGruposFromNames(exerciseNames) {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '22'; // 22 = full rebuild Sport Fitness rutinas (5+1 structure)
+  const CURRENT_SEED_V = '23'; // 23 = add 5+5 Sport Fitness seed rutinas
 
   const seedRutinas = [
     ...rutinasLean(),
     ...rutinasNat(),
+    ...rutinasSportLean(),
+    ...rutinasSportNat(),
     ...getBibliotecaRutinas(),
   ];
 
@@ -521,10 +628,24 @@ export function seedIfEmpty() {
 
 function seedPlan() {
   const PLAN_KEY = 'gym_plan_semanal';
-  if (localStorage.getItem(PLAN_KEY)) return;
-  const defaultPlan = {
-    Lean: { 1: 'gimnasio', 3: 'gimnasio', 5: 'gimnasio' },
-    Nat: { 1: 'gimnasio', 3: 'gimnasio', 5: 'gimnasio' },
+  const existing = localStorage.getItem(PLAN_KEY);
+  // Lu/Mi/Vi = Sport Fitness (gimnasio), Sáb = funcional Río (cross), resto libre
+  const targetPlan = {
+    Lean: { 1: 'gimnasio', 3: 'gimnasio', 5: 'gimnasio', 6: 'cross' },
+    Nat: { 1: 'gimnasio', 3: 'gimnasio', 5: 'gimnasio', 6: 'cross' },
   };
-  localStorage.setItem(PLAN_KEY, JSON.stringify(defaultPlan));
+  if (!existing) {
+    localStorage.setItem(PLAN_KEY, JSON.stringify(targetPlan));
+    return;
+  }
+  // Update existing plan to add Sáb if not set
+  try {
+    const plan = JSON.parse(existing);
+    let changed = false;
+    for (const u of ['Lean', 'Nat']) {
+      if (!plan[u]) plan[u] = {};
+      if (!plan[u][6]) { plan[u][6] = 'cross'; changed = true; }
+    }
+    if (changed) localStorage.setItem(PLAN_KEY, JSON.stringify(plan));
+  } catch {}
 }
