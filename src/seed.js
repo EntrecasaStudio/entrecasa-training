@@ -322,7 +322,7 @@ function deriveGruposFromNames(exerciseNames) {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '24'; // 24 = auto-set usaPeso on ejercicio meta
+  const CURRENT_SEED_V = '25'; // 25 = force reassign Sport Fitness to calendar
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -609,7 +609,7 @@ export function seedIfEmpty() {
           }
 
           // ── Assign Sport Fitness rutinas to calendar (Lu=1, Mi=3, Vi=5) ──
-          if (!seedV || parseInt(seedV, 10) < 23) {
+          if (!seedV || parseInt(seedV, 10) < 25) {
             const gymDays = [1, 3, 5]; // Lunes, Miercoles, Viernes
             for (const usuario of ['Lean', 'Nat']) {
               const sportRutinas = merged.filter((r) =>
