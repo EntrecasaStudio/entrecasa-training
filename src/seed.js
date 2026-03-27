@@ -205,6 +205,8 @@ function velCirc() {
 }
 
 function rutinasSportLean() {
+  // Sport Fitness starts after the last Vilo/biblioteca routine
+  // _seedNumero is already at the end of Vilo+biblioteca (auto-incremented)
   const SF = { tipo: 'gimnasio', lugar: 'SPORT_FITNESS' };
   return [
     rutina('Pecho + Espalda', 'Lean', null, [
@@ -322,14 +324,14 @@ function deriveGruposFromNames(exerciseNames) {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '25'; // 25 = force reassign Sport Fitness to calendar
+  const CURRENT_SEED_V = '26'; // 26 = clean meta + fix Sport Fitness numeros
 
   const seedRutinas = [
     ...rutinasLean(),
     ...rutinasNat(),
-    ...rutinasSportLean(),
-    ...rutinasSportNat(),
     ...getBibliotecaRutinas(),
+    ...rutinasSportLean(),  // After biblioteca so numeros are higher
+    ...rutinasSportNat(),
   ];
 
   // Expected library count: both H and M variants
@@ -609,20 +611,24 @@ export function seedIfEmpty() {
           }
 
           // ── Assign Sport Fitness rutinas to calendar (Lu=1, Mi=3, Vi=5) ──
-          if (!seedV || parseInt(seedV, 10) < 25) {
-            const gymDays = [1, 3, 5]; // Lunes, Miercoles, Viernes
+          // Always check: if no Sport Fitness is assigned to gym days, assign them
+          {
+            const gymDays = [1, 3, 5];
             for (const usuario of ['Lean', 'Nat']) {
               const sportRutinas = merged.filter((r) =>
                 r.lugar === 'SPORT_FITNESS' && r.usuario === usuario && r.tipo === 'gimnasio' && !r.deleted
               );
               if (sportRutinas.length === 0) continue;
-              // Clear old day assignments for gym days
+              // Check if any Sport Fitness is already assigned to a gym day
+              const hasAssignment = sportRutinas.some((r) => r.diaSemana != null && gymDays.includes(Number(r.diaSemana)));
+              if (hasAssignment) continue; // already assigned, don't overwrite
+              // Clear ALL gym-day assignments (Vilo and others) for this user
               for (const r of merged) {
                 if (r.usuario === usuario && r.diaSemana != null && gymDays.includes(Number(r.diaSemana))) {
                   r.diaSemana = null;
                 }
               }
-              // Assign Sport Fitness rutinas round-robin to gym days
+              // Assign Sport Fitness round-robin
               for (let i = 0; i < gymDays.length; i++) {
                 const r = sportRutinas[i % sportRutinas.length];
                 r.diaSemana = gymDays[i];
@@ -631,33 +637,29 @@ export function seedIfEmpty() {
             }
           }
 
-          // ── Migration v24: auto-set usaPeso in ejercicio meta ──
-          if (!seedV || parseInt(seedV, 10) < 24) {
+          // ── Migration v24→v26: clean up ejercicio meta ──
+          // Remove bloated meta entries from old Notion-style exercise names
+          // Only keep entries for exercises that exist in current rutinas
+          {
             const META_KEY = 'gym_ejercicio_meta';
             const meta = JSON.parse(localStorage.getItem(META_KEY) || '{}');
-            // Keywords that indicate weight is used
-            const PESO_KW = ['barra', 'mancuerna', 'rusas', 'disco', 'peso', 'polea', 'maquina', 'máquina', 'press', 'curl', 'remo', 'fondos', 'aductores', 'elevaciones', 'vuelos', 'biceps', 'triceps', 'sentadilla', 'sumo', 'empuje', 'dominada'];
-            const NO_PESO = ['burpees', 'plancha', 'copenhague', 'deadbug', 'salto', 'complex', 'estrella', 'ruedita', 'ballwall'];
-            // Collect all exercise names from all rutinas
-            const allNames = new Set();
+            const activeNames = new Set();
             for (const r of merged) {
               for (const c of (r.circuitos || [])) {
                 for (const e of (c.ejercicios || [])) {
-                  if (e.nombre && e.tipo !== 'velocidad' && e.tipo !== 'hiit') allNames.add(e.nombre);
+                  if (e.nombre) activeNames.add(e.nombre);
                 }
               }
             }
-            for (const nombre of allNames) {
-              if (meta[nombre]?.usaPeso !== undefined) continue; // user already set
-              const lower = nombre.toLowerCase();
-              const isNoPeso = NO_PESO.some((n) => lower === n || lower.startsWith(n));
-              const hasPesoKw = PESO_KW.some((kw) => lower.includes(kw));
-              if (!isNoPeso && hasPesoKw) {
-                if (!meta[nombre]) meta[nombre] = { usaPeso: false, usaChaleco: false };
-                meta[nombre].usaPeso = true;
+            // Remove entries for exercises that don't exist in any rutina
+            let cleaned = false;
+            for (const nombre of Object.keys(meta)) {
+              if (!activeNames.has(nombre)) {
+                delete meta[nombre];
+                cleaned = true;
               }
             }
-            localStorage.setItem(META_KEY, JSON.stringify(meta));
+            if (cleaned) localStorage.setItem(META_KEY, JSON.stringify(meta));
           }
 
           localStorage.setItem(KEY, JSON.stringify(merged));
