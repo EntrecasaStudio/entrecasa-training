@@ -217,7 +217,7 @@ function deriveGruposFromNames(exerciseNames) {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '21'; // 21 = restructure Sport Fitness rutinas (5+1)
+  const CURRENT_SEED_V = '22'; // 22 = full rebuild Sport Fitness rutinas (5+1 structure)
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -407,36 +407,97 @@ export function seedIfEmpty() {
             }
           }
 
-          // ── Migration v21: restructure Sport Fitness rutinas (5+1 circuits) ──
-          // Only touch rutinas with lugar=SPORT_FITNESS that have no sessions
-          if (!seedV || parseInt(seedV, 10) < 21) {
+          // ── Migration v22: full rebuild Sport Fitness rutinas (5+1 structure) ──
+          // C1: 2 piernas + 1 core | C2-C5: 2 ej upper body | C6: velocidad
+          // Nat: C2 = glúteos, C3-C5 = upper body
+          if (!seedV || parseInt(seedV, 10) < 22) {
             const sesiones = JSON.parse(localStorage.getItem('gym_sesiones') || '[]');
             const doneIds = new Set(sesiones.map((s) => s.rutinaId));
+
+            // Exercise pools for rebuilding circuits
+            const LEGS = [
+              { n: 'Sentadilla con barra', r: 8 }, { n: 'Peso muerto rumano', r: 10 },
+              { n: 'Peso muerto con barra', r: 6 }, { n: 'Zancadas con mancuernas', r: 10 },
+              { n: 'Sumo con barra', r: 8 }, { n: 'Peso muerto dividido con barra', r: 10 },
+            ];
+            const CORE_EJS = [
+              { n: 'Plancha', r: 1 }, { n: 'Deadbug', r: 12 },
+              { n: 'Pallof press', r: 12 }, { n: 'Complex', r: 10 },
+            ];
+            const UPPER = {
+              Pecho: [{ n: 'Press de pecho', r: 8 }, { n: 'Pecho con polea doble', r: 12 }, { n: 'Fondos de pecho en maquina', r: 10 }],
+              Espalda: [{ n: 'Remo en maquina', r: 10 }, { n: 'Dominadas abiertas', r: 8 }, { n: 'Remo alto en polea', r: 10 }],
+              Hombros: [{ n: 'Empuje de hombros con barra en banco', r: 8 }, { n: 'Elevaciones de hombro adelante', r: 10 }, { n: 'Face pulls', r: 15 }],
+              Brazos: [{ n: 'Biceps en banco', r: 10 }, { n: 'Triceps con polea', r: 10 }, { n: 'Biceps alto en polea', r: 10 }],
+            };
+            const GLUT = [
+              { n: 'Hip thrust con barra', r: 10 }, { n: 'Empuje de cadera en cajon', r: 12 },
+              { n: 'Aductores en maquina', r: 15 }, { n: 'Gluteos patada en polea', r: 12 },
+            ];
+
+            function mkEj(t) {
+              return {
+                id: generateId(), nombre: t.n, repsObjetivo: t.r, pesoKg: 0,
+                tipo: 'normal', series: [{ reps: t.r, pesoKg: 0 }, { reps: t.r, pesoKg: 0 }, { reps: t.r, pesoKg: 0 }],
+              };
+            }
+            function mkCirc(grupo, ejercicios) {
+              return { id: generateId(), grupoMuscular: Array.isArray(grupo) ? grupo : [grupo], ejercicios };
+            }
+            function pickN(arr, n) {
+              const shuffled = [...arr].sort(() => Math.random() - 0.5);
+              return shuffled.slice(0, n);
+            }
+            const VEL_CIRC = () => mkCirc('Cardio', [{
+              id: generateId(), nombre: 'Pasadas de velocidad', tipo: 'velocidad',
+              velocidad: 12, tiempo: 60, descanso: 30, cantidadPasadas: 3, inclinacion: 0,
+            }]);
+
+            // Upper body rotation: each routine gets a different combo
+            const UPPER_COMBOS_M = [
+              ['Pecho', 'Espalda', 'Hombros', 'Brazos'],
+              ['Espalda', 'Pecho', 'Brazos', 'Hombros'],
+              ['Pecho', 'Hombros', 'Espalda', 'Brazos'],
+              ['Espalda', 'Brazos', 'Pecho', 'Hombros'],
+              ['Hombros', 'Espalda', 'Pecho', 'Brazos'],
+              ['Pecho', 'Brazos', 'Hombros', 'Espalda'],
+            ];
+            const UPPER_COMBOS_F = [
+              ['Glúteos', 'Pecho', 'Espalda', 'Brazos'],
+              ['Glúteos', 'Espalda', 'Hombros', 'Brazos'],
+              ['Glúteos', 'Pecho', 'Hombros', 'Brazos'],
+            ];
+
+            let mIdx = 0, fIdx = 0;
             for (const r of merged) {
-              if (r.lugar !== 'SPORT_FITNESS') continue;
-              if (doneIds.has(r.id)) continue; // don't touch completed
-              // Check if missing velocity circuit (6th)
-              const hasVelCirc = r.circuitos?.some((c) =>
-                c.ejercicios?.some((e) => e.tipo === 'velocidad')
-              );
-              if (!hasVelCirc && r.circuitos) {
-                // Add velocity circuit at the end
-                r.circuitos.push({
-                  id: generateId(),
-                  grupoMuscular: ['Cardio'],
-                  ejercicios: [{
-                    id: generateId(),
-                    nombre: 'Pasadas de velocidad',
-                    tipo: 'velocidad',
-                    velocidad: 12,
-                    tiempo: 60,
-                    descanso: 30,
-                    cantidadPasadas: 3,
-                    inclinacion: 0,
-                  }],
-                });
-                r.updatedAt = new Date().toISOString();
-              }
+              if (r.lugar !== 'SPORT_FITNESS' || r.tipo !== 'gimnasio') continue;
+              if (doneIds.has(r.id)) continue;
+              if (!r.circuitos) continue;
+
+              const isNat = r.usuario === 'Nat';
+              const combo = isNat
+                ? UPPER_COMBOS_F[fIdx++ % UPPER_COMBOS_F.length]
+                : UPPER_COMBOS_M[mIdx++ % UPPER_COMBOS_M.length];
+
+              // C1: 2 piernas + 1 core
+              const c1 = mkCirc(['Piernas', 'Core'], [
+                ...pickN(LEGS, 2).map(mkEj),
+                mkEj(pickN(CORE_EJS, 1)[0]),
+              ]);
+
+              // C2-C5: from combo
+              const upperCircs = combo.map((grupo) => {
+                if (grupo === 'Glúteos') {
+                  return mkCirc('Glúteos', pickN(GLUT, 2).map(mkEj));
+                }
+                const pool = UPPER[grupo];
+                if (!pool) return null;
+                return mkCirc(grupo, pickN(pool, 2).map(mkEj));
+              }).filter(Boolean);
+
+              // C6: velocidad
+              r.circuitos = [c1, ...upperCircs.slice(0, 4), VEL_CIRC()];
+              r.updatedAt = new Date().toISOString();
             }
           }
 
