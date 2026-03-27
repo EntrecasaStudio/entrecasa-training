@@ -361,10 +361,12 @@ export function showDayAssignmentModal(usuario, dia, tipoActual, onDone, { date,
       const check = r.id === selectedRutinaId ? '<span class="day-assign-check">✓</span>' : '';
       const code = formatNumero(r.numero, r);
       const name = getDisplayName(r, { withEmoji: true });
+      const lugarTag = r.lugar ? `<span class="day-assign-lugar-tag">${r.lugar === 'SPORT_FITNESS' ? 'Sport' : r.lugar === 'VILO_GYM' ? 'Vilo' : r.lugar === 'RIO' ? 'Río' : r.lugar}</span>` : '';
       return `
         <div class="day-assign-option${isActive}" data-assign-rutina="${r.id}">
           ${check}
           ${code ? `<span class="day-assign-option-code">${code}</span>` : ''}
+          ${lugarTag}
           <span class="day-assign-option-name">${name}</span>
           <button class="day-assign-option-info" data-assign-info="${r.id}" title="Ver detalle">
             ${icon.info}

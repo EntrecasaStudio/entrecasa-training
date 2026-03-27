@@ -382,6 +382,19 @@ select.input {
   transition: background-color 0.15s, border-color 0.15s;
 }
 
+.day-assign-lugar-tag {
+  font-size: 8px;
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  color: var(--color-accent);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .day-assign-option:active {
   background-color: color-mix(in srgb, var(--color-surface) 80%, var(--color-accent));
 }
