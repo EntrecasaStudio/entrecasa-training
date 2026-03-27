@@ -20,6 +20,7 @@ const SYNC_KEYS = {
   gym_day_overrides: 'dayOverrides',
   gym_plan_generado: 'planGenerado',
   gym_ejercicio_progresion: 'ejercicioProgresion',
+  gym_hiit_config: 'hiitConfig',
 };
 
 // Keys that are arrays of items with `id` field — use item-level merge

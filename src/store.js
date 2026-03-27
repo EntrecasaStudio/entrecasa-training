@@ -479,6 +479,53 @@ export function deletePlanGenerado(usuario) {
   bumpVersion();
 }
 
+// ── HIIT equipment rotation config ───────────
+
+const HIIT_CONFIG_KEY = 'gym_hiit_config';
+
+const HIIT_EQUIPMENT_ORDER = ['treadmill', 'bike', 'bodyweight', 'elliptical', 'escalator'];
+const HIIT_DEFAULTS = {
+  treadmill: { velocity: 12, inclination: 1 },
+  bike: { resistance: 6 },
+  bodyweight: { exercise: 'burpees' },
+  elliptical: { resistance: 5 },
+  escalator: { speed: 8 },
+};
+
+export function getHiitConfig(usuario) {
+  const all = read(HIIT_CONFIG_KEY) || {};
+  return all[usuario] || { lastEquipment: null, lastDate: null, savedParams: {} };
+}
+
+export function saveHiitConfig(usuario, config) {
+  const all = read(HIIT_CONFIG_KEY) || {};
+  all[usuario] = { ...config, updatedAt: new Date().toISOString() };
+  write(HIIT_CONFIG_KEY, all);
+}
+
+export function getNextHiitEquipment(usuario) {
+  const config = getHiitConfig(usuario);
+  if (!config.lastEquipment) return HIIT_EQUIPMENT_ORDER[0];
+  const lastIdx = HIIT_EQUIPMENT_ORDER.indexOf(config.lastEquipment);
+  return HIIT_EQUIPMENT_ORDER[(lastIdx + 1) % HIIT_EQUIPMENT_ORDER.length];
+}
+
+export function getHiitParams(usuario, equipment) {
+  const config = getHiitConfig(usuario);
+  return config.savedParams?.[equipment] || HIIT_DEFAULTS[equipment] || {};
+}
+
+export function saveHiitSession(usuario, equipment, params) {
+  const config = getHiitConfig(usuario);
+  config.lastEquipment = equipment;
+  config.lastDate = new Date().toISOString().split('T')[0];
+  if (!config.savedParams) config.savedParams = {};
+  config.savedParams[equipment] = params;
+  saveHiitConfig(usuario, config);
+}
+
+export { HIIT_EQUIPMENT_ORDER, HIIT_DEFAULTS };
+
 // ── Progressive overload tracking ────────────
 
 const PROGRESION_KEY = 'gym_ejercicio_progresion';

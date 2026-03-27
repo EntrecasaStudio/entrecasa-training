@@ -1,4 +1,4 @@
-import { getRutinaById, getWorkoutActivo, saveWorkoutActivo, clearWorkoutActivo, saveSesion, getUltimaSesionDeRutina, getUsuarioActivo, saveRutina, duplicateRutina, getEjercicioMeta, getProgresion, saveProgresion } from '@/store.js';
+import { getRutinaById, getWorkoutActivo, saveWorkoutActivo, clearWorkoutActivo, saveSesion, getUltimaSesionDeRutina, getUsuarioActivo, saveRutina, duplicateRutina, getEjercicioMeta, getProgresion, saveProgresion, getNextHiitEquipment, getHiitParams, saveHiitSession, HIIT_EQUIPMENT_ORDER } from '@/store.js';
 import { generateId } from '@/id.js';
 import { navigate } from '@/router.js';
 import { showModal } from '@js/components/modal.js';
@@ -430,12 +430,67 @@ function renderEjercicioVelocidad(ej, ejIdx) {
     </button>
   ` : '';
 
-  return `
-    <div class="workout-ejercicio animate-in" style="animation-delay:${ejIdx * 60}ms">
-      <div class="workout-ejercicio-header">
-        <div class="workout-ejercicio-name">${ej.nombre}</div>
-        <span class="workout-circuit-type-badge ${tipo}">${tipo === 'caminata' ? 'Caminata' : 'Velocidad'}</span>
-      </div>
+  // Equipment selector (for Circuit 6 HIIT)
+  const equipment = ej.equipment || 'treadmill';
+  const EQUIP_LABELS = { treadmill: '🏃 Cinta', bike: '🚴 Bici', bodyweight: '💪 Cuerpo', elliptical: '🏋️ Elíptico', escalator: '🪜 Escalera' };
+  const equipSelector = `
+    <div class="workout-equip-selector">
+      ${HIIT_EQUIPMENT_ORDER.map((eq) => `
+        <button class="workout-equip-btn ${eq === equipment ? 'active' : ''}" data-action="set-equipment" data-ej="${ejIdx}" data-equip="${eq}">
+          ${EQUIP_LABELS[eq] || eq}
+        </button>
+      `).join('')}
+    </div>`;
+
+  // Dynamic params based on equipment
+  let paramsHtml;
+  if (equipment === 'bike' || equipment === 'elliptical' || equipment === 'escalator') {
+    const resistLabel = equipment === 'escalator' ? 'Vel' : 'Resist.';
+    const resistVal = equipment === 'escalator' ? (ej.speed || 8) : (ej.resistance || 6);
+    const resistField = equipment === 'escalator' ? 'speed' : 'resistance';
+    paramsHtml = `
+      <div class="workout-vel-params">
+        <label class="workout-vel-param">
+          <span>${resistLabel}</span>
+          <input type="number" inputmode="numeric" value="${resistVal}" data-vel-param="${resistField}" data-ej="${ejIdx}" class="workout-vel-input">
+          <span>${equipment === 'escalator' ? '' : '/10'}</span>
+        </label>
+        <label class="workout-vel-param">
+          <span>Tiempo</span>
+          <input type="number" inputmode="numeric" value="${ej.tiempo}" data-vel-param="tiempo" data-ej="${ejIdx}" class="workout-vel-input">
+          <span>s</span>
+        </label>
+        <label class="workout-vel-param">
+          <span>Desc</span>
+          <input type="number" inputmode="numeric" value="${ej.descanso}" data-vel-param="descanso" data-ej="${ejIdx}" class="workout-vel-input">
+          <span>s</span>
+        </label>
+      </div>`;
+  } else if (equipment === 'bodyweight') {
+    const bwExercise = ej.bodyweightExercise || 'burpees';
+    const BW_OPTIONS = ['burpees', 'sentadilla con salto', 'saltos laterales', 'escalador'];
+    paramsHtml = `
+      <div class="workout-vel-params">
+        <label class="workout-vel-param" style="flex:2">
+          <span>Ejercicio</span>
+          <select data-vel-param="bodyweightExercise" data-ej="${ejIdx}" class="workout-vel-input">
+            ${BW_OPTIONS.map((o) => `<option value="${o}" ${o === bwExercise ? 'selected' : ''}>${o}</option>`).join('')}
+          </select>
+        </label>
+        <label class="workout-vel-param">
+          <span>Work</span>
+          <input type="number" inputmode="numeric" value="${ej.tiempo || 30}" data-vel-param="tiempo" data-ej="${ejIdx}" class="workout-vel-input">
+          <span>s</span>
+        </label>
+        <label class="workout-vel-param">
+          <span>Rest</span>
+          <input type="number" inputmode="numeric" value="${ej.descanso || 10}" data-vel-param="descanso" data-ej="${ejIdx}" class="workout-vel-input">
+          <span>s</span>
+        </label>
+      </div>`;
+  } else {
+    // treadmill (default)
+    paramsHtml = `
       <div class="workout-vel-params">
         <label class="workout-vel-param">
           <span>Vel</span>
@@ -457,7 +512,17 @@ function renderEjercicioVelocidad(ej, ejIdx) {
           <input type="number" inputmode="decimal" value="${ej.inclinacion || 0}" data-vel-param="inclinacion" data-ej="${ejIdx}" step="0.5" class="workout-vel-input">
           <span>%</span>
         </label>
+      </div>`;
+  }
+
+  return `
+    <div class="workout-ejercicio animate-in" style="animation-delay:${ejIdx * 60}ms">
+      <div class="workout-ejercicio-header">
+        <div class="workout-ejercicio-name">${ej.nombre}</div>
+        <span class="workout-circuit-type-badge hiit">HIIT</span>
       </div>
+      ${equipSelector}
+      ${paramsHtml}
       <div class="workout-pasada-progress">${completadas}/${total} completadas ${allDone ? icon.check : ''}</div>
       ${timerHtml}
       <div class="workout-vueltas">
@@ -869,20 +934,38 @@ function doFinishWorkout() {
     if (calorias > 0) sesion.calorias = calorias;
     saveSesion(sesion);
 
-    // Save progressive overload data for each normal exercise
+    // Save progressive overload + HIIT equipment data
     const usuario = state.usuario || getUsuarioActivo();
     for (const circ of state.resultados) {
       for (const ej of circ.ejercicios) {
-        if ((ej.tipo || 'normal') !== 'normal' || !ej.vueltas?.length) continue;
-        const maxWeight = Math.max(...ej.vueltas.map((v) => v.pesoRealKg || 0));
-        const targetReps = ej.repsObjetivo || ej.vueltas[0]?.repsReal || 10;
-        const completedAllReps = ej.vueltas.every((v) => v.done && v.repsReal >= targetReps);
-        saveProgresion(usuario, ej.nombre, {
-          lastWeight: maxWeight,
-          lastDate: sesion.fecha,
-          completedAllReps,
-          targetReps,
-        });
+        const ejTipo = ej.tipo || 'normal';
+        // Progressive overload for normal exercises
+        if (ejTipo === 'normal' && ej.vueltas?.length) {
+          const maxWeight = Math.max(...ej.vueltas.map((v) => v.pesoRealKg || 0));
+          const targetReps = ej.repsObjetivo || ej.vueltas[0]?.repsReal || 10;
+          const completedAllReps = ej.vueltas.every((v) => v.done && v.repsReal >= targetReps);
+          saveProgresion(usuario, ej.nombre, {
+            lastWeight: maxWeight,
+            lastDate: sesion.fecha,
+            completedAllReps,
+            targetReps,
+          });
+        }
+        // HIIT equipment tracking for velocidad exercises
+        if ((ejTipo === 'velocidad' || ejTipo === 'caminata') && ej.equipment) {
+          const eqParams = {};
+          if (ej.equipment === 'treadmill') {
+            eqParams.velocity = ej.velocidad;
+            eqParams.inclination = ej.inclinacion || 0;
+          } else if (ej.equipment === 'bike' || ej.equipment === 'elliptical') {
+            eqParams.resistance = ej.resistance || 6;
+          } else if (ej.equipment === 'escalator') {
+            eqParams.speed = ej.speed || 8;
+          } else if (ej.equipment === 'bodyweight') {
+            eqParams.exercise = ej.bodyweightExercise || 'burpees';
+          }
+          saveHiitSession(usuario, ej.equipment, eqParams);
+        }
       }
     }
 
@@ -1711,6 +1794,36 @@ export function mount(params) {
           haptic.medium();
           saveWorkoutActivo(state);
           reRenderWorkout(params);
+        }
+        break;
+      }
+
+      case 'set-equipment': {
+        syncInputs();
+        const ejIdx = parseInt(btn.dataset.ej);
+        const equip = btn.dataset.equip;
+        const circ = state.resultados[state.circuitoActual];
+        const ej = circ?.ejercicios[ejIdx];
+        if (ej) {
+          ej.equipment = equip;
+          // Load saved params for this equipment
+          const saved = getHiitParams(state.usuario || getUsuarioActivo(), equip);
+          if (equip === 'bike' || equip === 'elliptical') {
+            ej.resistance = saved.resistance || 6;
+          } else if (equip === 'escalator') {
+            ej.speed = saved.speed || 8;
+          } else if (equip === 'bodyweight') {
+            ej.bodyweightExercise = saved.exercise || 'burpees';
+            ej.tiempo = saved.tiempo || 30;
+            ej.descanso = saved.descanso || 10;
+          } else {
+            ej.velocidad = saved.velocity || ej.velocidad || 12;
+            ej.inclinacion = saved.inclination || ej.inclinacion || 0;
+          }
+          state.modified = true;
+          saveWorkoutActivo(state);
+          haptic.light();
+          reRenderWorkout(params, { preserveScroll: true });
         }
         break;
       }
