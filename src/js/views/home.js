@@ -311,7 +311,7 @@ function renderUserDayRow(u, selectedDate, isToday, isPast, dow, isActive) {
     statusHtml = `
       <div class="cal-shared-row-info">
         ${volanta}
-        <span class="cal-shared-status" data-action="start" data-id="${r.id}" style="cursor:pointer">${r.nombre}</span>
+        <span class="cal-shared-status" data-action="start" data-id="${r.id}" style="cursor:pointer">${r.nombre}${r.lugar ? ` <span class="cal-lugar-badge">${r.lugar === 'SPORT_FITNESS' ? 'Sport' : r.lugar === 'VILO_GYM' ? 'Vilo' : r.lugar === 'RIO' ? 'Río' : r.lugar}</span>` : ''}</span>
         ${metaLine}
       </div>`;
   } else if (planned && !planned.routine) {

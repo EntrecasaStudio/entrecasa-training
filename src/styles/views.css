@@ -1225,6 +1225,30 @@
   border-color: var(--color-accent);
 }
 
+.rutinas-lugar-row {
+  display: flex;
+  gap: 4px;
+  padding: 0 var(--space-md) var(--space-sm);
+  flex-wrap: wrap;
+}
+.rutinas-lugar-chip {
+  font-size: 10px;
+  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  opacity: 0.4;
+}
+.rutinas-lugar-chip.active {
+  opacity: 1;
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
 /* ── Rutina Form view ────────────────────── */
 
 .form-section {
@@ -4322,6 +4346,18 @@
 }
 .plan-day-pp-press { background: color-mix(in srgb, var(--color-tag-pecho) 25%, transparent); color: var(--color-tag-pecho); }
 .plan-day-pp-pull { background: color-mix(in srgb, var(--color-tag-espalda) 25%, transparent); color: var(--color-tag-espalda); }
+
+/* Lugar badge in calendar */
+.cal-lugar-badge {
+  font-size: 0.6rem;
+  font-weight: var(--fw-bold);
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  color: var(--color-accent);
+  vertical-align: middle;
+  margin-left: 4px;
+}
 
 /* ── Plan Report ─────────────────────────── */
 .plan-report { padding: var(--space-md); padding-bottom: calc(80px + env(safe-area-inset-bottom)); }

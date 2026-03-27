@@ -37,6 +37,9 @@ let cardCounter = 0;
 let searchQuery = '';
 let sortBy = 'numero'; // 'numero' | 'picante' | 'duracion' | 'done'
 let filterDone = 'all'; // 'all' | 'pending' | 'done'
+let filterLugar = JSON.parse(localStorage.getItem('gym_filter_lugar') || 'null'); // null = show all
+
+const ALL_LUGARES = Object.keys(LUGAR_LABELS);
 
 // ── Helpers ──────────────────────────────────
 
@@ -236,6 +239,11 @@ export function render() {
     </div>
   `;
 
+  const lugarChips = ALL_LUGARES.map((l) => {
+    const isOn = !filterLugar || filterLugar.includes(l);
+    return `<button class="rutinas-lugar-chip ${isOn ? 'active' : ''}" data-action="toggle-lugar" data-lugar="${l}">${LUGAR_LABELS[l]}</button>`;
+  }).join('');
+
   const sortFilterRow = `
     <div class="rutinas-sort-row">
       <select class="rutinas-sort-select" data-action="sort-rutinas" id="rutinas-sort-select">
@@ -250,9 +258,15 @@ export function render() {
         <button class="rutinas-filter-chip ${filterDone === 'done' ? 'active' : ''}" data-action="filter-done" data-value="done">Hechas</button>
       </div>
     </div>
+    <div class="rutinas-lugar-row">${lugarChips}</div>
   `;
 
   let filtered = activeFilter === 'cross' ? cross : gimnasio;
+
+  // Apply lugar filter
+  if (filterLugar && filterLugar.length > 0) {
+    filtered = filtered.filter((r) => filterLugar.includes(r.lugar || 'VILO_GYM'));
+  }
 
   // Apply search filter
   if (searchQuery) {
@@ -424,6 +438,25 @@ export function mount() {
           filterDone = newVal;
           rerender();
         }
+        break;
+      }
+      case 'toggle-lugar': {
+        const lugar = btn.dataset.lugar;
+        if (!filterLugar) {
+          // First toggle: disable all except the one clicked
+          filterLugar = [lugar];
+        } else {
+          const idx = filterLugar.indexOf(lugar);
+          if (idx >= 0) {
+            filterLugar.splice(idx, 1);
+            if (filterLugar.length === 0) filterLugar = null; // show all
+          } else {
+            filterLugar.push(lugar);
+          }
+          if (filterLugar && filterLugar.length === ALL_LUGARES.length) filterLugar = null; // all selected = show all
+        }
+        localStorage.setItem('gym_filter_lugar', JSON.stringify(filterLugar));
+        rerender();
         break;
       }
       case 'delete':
