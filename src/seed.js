@@ -322,7 +322,7 @@ function deriveGruposFromNames(exerciseNames) {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '23'; // 23 = add 5+5 Sport Fitness seed rutinas
+  const CURRENT_SEED_V = '24'; // 24 = auto-set usaPeso on ejercicio meta
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -629,6 +629,35 @@ export function seedIfEmpty() {
                 r.updatedAt = new Date().toISOString();
               }
             }
+          }
+
+          // ── Migration v24: auto-set usaPeso in ejercicio meta ──
+          if (!seedV || parseInt(seedV, 10) < 24) {
+            const META_KEY = 'gym_ejercicio_meta';
+            const meta = JSON.parse(localStorage.getItem(META_KEY) || '{}');
+            // Keywords that indicate weight is used
+            const PESO_KW = ['barra', 'mancuerna', 'rusas', 'disco', 'peso', 'polea', 'maquina', 'máquina', 'press', 'curl', 'remo', 'fondos', 'aductores', 'elevaciones', 'vuelos', 'biceps', 'triceps', 'sentadilla', 'sumo', 'empuje', 'dominada'];
+            const NO_PESO = ['burpees', 'plancha', 'copenhague', 'deadbug', 'salto', 'complex', 'estrella', 'ruedita', 'ballwall'];
+            // Collect all exercise names from all rutinas
+            const allNames = new Set();
+            for (const r of merged) {
+              for (const c of (r.circuitos || [])) {
+                for (const e of (c.ejercicios || [])) {
+                  if (e.nombre && e.tipo !== 'velocidad' && e.tipo !== 'hiit') allNames.add(e.nombre);
+                }
+              }
+            }
+            for (const nombre of allNames) {
+              if (meta[nombre]?.usaPeso !== undefined) continue; // user already set
+              const lower = nombre.toLowerCase();
+              const isNoPeso = NO_PESO.some((n) => lower === n || lower.startsWith(n));
+              const hasPesoKw = PESO_KW.some((kw) => lower.includes(kw));
+              if (!isNoPeso && hasPesoKw) {
+                if (!meta[nombre]) meta[nombre] = { usaPeso: false, usaChaleco: false };
+                meta[nombre].usaPeso = true;
+              }
+            }
+            localStorage.setItem(META_KEY, JSON.stringify(meta));
           }
 
           localStorage.setItem(KEY, JSON.stringify(merged));
