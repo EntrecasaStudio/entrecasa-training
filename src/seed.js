@@ -406,7 +406,7 @@ function deriveGruposFromNames(exerciseNames) {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '27'; // 27 = 10+10 Sport Fitness rutinas + rotation
+  const CURRENT_SEED_V = '28'; // 28 = force usaPeso on catalog exercises
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -777,6 +777,22 @@ export function seedIfEmpty() {
               }
             }
             if (cleaned) localStorage.setItem(META_KEY, JSON.stringify(meta));
+
+            // Set usaPeso for all exercises that use weight (machines, barbells, dumbbells, etc.)
+            const PESO_KW = ['barra', 'mancuerna', 'rusas', 'disco', 'peso', 'polea', 'maquina', 'máquina', 'press', 'curl', 'remo', 'fondos', 'aductores', 'elevaciones', 'vuelos', 'biceps', 'triceps', 'sentadilla', 'sumo', 'empuje', 'dominada', 'jalon', 'hip thrust', 'gluteos'];
+            const NO_PESO = ['burpees', 'plancha', 'copenhague', 'deadbug', 'salto', 'complex', 'estrella', 'ruedita', 'ballwall'];
+            for (const nombre of activeNames) {
+              const lower = nombre.toLowerCase();
+              if (lower.includes('velocidad') || lower.includes('pasada')) continue;
+              const isNoPeso = NO_PESO.some((n) => lower === n || lower.startsWith(n));
+              if (isNoPeso) continue;
+              const shouldUsePeso = PESO_KW.some((kw) => lower.includes(kw));
+              if (shouldUsePeso) {
+                if (!meta[nombre]) meta[nombre] = { usaPeso: false, usaChaleco: false };
+                meta[nombre].usaPeso = true;
+              }
+            }
+            localStorage.setItem(META_KEY, JSON.stringify(meta));
           }
 
           localStorage.setItem(KEY, JSON.stringify(merged));
