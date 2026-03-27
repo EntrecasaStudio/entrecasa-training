@@ -522,8 +522,17 @@ function renderEjercicioHIIT(ej, ejIdx) {
         <div class="workout-ejercicio-name">${ej.nombre}</div>
         <span class="workout-circuit-type-badge hiit">HIIT</span>
       </div>
-      <div class="workout-ejercicio-target">
-        ${total} rondas &middot; ${ej.workTime}s work / ${ej.restTime}s rest
+      <div class="workout-vel-params">
+        <label class="workout-vel-param">
+          <span>Work</span>
+          <input type="number" inputmode="numeric" value="${ej.workTime}" data-hiit-param="workTime" data-ej="${ejIdx}" class="workout-vel-input">
+          <span>s</span>
+        </label>
+        <label class="workout-vel-param">
+          <span>Rest</span>
+          <input type="number" inputmode="numeric" value="${ej.restTime}" data-hiit-param="restTime" data-ej="${ejIdx}" class="workout-vel-input">
+          <span>s</span>
+        </label>
       </div>
       <div class="workout-pasada-progress">${completadas}/${total} rondas ${allDone ? icon.check : ''}</div>
       ${timerHtml}
@@ -813,6 +822,26 @@ function syncInputs() {
     const ejIdx = parseInt(input.dataset.ej);
     if (circ.ejercicios[ejIdx]) {
       circ.ejercicios[ejIdx].pesoChalecoKg = parseFloat(input.value) || 0;
+    }
+  });
+
+  // Sync velocidad/caminata params (vel, tiempo, descanso, inclinacion)
+  document.querySelectorAll('[data-vel-param]').forEach((input) => {
+    const ejIdx = parseInt(input.dataset.ej);
+    const field = input.dataset.velParam;
+    const ej = circ.ejercicios[ejIdx];
+    if (ej && field) {
+      ej[field] = parseFloat(input.value) || 0;
+    }
+  });
+
+  // Sync HIIT params (workTime, restTime, rounds)
+  document.querySelectorAll('[data-hiit-param]').forEach((input) => {
+    const ejIdx = parseInt(input.dataset.ej);
+    const field = input.dataset.hiitParam;
+    const ej = circ.ejercicios[ejIdx];
+    if (ej && field) {
+      ej[field] = parseFloat(input.value) || 0;
     }
   });
 
