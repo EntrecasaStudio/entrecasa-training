@@ -249,6 +249,47 @@ function rutinasSportLean() {
       sportCirc('Brazos', [ej('Biceps alto en polea', 10, 25), ej('Triceps con polea', 10, 30)]),
       velCirc(),
     ], SF),
+    // ── 5 más para rotar ──
+    rutina('Hombros + Pecho', 'Lean', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Peso muerto rumano', 10, 50), ej('Sentadilla con barra', 8, 70), ej('Deadbug', 12)]),
+      sportCirc('Hombros', [ej('Empuje de hombros con barra en banco', 8, 25), ej('Vuelos laterales', 12, 8)]),
+      sportCirc('Pecho', [ej('Press de pecho', 8, 55), ej('Fondos de pecho en maquina', 10, 50)]),
+      sportCirc('Espalda', [ej('Remo alto en polea', 10, 40), ej('Dominadas abiertas', 8)]),
+      sportCirc('Brazos', [ej('Triceps con polea', 10, 30), ej('Biceps en banco', 10, 25)]),
+      velCirc(),
+    ], SF),
+    rutina('Espalda + Pecho', 'Lean', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Sumo con barra', 8, 70), ej('Peso muerto con barra', 6, 80), ej('Plancha', 1)]),
+      sportCirc('Espalda', [ej('Remo en maquina', 10, 65), ej('Remo alto en polea', 10, 40)]),
+      sportCirc('Pecho', [ej('Pecho con polea doble', 12, 10), ej('Press de pecho', 8, 55)]),
+      sportCirc('Hombros', [ej('Face pulls', 15, 10), ej('Elevaciones de hombro adelante', 10, 10)]),
+      sportCirc('Brazos', [ej('Biceps alto en polea', 10, 25), ej('Triceps con polea', 10, 30)]),
+      velCirc(),
+    ], SF),
+    rutina('Brazos + Hombros', 'Lean', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Sentadilla con barra', 8, 70), ej('Zancadas con mancuernas', 10, 16), ej('Complex', 10)]),
+      sportCirc('Brazos', [ej('Biceps en banco', 10, 25), ej('Triceps con polea', 10, 30)]),
+      sportCirc('Hombros', [ej('Empuje de hombros con barra en banco', 8, 25), ej('Face pulls', 15, 10)]),
+      sportCirc('Pecho', [ej('Fondos de pecho en maquina', 10, 50), ej('Pecho con polea doble', 12, 10)]),
+      sportCirc('Espalda', [ej('Dominadas abiertas', 8), ej('Remo en maquina', 10, 65)]),
+      velCirc(),
+    ], SF),
+    rutina('Pecho + Hombros', 'Lean', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Peso muerto con barra', 6, 80), ej('Sumo con barra', 8, 70), ej('Pallof press', 12)]),
+      sportCirc('Pecho', [ej('Press de pecho', 8, 55), ej('Pecho con polea doble', 12, 10)]),
+      sportCirc('Hombros', [ej('Vuelos laterales', 12, 8), ej('Elevaciones de hombro adelante', 10, 10)]),
+      sportCirc('Espalda', [ej('Remo en maquina', 10, 65), ej('Remo alto en polea', 10, 40)]),
+      sportCirc('Brazos', [ej('Biceps en banco', 10, 25), ej('Biceps alto en polea', 10, 25)]),
+      velCirc(),
+    ], SF),
+    rutina('Full Strength', 'Lean', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Peso muerto con barra', 6, 80), ej('Sentadilla con barra', 8, 70), ej('Espinales con disco', 15)]),
+      sportCirc('Espalda', [ej('Dominadas abiertas', 8), ej('Remo en maquina', 10, 65)]),
+      sportCirc('Pecho', [ej('Press de pecho', 8, 55), ej('Fondos de pecho en maquina', 10, 50)]),
+      sportCirc('Brazos', [ej('Triceps con polea', 10, 30), ej('Biceps alto en polea', 10, 25)]),
+      sportCirc('Hombros', [ej('Empuje de hombros con barra en banco', 8, 25), ej('Face pulls', 15, 10)]),
+      velCirc(),
+    ], SF),
   ];
 }
 
@@ -295,6 +336,47 @@ function rutinasSportNat() {
       sportCirc('Brazos', [ej('Triceps con polea', 10, 20), ej('Biceps con mancuerna', 10, 8)]),
       velCirc(),
     ], SF),
+    // ── 5 más para rotar ──
+    rutina('Glúteos + Piernas', 'Nat', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Sentadilla con barra', 8, 40), ej('Zancadas con mancuernas', 10, 10), ej('Complex', 10)]),
+      sportCirc('Glúteos', [ej('Empuje de cadera en cajon', 12, 30), ej('Gluteos patada en polea', 12, 15)]),
+      sportCirc('Espalda', [ej('Dominada en maquina ascensor', 8, 35), ej('Remo en maquina separado', 10, 30)]),
+      sportCirc('Hombros', [ej('Face pulls', 15, 5), ej('Elevaciones de hombro hacia arriba', 10, 5)]),
+      sportCirc('Brazos', [ej('Triceps con polea', 10, 20), ej('Biceps con mancuerna', 10, 8)]),
+      velCirc(),
+    ], SF),
+    rutina('Glúteos + Full', 'Nat', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Peso muerto rumano', 10, 30), ej('Sumo con rusas', 10, 20), ej('Plancha', 1)]),
+      sportCirc('Glúteos', [ej('Aductores en maquina', 15, 30), ej('Empuje de cadera en cajon', 12, 30)]),
+      sportCirc('Pecho', [ej('Fondos de pecho suspendido en maquina', 10, 25), ej('Pecho con polea doble', 12, 5)]),
+      sportCirc('Espalda', [ej('Remo en maquina', 10, 40), ej('Dominada sentada en maquina', 8, 30)]),
+      sportCirc('Hombros', [ej('Elevaciones de hombro adelante', 10, 5), ej('Face pulls', 15, 5)]),
+      velCirc(),
+    ], SF),
+    rutina('Espalda + Glúteos', 'Nat', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Sentadilla con barra', 8, 40), ej('Peso muerto dividido con barra', 10, 30), ej('Deadbug', 12)]),
+      sportCirc('Glúteos', [ej('Gluteos patada en polea', 12, 15), ej('Aductores en maquina', 15, 30)]),
+      sportCirc('Espalda', [ej('Dominada en maquina ascensor', 8, 35), ej('Remo en maquina', 10, 40)]),
+      sportCirc('Brazos', [ej('Biceps polea con bolitas', 10, 10), ej('Triceps con polea', 10, 20)]),
+      sportCirc('Pecho', [ej('Pecho con polea doble', 12, 5), ej('Fondos de pecho suspendido en maquina', 10, 25)]),
+      velCirc(),
+    ], SF),
+    rutina('Brazos + Glúteos', 'Nat', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Sumo con rusas', 10, 20), ej('Zancadas con mancuernas', 10, 10), ej('Pallof press', 12)]),
+      sportCirc('Glúteos', [ej('Empuje de cadera en cajon', 12, 30), ej('Gluteos patada en polea', 12, 15)]),
+      sportCirc('Brazos', [ej('Triceps con polea', 10, 20), ej('Biceps con mancuerna', 10, 8)]),
+      sportCirc('Hombros', [ej('Face pulls', 15, 5), ej('Vuelos laterales', 10, 5)]),
+      sportCirc('Espalda', [ej('Remo en maquina separado', 10, 30), ej('Dominada sentada en maquina', 8, 30)]),
+      velCirc(),
+    ], SF),
+    rutina('Full Tono', 'Nat', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Peso muerto rumano', 10, 30), ej('Sentadilla con barra', 8, 40), ej('Espinales con disco', 15)]),
+      sportCirc('Glúteos', [ej('Empuje de cadera en cajon', 12, 30), ej('Aductores en maquina', 15, 30)]),
+      sportCirc('Espalda', [ej('Remo en maquina', 10, 40), ej('Dominada en maquina ascensor', 8, 35)]),
+      sportCirc('Pecho', [ej('Pecho con polea doble', 12, 5), ej('Fondos de pecho suspendido en maquina', 10, 25)]),
+      sportCirc('Brazos', [ej('Biceps con mancuerna', 10, 8), ej('Triceps con polea', 10, 20)]),
+      velCirc(),
+    ], SF),
   ];
 }
 
@@ -324,7 +406,7 @@ function deriveGruposFromNames(exerciseNames) {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '26'; // 26 = clean meta + fix Sport Fitness numeros
+  const CURRENT_SEED_V = '27'; // 27 = 10+10 Sport Fitness rutinas + rotation
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -634,6 +716,42 @@ export function seedIfEmpty() {
                 r.updatedAt = new Date().toISOString();
               }
             }
+          }
+
+          // ── Rotation: assign all 10 Sport rutinas to upcoming weeks via day_overrides ──
+          {
+            const OV_KEY = 'gym_day_overrides';
+            const overrides = JSON.parse(localStorage.getItem(OV_KEY) || '{}');
+            const gymDows = [1, 3, 5]; // Lu, Mi, Vi
+            for (const usuario of ['Lean', 'Nat']) {
+              const sportRutinas = merged.filter((r) =>
+                r.lugar === 'SPORT_FITNESS' && r.usuario === usuario && r.tipo === 'gimnasio' && !r.deleted
+              ).sort((a, b) => (a.numero || 0) - (b.numero || 0));
+              if (sportRutinas.length === 0) continue;
+              if (!overrides[usuario]) overrides[usuario] = {};
+              // Generate overrides for the next 4 weeks starting tomorrow
+              const tomorrow = new Date();
+              tomorrow.setDate(tomorrow.getDate() + 1);
+              tomorrow.setHours(0, 0, 0, 0);
+              let rutinaIdx = 0;
+              for (let w = 0; w < 4; w++) {
+                for (const dow of gymDows) {
+                  // Find the next date matching this dow
+                  const d = new Date(tomorrow);
+                  d.setDate(d.getDate() + w * 7);
+                  // Find next occurrence of this dow in this week
+                  while (d.getDay() !== dow) d.setDate(d.getDate() + 1);
+                  const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                  // Only set if no override exists yet
+                  if (!overrides[usuario][dateStr]) {
+                    const r = sportRutinas[rutinaIdx % sportRutinas.length];
+                    overrides[usuario][dateStr] = { rutinaId: r.id, tipo: 'gimnasio' };
+                    rutinaIdx++;
+                  }
+                }
+              }
+            }
+            localStorage.setItem(OV_KEY, JSON.stringify(overrides));
           }
 
           // ── Migration v24→v26: clean up ejercicio meta ──
