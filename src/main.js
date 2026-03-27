@@ -57,15 +57,14 @@ applyUserAccent(getUsuarioActivo());
 if ('serviceWorker' in navigator) {
   const swPath = import.meta.env.BASE_URL + 'sw.js';
   navigator.serviceWorker.register(swPath).then((reg) => {
-    // Check for updates every 60s
+    // Check for updates immediately, then every 60s
+    reg.update().catch(() => {});
     setInterval(() => reg.update(), 60000);
-    // Only reload on UPDATE (not first install) to avoid infinite loop
-    const hadController = !!navigator.serviceWorker.controller;
     reg.addEventListener('updatefound', () => {
       const newSW = reg.installing;
-      if (newSW && hadController) {
+      if (newSW) {
         newSW.addEventListener('statechange', () => {
-          if (newSW.state === 'activated') {
+          if (newSW.state === 'activated' && navigator.serviceWorker.controller) {
             // Save active workout before reload to prevent data loss
             const workout = getWorkoutActivo();
             if (workout) saveWorkoutActivo(workout);
