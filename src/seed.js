@@ -608,6 +608,29 @@ export function seedIfEmpty() {
             }
           }
 
+          // ── Assign Sport Fitness rutinas to calendar (Lu=1, Mi=3, Vi=5) ──
+          if (!seedV || parseInt(seedV, 10) < 23) {
+            const gymDays = [1, 3, 5]; // Lunes, Miercoles, Viernes
+            for (const usuario of ['Lean', 'Nat']) {
+              const sportRutinas = merged.filter((r) =>
+                r.lugar === 'SPORT_FITNESS' && r.usuario === usuario && r.tipo === 'gimnasio' && !r.deleted
+              );
+              if (sportRutinas.length === 0) continue;
+              // Clear old day assignments for gym days
+              for (const r of merged) {
+                if (r.usuario === usuario && r.diaSemana != null && gymDays.includes(Number(r.diaSemana))) {
+                  r.diaSemana = null;
+                }
+              }
+              // Assign Sport Fitness rutinas round-robin to gym days
+              for (let i = 0; i < gymDays.length; i++) {
+                const r = sportRutinas[i % sportRutinas.length];
+                r.diaSemana = gymDays[i];
+                r.updatedAt = new Date().toISOString();
+              }
+            }
+          }
+
           localStorage.setItem(KEY, JSON.stringify(merged));
           localStorage.setItem(SEED_VERSION, CURRENT_SEED_V);
           seedPlan(); // ensure plan exists

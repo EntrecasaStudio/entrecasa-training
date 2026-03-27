@@ -39,11 +39,9 @@ function updateDot(status) {
 
 function onStatusChange(status) {
   updateDot(status);
+  // Only show banner when truly offline — syncing/pending are silent
   if (status === 'offline') {
     showBanner('Sin conexion — Cambios guardados local');
-  } else if (status === 'syncing') {
-    showBanner('Sincronizando...');
-    setTimeout(() => { if (getSyncStatus() !== 'offline') hideBanner(); }, 2500);
   } else {
     hideBanner();
   }
