@@ -382,6 +382,86 @@ function rutinasSportNat() {
   ];
 }
 
+// ── Cross/Funcional Sport Fitness (indoor, rain days) ──────
+
+function rutinasCrossLean() {
+  const PRESS = { tipo: 'cross', lugar: 'SPORT_FITNESS', pushPull: 'press' };
+  const PULL = { tipo: 'cross', lugar: 'SPORT_FITNESS', pushPull: 'pull' };
+  return [
+    rutina('Cross Press A — KB + TRX 🏋️', 'Lean', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Kettlebell goblet squat', 10, 24), ej('Kettlebell sumo deadlift', 10, 24), ej('Ab wheel rollout', 10)]),
+      sportCirc('Pecho', [ej('Flexiones de pecho', 15), ej('TRX chest press', 12)]),
+      sportCirc('Hombros', [ej('Kettlebell clean and press', 8, 16), ej('TRX face pull', 12)]),
+      sportCirc('Brazos', [ej('TRX curl de biceps', 10), ej('Flexiones diamante', 10)]),
+      sportCirc('Core', [ej('Mountain climbers', 20), ej('Bear crawl', 10)]),
+      velCirc(),
+    ], PRESS),
+    rutina('Cross Pull A — KB + Barra 🏋️', 'Lean', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Kettlebell front squat', 10, 20), ej('Jumping lunges', 10), ej('Kettlebell turkish get-up', 5, 16)]),
+      sportCirc('Espalda', [ej('Dominadas en barra', 8), ej('Kettlebell row', 10, 20)]),
+      sportCirc('Espalda', [ej('TRX row', 12), ej('Banda pull apart', 15)]),
+      sportCirc('Brazos', [ej('Banda curl de biceps', 12), ej('TRX triceps extension', 10)]),
+      sportCirc('Core', [ej('Plancha en codos', 1), ej('Deadbug', 12)]),
+      velCirc(),
+    ], PULL),
+    rutina('Cross Press B — Calistenia 🏋️', 'Lean', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Box jumps', 8), ej('Sentadilla con salto', 12), ej('Ab wheel rollout', 10)]),
+      sportCirc('Pecho', [ej('Dips en paralelas', 10), ej('Flexiones de pecho', 15)]),
+      sportCirc('Hombros', [ej('Kettlebell snatch', 8, 16), ej('Banda press de pecho', 12)]),
+      sportCirc('Brazos', [ej('Flexiones diamante', 10), ej('TRX curl de biceps', 10)]),
+      sportCirc('Core', [ej('Mountain climbers', 20), ej('Kettlebell turkish get-up', 5, 16)]),
+      velCirc(),
+    ], PRESS),
+    rutina('Cross Pull B — Bandas + TRX 🏋️', 'Lean', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Kettlebell goblet squat', 10, 24), ej('Saltos laterales', 12), ej('Plancha en codos', 1)]),
+      sportCirc('Espalda', [ej('Dominadas en barra', 8), ej('Banda remo', 12)]),
+      sportCirc('Hombros', [ej('Kettlebell clean and press', 8, 16), ej('TRX face pull', 12)]),
+      sportCirc('Brazos', [ej('Banda triceps pushdown', 12), ej('Banda curl de biceps', 12)]),
+      sportCirc('Core', [ej('Bear crawl', 10), ej('Copenhague', 10)]),
+      velCirc(),
+    ], PULL),
+  ];
+}
+
+function rutinasCrossNat() {
+  const PRESS = { tipo: 'cross', lugar: 'SPORT_FITNESS', pushPull: 'press' };
+  const PULL = { tipo: 'cross', lugar: 'SPORT_FITNESS', pushPull: 'pull' };
+  return [
+    rutina('Cross Press A — KB + TRX 🏋️‍♀️', 'Nat', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Kettlebell goblet squat', 10, 16), ej('Kettlebell sumo deadlift', 10, 16), ej('Plancha en codos', 1)]),
+      sportCirc('Pecho', [ej('TRX chest press', 10), ej('Banda press de pecho', 12)]),
+      sportCirc('Hombros', [ej('Kettlebell clean and press', 8, 8), ej('TRX face pull', 12)]),
+      sportCirc('Glúteos', [ej('Banda hip thrust', 15), ej('Banda lateral walk', 15)]),
+      sportCirc('Brazos', [ej('TRX curl de biceps', 10), ej('Banda triceps pushdown', 12)]),
+      velCirc(),
+    ], PRESS),
+    rutina('Cross Pull A — KB + Barra 🏋️‍♀️', 'Nat', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Kettlebell front squat', 10, 12), ej('Banda sentadilla', 12), ej('Deadbug', 12)]),
+      sportCirc('Espalda', [ej('TRX row', 12), ej('Banda remo', 12)]),
+      sportCirc('Espalda', [ej('Banda pull apart', 15), ej('Kettlebell row', 10, 12)]),
+      sportCirc('Glúteos', [ej('Banda hip thrust', 15), ej('Banda lateral walk', 15)]),
+      sportCirc('Brazos', [ej('Banda curl de biceps', 12), ej('TRX triceps extension', 10)]),
+      velCirc(),
+    ], PULL),
+    rutina('Cross Press B — Calistenia 🏋️‍♀️', 'Nat', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Kettlebell goblet squat', 10, 16), ej('Jumping lunges', 8), ej('Ab wheel rollout', 8)]),
+      sportCirc('Pecho', [ej('Flexiones de pecho', 10), ej('TRX chest press', 10)]),
+      sportCirc('Hombros', [ej('Kettlebell clean and press', 8, 8), ej('TRX face pull', 12)]),
+      sportCirc('Glúteos', [ej('Banda lateral walk', 15), ej('Banda hip thrust', 15)]),
+      sportCirc('Brazos', [ej('Flexiones diamante', 8), ej('Banda curl de biceps', 12)]),
+      velCirc(),
+    ], PRESS),
+    rutina('Cross Pull B — Bandas 🏋️‍♀️', 'Nat', null, [
+      sportCirc(['Piernas', 'Core'], [ej('Banda sentadilla', 12), ej('Kettlebell sumo deadlift', 10, 16), ej('Plancha en codos', 1)]),
+      sportCirc('Espalda', [ej('Banda remo', 12), ej('TRX row', 12)]),
+      sportCirc('Hombros', [ej('TRX face pull', 12), ej('Banda pull apart', 15)]),
+      sportCirc('Glúteos', [ej('Banda hip thrust', 15), ej('Banda lateral walk', 15)]),
+      sportCirc('Brazos', [ej('TRX triceps extension', 10), ej('TRX curl de biceps', 10)]),
+      velCirc(),
+    ], PULL),
+  ];
+}
+
 // ── Derive muscle groups from exercise names (for migration) ──
 
 function deriveGruposFromNames(exerciseNames) {
@@ -408,14 +488,16 @@ function deriveGruposFromNames(exerciseNames) {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '30'; // 30 = delete old SF routines + push/pull calendar alternation
+  const CURRENT_SEED_V = '31'; // 31 = cross/funcional indoor routines
 
   const seedRutinas = [
     ...rutinasLean(),
     ...rutinasNat(),
     ...getBibliotecaRutinas(),
-    ...rutinasSportLean(),  // After biblioteca so numeros are higher
+    ...rutinasSportLean(),
     ...rutinasSportNat(),
+    ...rutinasCrossLean(),
+    ...rutinasCrossNat(),
   ];
 
   // Expected library count: both H and M variants
