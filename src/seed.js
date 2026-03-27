@@ -610,25 +610,24 @@ export function seedIfEmpty() {
             }
           }
 
-          // ── Assign Sport Fitness rutinas to calendar (Lu=1, Mi=3, Vi=5) ──
-          // Always check: if no Sport Fitness is assigned to gym days, assign them
+          // ── Clean ALL non-Sport assignments + assign Sport Fitness to Lu/Mi/Vi ──
           {
             const gymDays = [1, 3, 5];
             for (const usuario of ['Lean', 'Nat']) {
+              // Clear ALL non-Sport-Fitness day assignments
+              for (const r of merged) {
+                if (r.usuario === usuario && r.diaSemana != null && r.lugar !== 'SPORT_FITNESS') {
+                  r.diaSemana = null;
+                }
+              }
+              // Assign Sport Fitness round-robin to gym days
               const sportRutinas = merged.filter((r) =>
                 r.lugar === 'SPORT_FITNESS' && r.usuario === usuario && r.tipo === 'gimnasio' && !r.deleted
               );
               if (sportRutinas.length === 0) continue;
-              // Check if any Sport Fitness is already assigned to a gym day
+              // Check if Sport Fitness already assigned
               const hasAssignment = sportRutinas.some((r) => r.diaSemana != null && gymDays.includes(Number(r.diaSemana)));
-              if (hasAssignment) continue; // already assigned, don't overwrite
-              // Clear ALL gym-day assignments (Vilo and others) for this user
-              for (const r of merged) {
-                if (r.usuario === usuario && r.diaSemana != null && gymDays.includes(Number(r.diaSemana))) {
-                  r.diaSemana = null;
-                }
-              }
-              // Assign Sport Fitness round-robin
+              if (hasAssignment) continue;
               for (let i = 0; i < gymDays.length; i++) {
                 const r = sportRutinas[i % sportRutinas.length];
                 r.diaSemana = gymDays[i];
