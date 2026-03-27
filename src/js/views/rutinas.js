@@ -38,6 +38,7 @@ let searchQuery = '';
 let sortBy = 'numero'; // 'numero' | 'picante' | 'duracion' | 'done'
 let filterDone = 'all'; // 'all' | 'pending' | 'done'
 let filterLugar = JSON.parse(localStorage.getItem('gym_filter_lugar') || 'null'); // null = show all
+let _lastLugarTap = null; // for double-tap detection
 
 const ALL_LUGARES = Object.keys(LUGAR_LABELS);
 
@@ -258,7 +259,13 @@ export function render() {
         <button class="rutinas-filter-chip ${filterDone === 'done' ? 'active' : ''}" data-action="filter-done" data-value="done">Hechas</button>
       </div>
     </div>
-    <div class="rutinas-lugar-row">${lugarChips}</div>
+    <div class="rutinas-lugar-row">
+      ${lugarChips}
+      ${filterLugar ? `<button class="rutinas-lugar-clear" data-action="clear-lugar-filter">✕ Limpiar</button>` : ''}
+    </div>
+    ${filterLugar ? `<div class="rutinas-lugar-pills">
+      ${filterLugar.map((l) => `<span class="rutinas-lugar-pill">${LUGAR_LABELS[l] || l} <button data-action="remove-lugar-pill" data-lugar="${l}">✕</button></span>`).join('')}
+    </div>` : ''}
   `;
 
   let filtered = activeFilter === 'cross' ? cross : gimnasio;
@@ -292,6 +299,11 @@ export function render() {
   const listClass = compactView ? 'rutinas-list rutinas-list--compact' : 'rutinas-list';
   const renderCard = compactView ? renderCompactCard : renderRutinaCard;
 
+  const totalBefore = (activeFilter === 'cross' ? cross : gimnasio).length;
+  const filterCount = filterLugar || searchQuery || filterDone !== 'all'
+    ? `<div class="rutinas-filter-count">Mostrando ${filtered.length} de ${totalBefore}</div>`
+    : '';
+
   const list = filtered.length > 0
     ? `<div class="${listClass}" id="rutinas-filtered-list">${filtered.map(renderCard).join('')}</div>`
     : `<div class="empty-state" id="rutinas-filtered-list">
@@ -303,6 +315,7 @@ export function render() {
     ${header}
     ${toggle}
     ${sortFilterRow}
+    ${filterCount}
     ${list}
   `;
 }
@@ -442,19 +455,44 @@ export function mount() {
       }
       case 'toggle-lugar': {
         const lugar = btn.dataset.lugar;
-        if (!filterLugar) {
-          // First toggle: disable all except the one clicked
+        const now = Date.now();
+        // Double-tap detection: isolate to this lugar only
+        if (_lastLugarTap && _lastLugarTap.lugar === lugar && now - _lastLugarTap.time < 400) {
+          // Double tap → isolate
           filterLugar = [lugar];
+          _lastLugarTap = null;
         } else {
-          const idx = filterLugar.indexOf(lugar);
-          if (idx >= 0) {
-            filterLugar.splice(idx, 1);
-            if (filterLugar.length === 0) filterLugar = null; // show all
+          _lastLugarTap = { lugar, time: now };
+          // Single tap → toggle
+          if (!filterLugar) {
+            filterLugar = ALL_LUGARES.filter((l) => l !== lugar); // deactivate this one
           } else {
-            filterLugar.push(lugar);
+            const idx = filterLugar.indexOf(lugar);
+            if (idx >= 0) {
+              filterLugar.splice(idx, 1);
+              if (filterLugar.length === 0) filterLugar = null;
+            } else {
+              filterLugar.push(lugar);
+            }
+            if (filterLugar && filterLugar.length === ALL_LUGARES.length) filterLugar = null;
           }
-          if (filterLugar && filterLugar.length === ALL_LUGARES.length) filterLugar = null; // all selected = show all
         }
+        localStorage.setItem('gym_filter_lugar', JSON.stringify(filterLugar));
+        rerender();
+        break;
+      }
+      case 'remove-lugar-pill': {
+        const lugar = btn.dataset.lugar;
+        if (filterLugar) {
+          filterLugar = filterLugar.filter((l) => l !== lugar);
+          if (filterLugar.length === 0) filterLugar = null;
+          localStorage.setItem('gym_filter_lugar', JSON.stringify(filterLugar));
+          rerender();
+        }
+        break;
+      }
+      case 'clear-lugar-filter': {
+        filterLugar = null;
         localStorage.setItem('gym_filter_lugar', JSON.stringify(filterLugar));
         rerender();
         break;
