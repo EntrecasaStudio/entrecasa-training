@@ -111,6 +111,8 @@ export function showExerciseDetail(nombre, { onSave } = {}) {
     });
   }
 
+  let _changed = false;
+
   const close = () => {
     clearTimeout(_autoSaveTimer);
     autoSave(); // flush pending save
@@ -120,7 +122,8 @@ export function showExerciseDetail(nombre, { onSave } = {}) {
       if (closed) return;
       closed = true;
       overlay.remove();
-      if (onSave) onSave();
+      // Only trigger onSave if something actually changed (avoids unnecessary re-renders)
+      if (_changed && onSave) onSave();
     };
     overlay.addEventListener('animationend', handleClose, { once: true });
     setTimeout(handleClose, 400); // fallback if animation skips
@@ -158,18 +161,18 @@ export function showExerciseDetail(nombre, { onSave } = {}) {
 
   // Auto-save on checkbox change
   overlay.querySelectorAll('.ej-param-cb').forEach((cb) => {
-    cb.addEventListener('change', autoSave);
+    cb.addEventListener('change', () => { _changed = true; autoSave(); });
   });
 
   // Auto-save on textarea blur (debounced to avoid rapid-fire saves)
   const notaTA = overlay.querySelector('.ej-detail-textarea');
-  if (notaTA) notaTA.addEventListener('blur', autoSaveDebounced);
+  if (notaTA) { notaTA.addEventListener('input', () => { _changed = true; }); notaTA.addEventListener('blur', autoSaveDebounced); }
   const descTA = overlay.querySelector('.ej-detail-desc-textarea');
-  if (descTA) descTA.addEventListener('blur', autoSaveDebounced);
+  if (descTA) { descTA.addEventListener('input', () => { _changed = true; }); descTA.addEventListener('blur', autoSaveDebounced); }
 
   // Auto-save on name blur (debounced)
   const nameIn = overlay.querySelector('[data-name-input]');
-  if (nameIn) nameIn.addEventListener('blur', autoSaveDebounced);
+  if (nameIn) { nameIn.addEventListener('input', () => { _changed = true; }); nameIn.addEventListener('blur', autoSaveDebounced); }
 
   // ── Click handlers ──
   overlay.addEventListener('click', (e) => {
@@ -210,6 +213,7 @@ export function showExerciseDetail(nombre, { onSave } = {}) {
     if (tipoBtn) {
       overlay.querySelectorAll('.ej-detail-tipo-toggle .ej-type-btn').forEach((b) => b.classList.remove('active'));
       tipoBtn.classList.add('active');
+      _changed = true;
       autoSave();
       return;
     }

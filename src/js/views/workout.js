@@ -42,6 +42,7 @@ function crearEjercicioWorkout(nombre) {
 import { showExercisePickerModal } from '@js/components/exercise-picker-modal.js';
 
 let state = null;
+let _finishing = false; // guard against re-renders during finish flow
 let timerInterval = null;
 let restInterval = null;
 let restRemaining = 0;
@@ -664,6 +665,7 @@ function clearActiveTimer() {
 }
 
 function reRenderWorkout(params, { preserveScroll = false } = {}) {
+  if (_finishing) return; // don't re-render during finish flow
   const container = getWorkoutContainer();
   if (container) {
     const savedScroll = preserveScroll ? window.scrollY : null;
@@ -937,6 +939,8 @@ function applyModificationsToRutina() {
 }
 
 function finishWorkout() {
+  if (_finishing) return; // prevent double-finish
+  _finishing = true;
   syncInputs();
   if (!state.modified) {
     doFinishWorkout();
