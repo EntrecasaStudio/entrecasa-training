@@ -19,6 +19,7 @@ const SYNC_KEYS = {
   gym_ejercicio_meta: 'ejercicioMeta',
   gym_day_overrides: 'dayOverrides',
   gym_plan_generado: 'planGenerado',
+  gym_ejercicio_progresion: 'ejercicioProgresion',
 };
 
 // Keys that are arrays of items with `id` field — use item-level merge

@@ -1,4 +1,4 @@
-import { getRutinaById, getWorkoutActivo, saveWorkoutActivo, clearWorkoutActivo, saveSesion, getUltimaSesionDeRutina, getUsuarioActivo, saveRutina, duplicateRutina, getEjercicioMeta } from '@/store.js';
+import { getRutinaById, getWorkoutActivo, saveWorkoutActivo, clearWorkoutActivo, saveSesion, getUltimaSesionDeRutina, getUsuarioActivo, saveRutina, duplicateRutina, getEjercicioMeta, getProgresion, saveProgresion } from '@/store.js';
 import { generateId } from '@/id.js';
 import { navigate } from '@/router.js';
 import { showModal } from '@js/components/modal.js';
@@ -243,16 +243,16 @@ function renderExerciseHistory(nombre) {
   return `<div class="workout-ej-history">${historyStr}</div>`;
 }
 
-function shouldSuggestOverload(nombre, ej) {
-  if (!state) return false;
-  const points = getExerciseProgressData(state.usuario, nombre);
-  if (points.length < 2) return false;
-  const last2 = points.slice(-2);
-  return last2.every((p) => p.reps >= ej.repsObjetivo && p.peso >= ej.pesoObjetivoKg);
+function getOverloadSuggestion(nombre) {
+  if (!state) return null;
+  const prog = getProgresion(state.usuario || getUsuarioActivo(), nombre);
+  if (!prog || !prog.completedAllReps || !prog.lastWeight) return null;
+  return { current: prog.lastWeight, suggested: prog.lastWeight + 2.5 };
 }
 
 function renderEjercicio(ej, ejIdx) {
-  const overload = shouldSuggestOverload(ej.nombre, ej);
+  const overloadInfo = getOverloadSuggestion(ej.nombre);
+  const overload = !!overloadInfo;
   const meta = getEjercicioMeta(ej.nombre);
   // Show peso if: meta explicitly set, or exercise has non-zero weight, or catalog default says so
   const catEntry = getTodosLosEjercicios().find((e) => e.nombre === ej.nombre);
@@ -373,7 +373,7 @@ function renderEjercicio(ej, ejIdx) {
         <button class="workout-check-all-btn ${doneCount === totalVueltas ? 'all-done' : ''}" data-action="check-all-vueltas" data-ej="${ejIdx}" aria-label="Marcar todas">${doneCount === totalVueltas ? '✓' : '○'}</button>
       </div>
       <div class="workout-ej-collapsible" data-ej-body="${ejIdx}" ${expandedEjs.has(ejIdx) ? '' : 'style="display:none"'}>
-        ${overload ? `<div class="workout-overload-hint">${icon.arrowUp} Subir peso</div>` : ''}
+        ${overload ? `<div class="workout-overload-hint" data-action="apply-overload" data-ej="${ejIdx}" data-weight="${overloadInfo.suggested}">${icon.arrowUp} +2.5kg sugerido (→ ${overloadInfo.suggested}kg)</div>` : ''}
         ${renderExerciseHistory(ej.nombre)}
         ${vestHtml}
         <div class="workout-ej-divider"></div>
@@ -868,6 +868,24 @@ function doFinishWorkout() {
   showCaloriesPrompt((calorias) => {
     if (calorias > 0) sesion.calorias = calorias;
     saveSesion(sesion);
+
+    // Save progressive overload data for each normal exercise
+    const usuario = state.usuario || getUsuarioActivo();
+    for (const circ of state.resultados) {
+      for (const ej of circ.ejercicios) {
+        if ((ej.tipo || 'normal') !== 'normal' || !ej.vueltas?.length) continue;
+        const maxWeight = Math.max(...ej.vueltas.map((v) => v.pesoRealKg || 0));
+        const targetReps = ej.repsObjetivo || ej.vueltas[0]?.repsReal || 10;
+        const completedAllReps = ej.vueltas.every((v) => v.done && v.repsReal >= targetReps);
+        saveProgresion(usuario, ej.nombre, {
+          lastWeight: maxWeight,
+          lastDate: sesion.fecha,
+          completedAllReps,
+          targetReps,
+        });
+      }
+    }
+
     clearWorkoutActivo();
     stopTimer();
     if (_removePopGuard) _removePopGuard();
@@ -1458,6 +1476,22 @@ export function mount(params) {
             if (doneCount > 0) parts.push(`${doneCount}/${totalV} ✓`);
             summaryEl.textContent = parts.join(' · ');
           }
+        }
+        break;
+      }
+
+      case 'apply-overload': {
+        syncInputs();
+        const ejIdx = parseInt(btn.dataset.ej);
+        const weight = parseFloat(btn.dataset.weight);
+        const circ = state.resultados[state.circuitoActual];
+        const ej = circ?.ejercicios[ejIdx];
+        if (ej && weight > 0) {
+          for (const v of ej.vueltas) v.pesoRealKg = weight;
+          ej.pesoObjetivoKg = weight;
+          saveWorkoutActivo(state);
+          haptic.medium();
+          reRenderWorkout(params, { preserveScroll: true });
         }
         break;
       }

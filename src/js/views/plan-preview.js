@@ -1,11 +1,12 @@
 /**
  * Plan Preview — Calendar view of generated plan for approval.
  */
-import { getUsuarioActivo, getPlanGenerado, savePlanGenerado, getRutinaById } from '@/store.js';
+import { getUsuarioActivo, getPlanGenerado, savePlanGenerado, getRutinaById, setDayOverride } from '@/store.js';
 import { navigate } from '@/router.js';
 import { icon } from '@js/icons.js';
 import { showToast } from '@js/components/toast.js';
 import { haptic } from '@js/helpers/haptics.js';
+import { programCalendarFromPlan } from '@js/helpers/plan-generator.js';
 
 const DIAS_CORTOS = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
 const TIPO_ICON = { gym: '🏋️', running: '🏃', rucking: '🎒', sauna: '🧖', yoga: '🧘', rest: '😴' };
@@ -66,6 +67,7 @@ export function render() {
                     <span class="plan-day-dow">${dow}</span>
                     <span class="plan-day-num">${dd}</span>
                     <span class="plan-day-icon">${TIPO_ICON[day.tipo] || ''}</span>
+                    ${day.pushPull ? `<span class="plan-day-pp plan-day-pp-${day.pushPull}">${day.pushPull === 'press' ? 'PRESS' : 'PULL'}</span>` : ''}
                     ${rutina ? `<span class="plan-day-name">${rutina.nombre}</span>` : ''}
                     ${day.notas ? `<span class="plan-day-note">${day.notas}</span>` : ''}
                   </div>`;
@@ -105,10 +107,16 @@ export function mount() {
       case 'activate': {
         const plan = getPlanGenerado(usuario);
         if (plan) {
+          // Program calendar with push/pull overrides for future gym days
+          const rutinas = (plan.rutinasGeneradas || []).map((id) => getRutinaById(id)).filter(Boolean);
+          const overrides = programCalendarFromPlan(usuario, rutinas, plan.weeks || [], plan.config?.diasGym);
+          for (const ov of overrides) {
+            setDayOverride(usuario, ov.dateStr, { tipo: ov.tipo, rutinaId: ov.rutinaId });
+          }
           plan.status = 'active';
           savePlanGenerado(usuario, plan);
           haptic.heavy();
-          showToast('Plan activado');
+          showToast(`Plan activado — ${overrides.length} sesiones programadas`);
           navigate('/');
         }
         break;

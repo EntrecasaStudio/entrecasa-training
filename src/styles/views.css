@@ -4312,6 +4312,17 @@
 }
 .plan-delete-btn { color: var(--color-danger); }
 
+/* Push/Pull badges */
+.plan-day-pp {
+  font-size: 7px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.5px;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+.plan-day-pp-press { background: color-mix(in srgb, var(--color-tag-pecho) 25%, transparent); color: var(--color-tag-pecho); }
+.plan-day-pp-pull { background: color-mix(in srgb, var(--color-tag-espalda) 25%, transparent); color: var(--color-tag-espalda); }
+
 /* ── Plan Report ─────────────────────────── */
 .plan-report { padding: var(--space-md); padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
 .report-stats {

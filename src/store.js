@@ -479,6 +479,27 @@ export function deletePlanGenerado(usuario) {
   bumpVersion();
 }
 
+// ── Progressive overload tracking ────────────
+
+const PROGRESION_KEY = 'gym_ejercicio_progresion';
+
+export function getProgresion(usuario, nombre) {
+  const all = read(PROGRESION_KEY) || {};
+  return all[usuario]?.[nombre] || null;
+}
+
+export function saveProgresion(usuario, nombre, data) {
+  const all = read(PROGRESION_KEY) || {};
+  if (!all[usuario]) all[usuario] = {};
+  all[usuario][nombre] = { ...data, updatedAt: new Date().toISOString() };
+  write(PROGRESION_KEY, all);
+}
+
+export function getAllProgresiones(usuario) {
+  const all = read(PROGRESION_KEY) || {};
+  return all[usuario] || {};
+}
+
 // ── Soft-delete purge (remove items deleted > 30 days ago) ──
 
 const PURGE_DAYS = 30;
