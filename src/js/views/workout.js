@@ -60,6 +60,9 @@ let activeTimer = null;     // { type, ejIdx, phase, remaining, pasadaIdx?, roun
 let activeTimerInterval = null;
 
 function initState(rutinaId, opts = {}) {
+  // Reset finishing guard for new workout
+  _finishing = false;
+
   const activo = getWorkoutActivo();
   if (activo && activo.rutinaId === rutinaId) {
     // Backward-compat: ensure all vueltas have `done` field
@@ -1463,15 +1466,17 @@ export function mount(params) {
       }
 
       case 'show-detail': {
-        // Save current state before opening modal (prevents loss from sync race)
+        // Save current inputs to in-memory state before opening modal
         syncInputs();
+        // Persist to localStorage so no sync race can lose edits
+        saveWorkoutActivo(state);
         const nombre = btn.dataset.nombre;
         if (nombre) showExerciseDetail(nombre, {
           onSave: () => {
-            // Re-read state from localStorage in case sync modified it
-            // but preserve our in-memory state which has the latest user edits
+            // Re-save state to localStorage (sync may have overwritten)
             saveWorkoutActivo(state);
-            reRenderWorkout(params, { preserveScroll: true });
+            // Small delay to let meta write propagate before re-render
+            setTimeout(() => reRenderWorkout(params, { preserveScroll: true }), 50);
           },
         });
         break;
@@ -1995,6 +2000,11 @@ export function mount(params) {
     }
     if (e.target.matches('.workout-vest-input')) {
       syncInputs();
+    }
+    // Auto-sync vel/HIIT params on input change
+    if (e.target.matches('[data-vel-param]') || e.target.matches('[data-hiit-param]')) {
+      syncInputs();
+      saveWorkoutActivo(state);
     }
     // Velocity/cardio parameter edits
     if (e.target.matches('.workout-vel-input')) {

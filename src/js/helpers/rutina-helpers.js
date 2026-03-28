@@ -225,7 +225,7 @@ export function showPreview(rutinaId, { from, dia: optDia } = {}) {
   overlay.innerHTML = `
     <div class="modal-box preview-modal" role="dialog" aria-modal="true">
       <button class="ej-detail-close-x" data-preview-cancel>${icon.close}</button>
-      ${rutina.numero ? `<div class="preview-code">${formatNumero(rutina.numero, rutina)}</div>` : ''}
+      ${rutina.numero ? `<div class="preview-code">${formatNumero(rutina.numero, rutina)}${rutina.lugar ? ` · <span class="preview-lugar">${rutina.lugar === 'SPORT_FITNESS' ? 'Sport Fitness' : rutina.lugar === 'VILO_GYM' ? 'Vilo' : rutina.lugar === 'RIO' ? 'Río' : rutina.lugar}</span>` : ''}</div>` : ''}
       <div class="modal-title">${getDisplayName(rutina, { withEmoji: true })}</div>
       ${renderRutinaStatsLine(rutina.id)}
       <div class="modal-body"><div class="preview-body">${circuitsHtml}</div></div>
