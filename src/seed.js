@@ -489,7 +489,7 @@ function deriveGruposFromNames(exerciseNames) {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '33'; // 33 = force Sport Fitness default + clean all diaSemana
+  const CURRENT_SEED_V = '34'; // 34 = fix lugar for all routines + HIIT circuit for VILO_GYM
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -606,20 +606,20 @@ export function seedIfEmpty() {
           }
 
           // ── Migration v19: assign lugar tag to rutinas ──
+          // v34: also fix null lugar (old code set null for non-matching routines)
           for (const r of parsed) {
-            if (r.lugar === undefined) {
-              const nombre = (r.nombre || '').toLowerCase();
-              const tipo = r.tipo || 'gimnasio';
-              if (nombre.includes('🇺🇾') || nombre.includes('uruguay')) {
-                r.lugar = 'URUGUAY';
-              } else if (tipo === 'cross' || nombre.includes('río') || nombre.includes('rio')) {
-                r.lugar = 'RIO';
-              } else if (tipo === 'gimnasio') {
-                r.lugar = 'VILO_GYM';
-              } else {
-                r.lugar = null;
-              }
+            if (r.lugar) continue; // already has a valid lugar — skip
+            if (r.lugar === 'SPORT_FITNESS') continue; // never overwrite SF
+            const nombre = (r.nombre || '').toLowerCase();
+            const tipo = r.tipo || 'gimnasio';
+            if (nombre.includes('🇺🇾') || nombre.includes('uruguay')) {
+              r.lugar = 'URUGUAY';
+            } else if (tipo === 'cross' || nombre.includes('río') || nombre.includes('rio')) {
+              r.lugar = 'RIO';
+            } else if (tipo === 'gimnasio') {
+              r.lugar = 'VILO_GYM';
             }
+            // else: unknown tipo — leave it undefined (will be fixed in v34 pass below)
           }
 
           // ── Migration v16: recalculate grupoMuscular from exercise names ──
@@ -884,69 +884,79 @@ export function seedIfEmpty() {
             localStorage.setItem(META_KEY, JSON.stringify(meta));
           }
 
-          // ── FINAL: Regenerate day_overrides with push/pull alternation ──
-          // Runs on the FINAL merged array so IDs are guaranteed to match
+          // ── Migration v34: fix lugar for ALL merged routines (incl. newOnes) ──
+          // buildFromNotion now sets lugar, but existing localStorage items may still
+          // have lugar=null or lugar=undefined from before this fix.
           {
-            const OV_KEY = 'gym_day_overrides';
-            const overrides = JSON.parse(localStorage.getItem(OV_KEY) || '{}');
-            const gymDows = [1, 3, 5]; // Lu, Mi, Vi
-            const todayStr = new Date().toISOString().split('T')[0];
-
-            for (const usuario of ['Lean', 'Nat']) {
-              if (!overrides[usuario]) overrides[usuario] = {};
-
-              // Clear ALL future overrides (will regenerate with correct IDs)
-              for (const dateStr of Object.keys(overrides[usuario])) {
-                if (dateStr > todayStr) delete overrides[usuario][dateStr];
-              }
-
-              // Separate press and pull rutinas (gimnasio only, not cross)
-              const pressRutinas = merged.filter((r) =>
-                r.lugar === 'SPORT_FITNESS' && r.usuario === usuario
-                && r.tipo === 'gimnasio' && r.pushPull === 'press' && !r.deleted
-              );
-              const pullRutinas = merged.filter((r) =>
-                r.lugar === 'SPORT_FITNESS' && r.usuario === usuario
-                && r.tipo === 'gimnasio' && r.pushPull === 'pull' && !r.deleted
-              );
-              if (pressRutinas.length === 0 || pullRutinas.length === 0) continue;
-
-              // Assign with alternation for next 4 weeks:
-              // Week 1 (even): Mon=Press, Wed=Pull, Fri=Press
-              // Week 2 (odd):  Mon=Pull,  Wed=Press, Fri=Pull
-              let pressIdx = 0, pullIdx = 0;
-              const tomorrow = new Date();
-              tomorrow.setDate(tomorrow.getDate() + 1);
-              tomorrow.setHours(0, 0, 0, 0);
-
-              for (let w = 0; w < 4; w++) {
-                const isEvenWeek = w % 2 === 0;
-                for (let di = 0; di < gymDows.length; di++) {
-                  const dow = gymDows[di];
-                  const d = new Date(tomorrow);
-                  d.setDate(d.getDate() + w * 7);
-                  while (d.getDay() !== dow) d.setDate(d.getDate() + 1);
-                  const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-
-                  const isPress = isEvenWeek ? (di % 2 === 0) : (di % 2 !== 0);
-                  let r;
-                  if (isPress) {
-                    r = pressRutinas[pressIdx % pressRutinas.length];
-                    pressIdx++;
-                  } else {
-                    r = pullRutinas[pullIdx % pullRutinas.length];
-                    pullIdx++;
-                  }
-                  overrides[usuario][dateStr] = { rutinaId: r.id, tipo: 'gimnasio', pushPull: r.pushPull };
-                }
+            function _assignLugar(r) {
+              if (r.lugar && r.lugar !== 'null') return; // already valid
+              const nombre = (r.nombre || '').toLowerCase();
+              const tipo = r.tipo || 'gimnasio';
+              if (nombre.includes('🇺🇾') || nombre.includes('uruguay')) {
+                r.lugar = 'URUGUAY';
+              } else if (tipo === 'cross' || nombre.includes('río') || nombre.includes('rio')) {
+                r.lugar = 'RIO';
+              } else if (tipo === 'gimnasio') {
+                // Check if it should be SPORT_FITNESS by pushPull field (SF seeded routines have this)
+                r.lugar = r.pushPull ? 'SPORT_FITNESS' : 'VILO_GYM';
               }
             }
-            localStorage.setItem(OV_KEY, JSON.stringify(overrides));
+            for (const r of merged) _assignLugar(r);
+            console.log('[seed] v34: lugar fixed for', merged.filter((r) => !r.lugar).length, 'remaining untagged');
           }
+
+          // ── Migration v34b: add HIIT circuit to VILO_GYM gym routines missing it ──
+          // Bring 4-5 circuit biblioteca routines to 6 circuits by appending a
+          // velocidad (HIIT) circuit. Non-destructive — existing circuits unchanged.
+          {
+            const sesiones34 = JSON.parse(localStorage.getItem('gym_sesiones') || '[]');
+            const doneIds34 = new Set(sesiones34.map((s) => s.rutinaId));
+            let hiitAdded = 0;
+            for (const r of merged) {
+              if (r.custom) continue;
+              if (doneIds34.has(r.id)) continue; // don't touch completed routines
+              if (r.tipo !== 'gimnasio') continue;
+              if (r.lugar !== 'VILO_GYM') continue; // only biblioteca/Vilo routines
+              const circCount = (r.circuitos || []).length;
+              if (circCount >= 6) continue;
+              // Check if already has a velocidad circuit
+              const hasHiit = (r.circuitos || []).some((c) =>
+                (c.ejercicios || []).some((e) => e.tipo === 'velocidad' || e.tipo === 'hiit')
+              );
+              if (hasHiit) continue;
+              // Add velocidad (treadmill interval) circuit
+              r.circuitos = [
+                ...(r.circuitos || []),
+                {
+                  id: generateId(),
+                  grupoMuscular: ['Cardio'],
+                  ejercicios: [{
+                    id: generateId(),
+                    nombre: 'Pasadas de velocidad',
+                    tipo: 'velocidad',
+                    velocidad: 12,
+                    tiempo: 60,
+                    descanso: 30,
+                    cantidadPasadas: 3,
+                    inclinacion: 0,
+                  }],
+                },
+              ];
+              r.updatedAt = new Date().toISOString();
+              hiitAdded++;
+            }
+            if (hiitAdded > 0) console.log(`[seed] v34b: added HIIT circuit to ${hiitAdded} VILO_GYM routines`);
+          }
+
+          // ── FINAL: Regenerate day_overrides with push/pull alternation ──
+          // Uses shared _seedOverrides() — runs on the FINAL merged array
+          // (called after localStorage.setItem below to use correct IDs)
+          // Note: called explicitly after save below
 
           localStorage.setItem(KEY, JSON.stringify(merged));
           localStorage.setItem(SEED_VERSION, CURRENT_SEED_V);
           seedPlan(); // ensure plan exists
+          _seedOverrides(merged); // regenerate push/pull overrides with final IDs
           return;
         }
       } catch {
@@ -960,6 +970,66 @@ export function seedIfEmpty() {
   localStorage.setItem(SEED_VERSION, CURRENT_SEED_V);
   localStorage.setItem(KEY, JSON.stringify(seedRutinas));
   seedPlan();
+  _seedOverrides(seedRutinas); // generate push/pull overrides even on fresh seed
+}
+
+/**
+ * Generate (or regenerate) gym_day_overrides from a given rutinas array.
+ * Assigns Sport Fitness Press/Pull routines to Mon/Wed/Fri for 4 weeks.
+ * Shared between fresh seed and migration paths.
+ */
+function _seedOverrides(rutinas) {
+  const OV_KEY = 'gym_day_overrides';
+  const gymDows = [1, 3, 5];
+  const existingOv = JSON.parse(localStorage.getItem(OV_KEY) || '{}');
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  for (const usuario of ['Lean', 'Nat']) {
+    if (!existingOv[usuario]) existingOv[usuario] = {};
+
+    // Clear future overrides to regenerate with correct IDs
+    for (const dateStr of Object.keys(existingOv[usuario])) {
+      if (dateStr > todayStr) delete existingOv[usuario][dateStr];
+    }
+
+    const pressRutinas = rutinas.filter((r) =>
+      r.lugar === 'SPORT_FITNESS' && r.usuario === usuario
+      && r.tipo === 'gimnasio' && r.pushPull === 'press' && !r.deleted
+    );
+    const pullRutinas = rutinas.filter((r) =>
+      r.lugar === 'SPORT_FITNESS' && r.usuario === usuario
+      && r.tipo === 'gimnasio' && r.pushPull === 'pull' && !r.deleted
+    );
+    if (pressRutinas.length === 0 || pullRutinas.length === 0) continue;
+
+    let pressIdx = 0, pullIdx = 0;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    for (let w = 0; w < 4; w++) {
+      const isEvenWeek = w % 2 === 0;
+      for (let di = 0; di < gymDows.length; di++) {
+        const dow = gymDows[di];
+        const d = new Date(tomorrow);
+        d.setDate(d.getDate() + w * 7);
+        while (d.getDay() !== dow) d.setDate(d.getDate() + 1);
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+        const isPress = isEvenWeek ? (di % 2 === 0) : (di % 2 !== 0);
+        let r;
+        if (isPress) {
+          r = pressRutinas[pressIdx % pressRutinas.length];
+          pressIdx++;
+        } else {
+          r = pullRutinas[pullIdx % pullRutinas.length];
+          pullIdx++;
+        }
+        existingOv[usuario][dateStr] = { rutinaId: r.id, tipo: 'gimnasio', pushPull: r.pushPull };
+      }
+    }
+  }
+  localStorage.setItem(OV_KEY, JSON.stringify(existingOv));
 }
 
 function seedPlan() {

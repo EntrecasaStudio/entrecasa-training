@@ -109,6 +109,8 @@ function parseChalecoFromName(circuitName) {
 
 function buildFromNotion(entry, usuario) {
   const tipo = entry.t === 'C' ? 'cross' : 'gimnasio';
+  // Default lugar: cross routines at Río park, gym routines at Vilo Gym
+  const lugar = tipo === 'cross' ? 'RIO' : 'VILO_GYM';
   const variant = usuario === 'Lean' ? entry.H : entry.M;
   const routineGrupos = parseGrupos(entry.n);
 
@@ -136,6 +138,7 @@ function buildFromNotion(entry, usuario) {
     nombre: entry.n,
     diaSemana: null,
     tipo,
+    lugar,
     numero: entry.num,
     picante: entry.p,
     usuario,
