@@ -3511,6 +3511,13 @@
   cursor: pointer;
   list-style: none;
   -webkit-tap-highlight-color: transparent;
+  transition: background 150ms;
+}
+.user-summary-header:hover {
+  background: color-mix(in srgb, var(--color-accent) 4%, transparent);
+}
+.user-summary-header:active {
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
 }
 .user-summary-header::-webkit-details-marker { display: none; }
 .user-summary-avatar {
@@ -3566,10 +3573,13 @@
 }
 .user-summary-chevron {
   color: var(--color-text-muted);
-  transition: transform 200ms;
+  transition: transform 200ms ease;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  opacity: 0.6;
 }
-.user-summary-chevron svg { width: 14px; height: 14px; }
+.user-summary-chevron svg { width: 12px; height: 12px; }
 details[open] .user-summary-chevron { transform: rotate(180deg); }
 .user-summary-body {
   padding: var(--space-xs) var(--space-md) var(--space-sm);

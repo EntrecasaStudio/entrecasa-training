@@ -146,6 +146,7 @@ function renderUserSummary(usuario) {
         <div class="user-summary-info">
           <div class="user-summary-top-row">
             <span class="user-summary-name">${usuario}</span>
+            <span class="user-summary-chevron">${icon.chevronDown}</span>
             <div class="user-summary-stats">
               <span class="user-summary-stat">${streak}🔥</span>
               <span class="user-summary-stat">${thisWeek}/${planned || '?'}📅</span>
@@ -154,7 +155,6 @@ function renderUserSummary(usuario) {
           </div>
           ${subtitleHtml}
         </div>
-        <span class="user-summary-chevron">${icon.chevronDown}</span>
       </summary>
       <div class="user-summary-body">
         ${bodyHtml}

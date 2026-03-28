@@ -197,4 +197,37 @@ describe('Calendar push/pull assignment', () => {
       }
     }
   });
+
+  it('no se asignan overrides en días que no son Lu/Mi/Vi', async () => {
+    const { seedIfEmpty } = await import('@/seed.js');
+    seedIfEmpty();
+    const overrides = JSON.parse(store.gym_day_overrides || '{}');
+    const leanOv = overrides['Lean'] || {};
+
+    const nonGymDays = Object.entries(leanOv).filter(([d, ov]) => {
+      if (ov.tipo !== 'gimnasio') return false;
+      const dow = new Date(d + 'T12:00:00').getDay();
+      return dow !== 1 && dow !== 3 && dow !== 5; // not Mon/Wed/Fri
+    });
+    expect(nonGymDays).toHaveLength(0);
+  });
+
+  it('rotación de variantes no repite la misma rutina en semanas consecutivas del mismo tipo', async () => {
+    const { seedIfEmpty } = await import('@/seed.js');
+    seedIfEmpty();
+    const overrides = JSON.parse(store.gym_day_overrides || '{}');
+    const leanOv = overrides['Lean'] || {};
+
+    // Get all Mondays with PRESS overrides sorted
+    const pressMondays = Object.entries(leanOv)
+      .filter(([d, ov]) => ov.pushPull === 'press' && new Date(d + 'T12:00:00').getDay() === 1)
+      .sort(([a], [b]) => a.localeCompare(b));
+
+    if (pressMondays.length >= 2) {
+      // Two consecutive Press Mondays should use different routines (A, B rotation)
+      const [, first] = pressMondays[0];
+      const [, second] = pressMondays[1];
+      expect(first.rutinaId).not.toBe(second.rutinaId);
+    }
+  });
 });
