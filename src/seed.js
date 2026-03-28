@@ -488,7 +488,7 @@ function deriveGruposFromNames(exerciseNames) {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '31'; // 31 = cross/funcional indoor routines
+  const CURRENT_SEED_V = '32'; // 32 = fix override IDs (regenerate post-merge)
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -819,64 +819,7 @@ export function seedIfEmpty() {
             }
           }
 
-          // ── v30: Force regenerate day_overrides with push/pull alternation ──
-          {
-            const OV_KEY = 'gym_day_overrides';
-            const overrides = JSON.parse(localStorage.getItem(OV_KEY) || '{}');
-            const gymDows = [1, 3, 5]; // Lu, Mi, Vi
-            const todayStr = new Date().toISOString().split('T')[0];
-
-            for (const usuario of ['Lean', 'Nat']) {
-              if (!overrides[usuario]) overrides[usuario] = {};
-
-              // Clear ALL future overrides (will regenerate)
-              for (const dateStr of Object.keys(overrides[usuario])) {
-                if (dateStr > todayStr) delete overrides[usuario][dateStr];
-              }
-
-              // Separate press and pull routines
-              const pressRutinas = merged.filter((r) =>
-                r.lugar === 'SPORT_FITNESS' && r.usuario === usuario && r.pushPull === 'press' && !r.deleted
-              );
-              const pullRutinas = merged.filter((r) =>
-                r.lugar === 'SPORT_FITNESS' && r.usuario === usuario && r.pushPull === 'pull' && !r.deleted
-              );
-              if (pressRutinas.length === 0 || pullRutinas.length === 0) continue;
-
-              // Assign with alternation for next 4 weeks:
-              // Week 1 (even): Mon=Press, Wed=Pull, Fri=Press
-              // Week 2 (odd):  Mon=Pull,  Wed=Press, Fri=Pull
-              let pressIdx = 0, pullIdx = 0;
-              const tomorrow = new Date();
-              tomorrow.setDate(tomorrow.getDate() + 1);
-              tomorrow.setHours(0, 0, 0, 0);
-
-              for (let w = 0; w < 4; w++) {
-                const isEvenWeek = w % 2 === 0;
-                for (let di = 0; di < gymDows.length; di++) {
-                  const dow = gymDows[di];
-                  const d = new Date(tomorrow);
-                  d.setDate(d.getDate() + w * 7);
-                  while (d.getDay() !== dow) d.setDate(d.getDate() + 1);
-                  const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-
-                  // Alternation: even weeks start with Press, odd with Pull
-                  // Pattern within week: Press/Pull/Press or Pull/Press/Pull
-                  const isPress = isEvenWeek ? (di % 2 === 0) : (di % 2 !== 0);
-                  let r;
-                  if (isPress) {
-                    r = pressRutinas[pressIdx % pressRutinas.length];
-                    pressIdx++;
-                  } else {
-                    r = pullRutinas[pullIdx % pullRutinas.length];
-                    pullIdx++;
-                  }
-                  overrides[usuario][dateStr] = { rutinaId: r.id, tipo: 'gimnasio', pushPull: r.pushPull };
-                }
-              }
-            }
-            localStorage.setItem(OV_KEY, JSON.stringify(overrides));
-          }
+          // v30 override regeneration moved to post-merge (see below)
 
           // ── Migration v24→v26: clean up ejercicio meta ──
           // Remove bloated meta entries from old Notion-style exercise names
@@ -917,6 +860,66 @@ export function seedIfEmpty() {
               }
             }
             localStorage.setItem(META_KEY, JSON.stringify(meta));
+          }
+
+          // ── FINAL: Regenerate day_overrides with push/pull alternation ──
+          // Runs on the FINAL merged array so IDs are guaranteed to match
+          {
+            const OV_KEY = 'gym_day_overrides';
+            const overrides = JSON.parse(localStorage.getItem(OV_KEY) || '{}');
+            const gymDows = [1, 3, 5]; // Lu, Mi, Vi
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            for (const usuario of ['Lean', 'Nat']) {
+              if (!overrides[usuario]) overrides[usuario] = {};
+
+              // Clear ALL future overrides (will regenerate with correct IDs)
+              for (const dateStr of Object.keys(overrides[usuario])) {
+                if (dateStr > todayStr) delete overrides[usuario][dateStr];
+              }
+
+              // Separate press and pull rutinas (gimnasio only, not cross)
+              const pressRutinas = merged.filter((r) =>
+                r.lugar === 'SPORT_FITNESS' && r.usuario === usuario
+                && r.tipo === 'gimnasio' && r.pushPull === 'press' && !r.deleted
+              );
+              const pullRutinas = merged.filter((r) =>
+                r.lugar === 'SPORT_FITNESS' && r.usuario === usuario
+                && r.tipo === 'gimnasio' && r.pushPull === 'pull' && !r.deleted
+              );
+              if (pressRutinas.length === 0 || pullRutinas.length === 0) continue;
+
+              // Assign with alternation for next 4 weeks:
+              // Week 1 (even): Mon=Press, Wed=Pull, Fri=Press
+              // Week 2 (odd):  Mon=Pull,  Wed=Press, Fri=Pull
+              let pressIdx = 0, pullIdx = 0;
+              const tomorrow = new Date();
+              tomorrow.setDate(tomorrow.getDate() + 1);
+              tomorrow.setHours(0, 0, 0, 0);
+
+              for (let w = 0; w < 4; w++) {
+                const isEvenWeek = w % 2 === 0;
+                for (let di = 0; di < gymDows.length; di++) {
+                  const dow = gymDows[di];
+                  const d = new Date(tomorrow);
+                  d.setDate(d.getDate() + w * 7);
+                  while (d.getDay() !== dow) d.setDate(d.getDate() + 1);
+                  const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+                  const isPress = isEvenWeek ? (di % 2 === 0) : (di % 2 !== 0);
+                  let r;
+                  if (isPress) {
+                    r = pressRutinas[pressIdx % pressRutinas.length];
+                    pressIdx++;
+                  } else {
+                    r = pullRutinas[pullIdx % pullRutinas.length];
+                    pullIdx++;
+                  }
+                  overrides[usuario][dateStr] = { rutinaId: r.id, tipo: 'gimnasio', pushPull: r.pushPull };
+                }
+              }
+            }
+            localStorage.setItem(OV_KEY, JSON.stringify(overrides));
           }
 
           localStorage.setItem(KEY, JSON.stringify(merged));
