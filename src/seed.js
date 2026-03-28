@@ -201,9 +201,12 @@ function sportCirc(grupo, ejercicios) {
 
 function velCirc() {
   return sportCirc('HIIT', [{
-    id: generateId(), nombre: 'Pasadas de velocidad', tipo: 'velocidad',
+    id: generateId(), nombre: 'Pasadas de velocidad', tipo: 'hiit',
     equipment: 'treadmill',
-    velocidad: 12, tiempo: 60, descanso: 60, cantidadPasadas: 5, inclinacion: 1,
+    series: 5, duracion: 60, descanso: 60,
+    opciones: ['Treadmill', 'Bicicleta', 'Eliptica', 'Escaladora', 'Tabata'],
+    // Legacy compat
+    velocidad: 12, tiempo: 60, cantidadPasadas: 5, inclinacion: 1,
   }]);
 }
 
@@ -214,7 +217,7 @@ function rutinasSportLean() {
     rutina('Press A — Pecho + Brazos 🏋️', 'Lean', null, [
       sportCirc(['Piernas', 'Core'], [ej('Sentadilla con barra', 8, 70), ej('Peso muerto rumano', 10, 50), ej('Plancha', 1)]),
       sportCirc('Pecho', [ej('Press de pecho', 8, 55), ej('Pecho con polea doble', 12, 10)]),
-      sportCirc('Espalda', [ej('Remo en maquina', 10, 65), ej('Dominadas abiertas', 8)]),
+      sportCirc('Hombros', [ej('Elevaciones laterales', 10, 10), ej('Triceps con polea', 10, 30)]),
       sportCirc('Hombros', [ej('Empuje de hombros con barra en banco', 8, 25), ej('Face pulls', 15, 10)]),
       sportCirc('Brazos', [ej('Biceps en banco', 10, 25), ej('Triceps con polea', 10, 30)]),
       velCirc(),
@@ -223,30 +226,30 @@ function rutinasSportLean() {
       sportCirc(['Piernas', 'Core'], [ej('Peso muerto con barra', 6, 80), ej('Sumo con barra', 8, 70), ej('Deadbug', 12)]),
       sportCirc('Espalda', [ej('Dominadas abiertas', 8), ej('Remo alto en polea', 10, 40)]),
       sportCirc('Hombros', [ej('Elevaciones de hombro adelante', 10, 10), ej('Vuelos laterales', 12, 8)]),
-      sportCirc('Pecho', [ej('Fondos de pecho en maquina', 10, 50), ej('Pecho con polea doble', 12, 10)]),
-      sportCirc('Brazos', [ej('Biceps alto en polea', 10, 25), ej('Triceps con polea', 10, 30)]),
+      sportCirc('Espalda', [ej('Jalon al pecho', 10, 50), ej('Remo alto en polea', 10, 40)]),
+      sportCirc('Brazos', [ej('Biceps alto en polea', 10, 25), ej('Curl de biceps con barra', 10, 30)]),
       velCirc(),
     ], PULL),
     rutina('Press B — Pecho + Brazos 🏋️', 'Lean', null, [
       sportCirc(['Piernas', 'Core'], [ej('Sentadilla con barra', 8, 70), ej('Zancadas con mancuernas', 10, 16), ej('Complex', 10)]),
       sportCirc('Pecho', [ej('Press de pecho', 8, 55), ej('Fondos de pecho en maquina', 10, 50)]),
       sportCirc('Brazos', [ej('Biceps en banco', 10, 25), ej('Biceps alto en polea', 10, 25)]),
-      sportCirc('Espalda', [ej('Remo en maquina', 10, 65), ej('Remo alto en polea', 10, 40)]),
+      sportCirc('Hombros', [ej('Elevaciones laterales', 10, 10), ej('Press inclinado con mancuernas', 10, 40)]),
       sportCirc('Hombros', [ej('Empuje de hombros con barra en banco', 8, 25), ej('Elevaciones de hombro adelante', 10, 10)]),
       velCirc(),
     ], PRESS),
     rutina('Pull B — Espalda + Brazos 🏋️', 'Lean', null, [
       sportCirc(['Piernas', 'Core'], [ej('Peso muerto rumano', 10, 50), ej('Sumo con barra', 8, 70), ej('Pallof press', 12)]),
       sportCirc('Espalda', [ej('Dominadas abiertas', 8), ej('Remo en maquina', 10, 65)]),
-      sportCirc('Brazos', [ej('Triceps con polea', 10, 30), ej('Biceps en banco', 10, 25)]),
-      sportCirc('Pecho', [ej('Press de pecho', 8, 55), ej('Pecho con polea doble', 12, 10)]),
+      sportCirc('Brazos', [ej('Curl de biceps con barra', 10, 30), ej('Biceps en banco', 10, 25)]),
+      sportCirc('Espalda', [ej('Jalon al pecho', 8, 55), ej('Remo alto en polea', 10, 40)]),
       sportCirc('Hombros', [ej('Face pulls', 15, 10), ej('Vuelos laterales', 12, 8)]),
       velCirc(),
     ], PULL),
     rutina('Press C — Full Upper 🏋️', 'Lean', null, [
       sportCirc(['Piernas', 'Core'], [ej('Sentadilla con barra', 8, 70), ej('Peso muerto con barra', 6, 80), ej('Espinales con disco', 15)]),
       sportCirc('Pecho', [ej('Press de pecho', 8, 55), ej('Fondos de pecho en maquina', 10, 50)]),
-      sportCirc('Espalda', [ej('Dominadas abiertas', 8), ej('Remo alto en polea', 10, 40)]),
+      sportCirc('Pecho', [ej('Pecho con polea doble', 12, 10), ej('Press inclinado con mancuernas', 10, 40)]),
       sportCirc('Hombros', [ej('Empuje de hombros con barra en banco', 8, 25), ej('Elevaciones de hombro adelante', 10, 10)]),
       sportCirc('Brazos', [ej('Biceps alto en polea', 10, 25), ej('Triceps con polea', 10, 30)]),
       velCirc(),
@@ -256,23 +259,23 @@ function rutinasSportLean() {
       sportCirc(['Piernas', 'Core'], [ej('Peso muerto rumano', 10, 50), ej('Sentadilla con barra', 8, 70), ej('Deadbug', 12)]),
       sportCirc('Hombros', [ej('Empuje de hombros con barra en banco', 8, 25), ej('Vuelos laterales', 12, 8)]),
       sportCirc('Pecho', [ej('Press de pecho', 8, 55), ej('Fondos de pecho en maquina', 10, 50)]),
-      sportCirc('Espalda', [ej('Remo alto en polea', 10, 40), ej('Dominadas abiertas', 8)]),
+      sportCirc('Hombros', [ej('Elevaciones laterales', 10, 10), ej('Elevaciones de hombro adelante', 10, 10)]),
       sportCirc('Brazos', [ej('Triceps con polea', 10, 30), ej('Biceps en banco', 10, 25)]),
       velCirc(),
     ], PRESS),
-    rutina('Pull C — Espalda + Pecho 🏋️', 'Lean', null, [
+    rutina('Pull C — Espalda + Hombros 🏋️', 'Lean', null, [
       sportCirc(['Piernas', 'Core'], [ej('Sumo con barra', 8, 70), ej('Peso muerto con barra', 6, 80), ej('Plancha', 1)]),
       sportCirc('Espalda', [ej('Remo en maquina', 10, 65), ej('Remo alto en polea', 10, 40)]),
-      sportCirc('Pecho', [ej('Pecho con polea doble', 12, 10), ej('Press de pecho', 8, 55)]),
+      sportCirc('Espalda', [ej('Dominada en maquina ascensor', 10, 50), ej('Jalon al pecho', 8, 55)]),
       sportCirc('Hombros', [ej('Face pulls', 15, 10), ej('Elevaciones de hombro adelante', 10, 10)]),
-      sportCirc('Brazos', [ej('Biceps alto en polea', 10, 25), ej('Triceps con polea', 10, 30)]),
+      sportCirc('Brazos', [ej('Biceps alto en polea', 10, 25), ej('Curl de biceps con barra', 10, 30)]),
       velCirc(),
     ], PULL),
     rutina('Pull D — Brazos + Hombros 🏋️', 'Lean', null, [
       sportCirc(['Piernas', 'Core'], [ej('Sentadilla con barra', 8, 70), ej('Zancadas con mancuernas', 10, 16), ej('Complex', 10)]),
-      sportCirc('Brazos', [ej('Biceps en banco', 10, 25), ej('Triceps con polea', 10, 30)]),
-      sportCirc('Hombros', [ej('Empuje de hombros con barra en banco', 8, 25), ej('Face pulls', 15, 10)]),
-      sportCirc('Pecho', [ej('Fondos de pecho en maquina', 10, 50), ej('Pecho con polea doble', 12, 10)]),
+      sportCirc('Brazos', [ej('Biceps en banco', 10, 25), ej('Curl de biceps con barra', 10, 30)]),
+      sportCirc('Hombros', [ej('Face pulls', 15, 10), ej('Vuelos laterales', 12, 8)]),
+      sportCirc('Espalda', [ej('Dominada en maquina ascensor', 10, 50), ej('Remo alto en polea', 10, 40)]),
       sportCirc('Espalda', [ej('Dominadas abiertas', 8), ej('Remo en maquina', 10, 65)]),
       velCirc(),
     ], PULL),
@@ -280,16 +283,16 @@ function rutinasSportLean() {
       sportCirc(['Piernas', 'Core'], [ej('Peso muerto con barra', 6, 80), ej('Sumo con barra', 8, 70), ej('Pallof press', 12)]),
       sportCirc('Pecho', [ej('Press de pecho', 8, 55), ej('Pecho con polea doble', 12, 10)]),
       sportCirc('Hombros', [ej('Vuelos laterales', 12, 8), ej('Elevaciones de hombro adelante', 10, 10)]),
-      sportCirc('Espalda', [ej('Remo en maquina', 10, 65), ej('Remo alto en polea', 10, 40)]),
-      sportCirc('Brazos', [ej('Biceps en banco', 10, 25), ej('Biceps alto en polea', 10, 25)]),
+      sportCirc('Pecho', [ej('Fondos de pecho en maquina', 10, 50), ej('Press inclinado con mancuernas', 10, 40)]),
+      sportCirc('Brazos', [ej('Biceps en banco', 10, 25), ej('Triceps con polea', 10, 30)]),
       velCirc(),
     ], PRESS),
     rutina('Pull E — Full Strength 🏋️', 'Lean', null, [
       sportCirc(['Piernas', 'Core'], [ej('Peso muerto con barra', 6, 80), ej('Sentadilla con barra', 8, 70), ej('Espinales con disco', 15)]),
       sportCirc('Espalda', [ej('Dominadas abiertas', 8), ej('Remo en maquina', 10, 65)]),
-      sportCirc('Pecho', [ej('Press de pecho', 8, 55), ej('Fondos de pecho en maquina', 10, 50)]),
-      sportCirc('Brazos', [ej('Triceps con polea', 10, 30), ej('Biceps alto en polea', 10, 25)]),
-      sportCirc('Hombros', [ej('Empuje de hombros con barra en banco', 8, 25), ej('Face pulls', 15, 10)]),
+      sportCirc('Espalda', [ej('Jalon al pecho', 8, 55), ej('Dominada en maquina ascensor', 10, 50)]),
+      sportCirc('Brazos', [ej('Curl de biceps con barra', 10, 30), ej('Biceps alto en polea', 10, 25)]),
+      sportCirc('Hombros', [ej('Face pulls', 15, 10), ej('Vuelos laterales', 12, 8)]),
       velCirc(),
     ], PULL),
   ];
@@ -489,7 +492,7 @@ function deriveGruposFromNames(exerciseNames) {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '34'; // 34 = fix lugar for all routines + HIIT circuit for VILO_GYM
+  const CURRENT_SEED_V = '35'; // 35 = HIIT C6 migration + press/pull mix fix
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -946,6 +949,89 @@ export function seedIfEmpty() {
               hiitAdded++;
             }
             if (hiitAdded > 0) console.log(`[seed] v34b: added HIIT circuit to ${hiitAdded} VILO_GYM routines`);
+          }
+
+          // ── Migration v35a: rename C6 to HIIT on all SPORT_FITNESS routines ──
+          {
+            let c6Fixed = 0;
+            for (const r of merged) {
+              if (r.lugar !== 'SPORT_FITNESS') continue;
+              const circs = r.circuitos || [];
+              if (circs.length < 6) continue;
+              const c6 = circs[5];
+              const gm = c6.grupoMuscular || [];
+              const isCardio = gm.some((g) => g === 'Cardio' || g === 'HIIT');
+              const hasVel = (c6.ejercicios || []).some((e) => e.tipo === 'velocidad' || e.nombre === 'Pasadas de velocidad');
+              if (!isCardio && !hasVel) continue;
+              // Rename circuit to HIIT
+              c6.grupoMuscular = ['HIIT'];
+              // Migrate exercise to hiit type
+              for (const ej of (c6.ejercicios || [])) {
+                if (ej.tipo === 'velocidad' || ej.nombre === 'Pasadas de velocidad') {
+                  ej.tipo = 'hiit';
+                  ej.series = ej.cantidadPasadas || ej.series || 5;
+                  ej.duracion = ej.tiempo || ej.duracion || 60;
+                  ej.descanso = ej.descanso || 60;
+                  ej.opciones = ej.opciones || ['Treadmill', 'Bicicleta', 'Eliptica', 'Escaladora', 'Tabata'];
+                }
+              }
+              r.updatedAt = new Date().toISOString();
+              c6Fixed++;
+            }
+            if (c6Fixed > 0) console.log(`[seed] v35a: migrated C6 to HIIT on ${c6Fixed} SPORT_FITNESS routines`);
+          }
+
+          // ── Migration v35b: fix mixed press/pull exercises in SPORT_FITNESS ──
+          {
+            const PRESS_KW = ['press de pecho', 'pecho con polea', 'fondos de pecho', 'flexiones de pecho'];
+            const PULL_KW = ['remo', 'jalon', 'jalón', 'dominad', 'traccion', 'tracción'];
+
+            const PRESS_REPLACE_IN_PULL = {
+              'fondos de pecho en maquina': 'Curl de biceps con barra',
+              'pecho con polea doble': 'Remo alto en polea',
+              'fondos de pecho suspendido': 'Dominada en maquina ascensor',
+              'press de pecho': 'Jalon al pecho',
+              'flexiones de pecho': 'Remo con mancuerna',
+            };
+            const PULL_REPLACE_IN_PRESS = {
+              'remo en maquina': 'Elevaciones laterales',
+              'remo alto en polea': 'Press inclinado con mancuernas',
+              'dominadas abiertas': 'Triceps con polea',
+              'remo con mancuerna': 'Vuelos laterales',
+            };
+
+            let mixFixed = 0;
+            for (const r of merged) {
+              if (r.lugar !== 'SPORT_FITNESS') continue;
+              const nombre = (r.nombre || '').toLowerCase();
+              const isPull = nombre.includes('pull');
+              const isPress = nombre.includes('press') && !nombre.includes('pull');
+              if (!isPull && !isPress) continue;
+
+              for (const c of (r.circuitos || [])) {
+                for (const ej of (c.ejercicios || [])) {
+                  const n = (ej.nombre || '').toLowerCase();
+                  if (isPull) {
+                    // Check if a press exercise appears in a pull routine
+                    const match = Object.entries(PRESS_REPLACE_IN_PULL).find(([k]) => n.includes(k));
+                    if (match) {
+                      ej.nombre = match[1];
+                      mixFixed++;
+                    }
+                  }
+                  if (isPress) {
+                    // Check if a pull exercise appears in a press routine
+                    const match = Object.entries(PULL_REPLACE_IN_PRESS).find(([k]) => n.includes(k));
+                    if (match) {
+                      ej.nombre = match[1];
+                      mixFixed++;
+                    }
+                  }
+                }
+              }
+              if (mixFixed > 0) r.updatedAt = new Date().toISOString();
+            }
+            if (mixFixed > 0) console.log(`[seed] v35b: fixed ${mixFixed} mixed press/pull exercises`);
           }
 
           // ── FINAL: Regenerate day_overrides with push/pull alternation ──

@@ -1232,21 +1232,27 @@
   flex-wrap: wrap;
 }
 .rutinas-lugar-chip {
-  font-size: 10px;
-  padding: 2px 8px;
-  border: 1px solid var(--color-border);
+  font-size: 11px;
+  padding: 5px 14px;
+  border: 1.5px solid var(--color-border);
   border-radius: var(--radius-full);
   background: transparent;
   color: var(--color-text-muted);
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.15s ease;
   opacity: 0.4;
+  user-select: none;
 }
 .rutinas-lugar-chip.active {
   opacity: 1;
+  background: var(--color-accent);
+  color: var(--color-bg);
   border-color: var(--color-accent);
-  color: var(--color-accent);
+  font-weight: 600;
+}
+.rutinas-lugar-chip:active {
+  transform: scale(0.92);
 }
 .rutinas-lugar-clear {
   font-size: 9px;
@@ -3486,113 +3492,122 @@
   margin-bottom: var(--space-md);
 }
 
-/* ── User summary cards ──────────────────── */
-.user-summaries {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-  padding: 0 var(--space-md);
+/* ── User carousel (swipeable, one user per slide) ──── */
+.user-carousel {
+  width: 100%;
+  overflow: hidden;
   margin-bottom: var(--space-md);
 }
-.user-summary-card {
+.user-carousel-track {
+  display: flex;
+  transition: transform 0.3s ease;
+  will-change: transform;
+}
+.user-carousel-slide {
+  min-width: 100%;
+  box-sizing: border-box;
+  padding: 0 var(--space-md);
+}
+.user-carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 0 6px;
+}
+.user-carousel-dots .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  opacity: 0.3;
+  transition: opacity 0.2s;
+  cursor: pointer;
+}
+.user-carousel-dots .dot.active {
+  opacity: 1;
+  background: var(--color-accent);
+}
+
+/* Carousel card */
+.carousel-card {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
   overflow: hidden;
+  padding: var(--space-sm) var(--space-md);
 }
-.user-summary-active {
-  border-color: var(--color-accent);
-}
-.user-summary-header {
+.carousel-card-header {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: 10px var(--space-md);
-  cursor: pointer;
-  list-style: none;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 150ms;
+  margin-bottom: var(--space-xs);
 }
-.user-summary-header:hover {
-  background: color-mix(in srgb, var(--color-accent) 4%, transparent);
-}
-.user-summary-header:active {
-  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
-}
-.user-summary-header::-webkit-details-marker { display: none; }
-.user-summary-avatar {
-  width: 28px; height: 28px;
+.carousel-avatar {
+  width: 32px; height: 32px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: var(--fw-bold);
+  font-size: 14px; font-weight: var(--fw-bold);
   flex-shrink: 0;
 }
-.user-summary-avatar--lean { background: var(--color-accent); color: var(--color-bg); }
-.user-summary-avatar--nat { background: #a78bfa; color: var(--color-bg); }
-.user-summary-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.user-summary-top-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-.user-summary-name {
+.carousel-avatar--lean { background: var(--color-accent); color: var(--color-bg); }
+.carousel-avatar--nat { background: #a78bfa; color: var(--color-bg); }
+.carousel-name {
   font-weight: var(--fw-semibold);
   font-size: var(--text-sm);
 }
-.user-summary-stats {
+.carousel-stats {
   display: flex;
   gap: var(--space-sm);
   margin-left: auto;
-}
-.user-summary-stat {
   font-size: 11px;
   color: var(--color-text-muted);
   white-space: nowrap;
 }
-.summary-subtitle {
-  font-size: 11px;
-  color: var(--color-text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.carousel-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: var(--space-xs);
 }
-.summary-lugar-tag {
+.carousel-code {
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  color: var(--color-text-muted);
+  font-family: var(--font-mono, monospace);
+}
+.carousel-lugar-badge {
   font-size: 9px;
   font-weight: var(--fw-bold);
   text-transform: uppercase;
-  padding: 1px 4px;
+  padding: 1px 6px;
   border-radius: var(--radius-full);
   background: color-mix(in srgb, var(--color-accent) 15%, transparent);
   color: var(--color-accent);
 }
-.user-summary-chevron {
-  color: var(--color-text-muted);
-  transition: transform 200ms ease;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  opacity: 0.6;
+.carousel-rutina-name {
+  font-size: 12px;
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
 }
-.user-summary-chevron svg { width: 12px; height: 12px; }
-details[open] .user-summary-chevron { transform: rotate(180deg); }
-.user-summary-body {
-  padding: var(--space-xs) var(--space-md) var(--space-sm);
-  border-top: 1px solid var(--color-border);
+.carousel-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: var(--space-xs) 0;
+}
+.carousel-card-empty {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  padding: var(--space-md) 0;
+  text-align: center;
 }
 
-/* Expanded exercise list */
-.summary-circuits {
+/* Carousel circuits (exercise list) */
+.carousel-circuits {
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
 }
-.summary-circuit-header {
+.carousel-circuit-header {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
@@ -3602,7 +3617,7 @@ details[open] .user-summary-chevron { transform: rotate(180deg); }
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
-.summary-circuit-num {
+.carousel-circuit-num {
   width: 16px; height: 16px;
   border-radius: 50%;
   background: var(--color-accent);
@@ -3611,12 +3626,10 @@ details[open] .user-summary-chevron { transform: rotate(180deg); }
   font-size: 9px; font-weight: var(--fw-bold);
   flex-shrink: 0;
 }
-.summary-circuit-list {
-  list-style: none;
-  padding: 0;
+.carousel-circuit-list {
   margin: 2px 0 0 20px;
 }
-.summary-ej {
+.carousel-ej {
   font-size: 11px;
   color: var(--color-text);
   padding: 1px 0;
@@ -3624,12 +3637,25 @@ details[open] .user-summary-chevron { transform: rotate(180deg); }
   justify-content: space-between;
   gap: var(--space-sm);
 }
-.summary-ej--cardio, .summary-ej--hiit { color: var(--color-text-muted); }
-.summary-ej-meta {
+.carousel-ej-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.carousel-ej-meta {
   font-size: 10px;
   color: var(--color-text-muted);
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+/* CTA button at bottom of card */
+.carousel-cta {
+  padding: var(--space-xs) 0 2px;
+}
+.carousel-start-btn {
+  gap: 6px;
 }
 
 .home-quick-stats {

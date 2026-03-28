@@ -357,11 +357,22 @@ export function mount() {
       btn.classList.toggle('active', btn.dataset.value === filterDone);
     });
 
+    // Update lugar chips
+    document.querySelectorAll('[data-action="toggle-lugar"]').forEach((btn) => {
+      const isOn = !filterLugar || filterLugar.includes(btn.dataset.lugar);
+      btn.classList.toggle('active', isOn);
+    });
+
     // Re-render list
     const container = document.getElementById('rutinas-filtered-list');
     if (!container) return;
 
     let filtered = activeFilter === 'cross' ? cross : gimnasio;
+
+    // Apply lugar filter
+    if (filterLugar && filterLugar.length > 0) {
+      filtered = filtered.filter((r) => filterLugar.includes(r.lugar || 'VILO_GYM'));
+    }
 
     // Apply search filter
     if (searchQuery) {

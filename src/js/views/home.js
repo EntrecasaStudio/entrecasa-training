@@ -31,6 +31,7 @@ import {
   getSessionsForDate,
   getPlannedRoutineForDate,
   getMonthPlannedDays,
+  getGeneralStats,
 } from '@js/helpers/stats-helpers.js';
 import { getCurrentUser } from '@js/services/firebase.js';
 import { calcVolumenSesion } from '@/store.js';
@@ -44,6 +45,7 @@ let selectedDate = new Date();
 const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 const CAL_WEEKDAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 const DAY_NAMES_LONG = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
+const LUGAR_LABELS = { SPORT_FITNESS: 'SPORT', VILO_GYM: 'VILO', RIO: 'RIO', URUGUAY: 'URUGUAY' };
 
 function isSameDay(a, b) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -78,103 +80,143 @@ function dateToStr(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-// ── Greeting ────────────────────────────────
+// ── Carousel ───────────────────────────────
 
-function getGreeting(nombre) {
-  const h = new Date().getHours();
-  const saludo = h < 12 ? 'Buenos dias' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
-  return `${saludo}, ${nombre}`;
-}
-
-function renderUserSummary(usuario) {
+function renderCarouselSlide(usuario) {
   const streak = getWeeklyStreak(usuario);
-  const thisWeek = getSessionsThisWeek(usuario);
+  const now = new Date();
+  const monthActivity = getMonthActivity(usuario, now.getFullYear(), now.getMonth());
+  const sessionsThisMonth = monthActivity.size;
   const planned = getPlannedDaysThisWeek(usuario);
-  const daysSince = getDaysSinceLastSession(usuario);
-  const proximo = getProximoEntrenamiento(usuario);
-  const rutinaHoy = getRutinaHoy(usuario);
-
-  const lastLabel = daysSince === null ? '--' : daysSince === 0 ? 'Hoy' : daysSince === 1 ? 'Ayer' : `${daysSince}d`;
+  const stats = getGeneralStats(usuario);
+  const avgTime = stats.duracionPromedio ? `${stats.duracionPromedio}min` : '--';
   const initial = usuario.charAt(0).toUpperCase();
-  const isActive = usuario === getUsuarioActivo();
 
-  // Determine the routine to show (today or next)
+  const rutinaHoy = getRutinaHoy(usuario);
+  const proximo = getProximoEntrenamiento(usuario);
   const rutina = rutinaHoy || proximo?.rutina;
-  const rutinaLabel = rutinaHoy ? 'Hoy' : proximo ? proximo.diaNombre : '';
 
-  // Header subtitle: routine name + lugar
-  let subtitleHtml = '';
-  if (rutina) {
-    const code = formatNumero(rutina.numero, rutina);
-    const LUGAR_LABELS = { SPORT_FITNESS: 'Sport', VILO_GYM: 'Vilo', RIO: 'Río', URUGUAY: '🇺🇾' };
-    const lugarTag = rutina.lugar ? `<span class="summary-lugar-tag">${LUGAR_LABELS[rutina.lugar] || rutina.lugar}</span>` : '';
-    subtitleHtml = `<span class="summary-subtitle">${rutinaLabel}: ${code ? code + ' ' : ''}${lugarTag} ${rutina.nombre}</span>`;
+  if (!rutina) {
+    return `
+      <div class="user-carousel-slide" data-usuario="${usuario}">
+        <div class="carousel-card">
+          <div class="carousel-card-header">
+            <span class="carousel-avatar carousel-avatar--${usuario.toLowerCase()}">${initial}</span>
+            <span class="carousel-name">${usuario}</span>
+            <div class="carousel-stats">
+              <span>${streak}🔥</span>
+              <span>${sessionsThisMonth}/${planned}📅</span>
+              <span>${avgTime}⏱</span>
+            </div>
+          </div>
+          <div class="carousel-card-empty">Sin rutina programada</div>
+        </div>
+      </div>`;
   }
 
-  // Expanded body: full exercise list grouped by circuit
-  let bodyHtml = '';
-  if (rutina && rutina.circuitos) {
-    const circuitsHtml = rutina.circuitos.map((c, ci) => {
-      const ejercicios = c.ejercicios.map((ej) => {
+  const code = formatNumero(rutina.numero, rutina);
+  const lugarTag = rutina.lugar ? LUGAR_LABELS[rutina.lugar] || rutina.lugar : '';
+
+  // Build full exercise list
+  let circuitsHtml = '';
+  if (rutina.circuitos) {
+    circuitsHtml = rutina.circuitos.map((c, ci) => {
+      const grupos = normalizeGrupos(c);
+      const grupoLabel = grupos.length > 0 ? grupos.join(' · ') : '';
+      const ejercicios = (c.ejercicios || []).map((ej) => {
         const tipo = ej.tipo || 'normal';
         if (tipo === 'velocidad' || tipo === 'caminata') {
-          return `<li class="summary-ej summary-ej--cardio">${ej.nombre} <span class="summary-ej-meta">${ej.cantidadPasadas || 3}×${ej.tiempo || 60}s</span></li>`;
+          return `<div class="carousel-ej"><span class="carousel-ej-name">${ej.nombre}</span><span class="carousel-ej-meta">${ej.cantidadPasadas || 3}×${ej.tiempo || 60}s</span></div>`;
         }
         if (tipo === 'hiit') {
-          return `<li class="summary-ej summary-ej--hiit">${ej.nombre} <span class="summary-ej-meta">${ej.rounds || 3} rondas</span></li>`;
+          return `<div class="carousel-ej"><span class="carousel-ej-name">${ej.nombre}</span><span class="carousel-ej-meta">${ej.rounds || ej.series || 3} rondas</span></div>`;
         }
         const series = ej.series?.length || 2;
         const reps = ej.repsObjetivo || ej.series?.[0]?.reps || 10;
         const peso = ej.pesoKg || ej.series?.[0]?.pesoKg || 0;
-        return `<li class="summary-ej">${ej.nombre} <span class="summary-ej-meta">${series}×${reps}${peso ? ` · ${peso}kg` : ''}</span></li>`;
+        return `<div class="carousel-ej"><span class="carousel-ej-name">${ej.nombre}</span><span class="carousel-ej-meta">${series}×${reps}${peso ? ` ${peso}kg` : ''}</span></div>`;
       }).join('');
-      const grupos = normalizeGrupos(c);
-      const grupoLabel = grupos.length > 0 ? grupos.join(' · ') : '';
+
       return `
-        <div class="summary-circuit">
-          <div class="summary-circuit-header"><span class="summary-circuit-num">${ci + 1}</span>${grupoLabel}</div>
-          <ul class="summary-circuit-list">${ejercicios}</ul>
+        <div class="carousel-circuit">
+          <div class="carousel-circuit-header"><span class="carousel-circuit-num">${ci + 1}</span>${grupoLabel}</div>
+          <div class="carousel-circuit-list">${ejercicios}</div>
         </div>`;
     }).join('');
-    bodyHtml = `<div class="summary-circuits">${circuitsHtml}</div>`;
   }
 
   return `
-    <details class="user-summary-card${isActive ? ' user-summary-active' : ''}" ${isActive ? 'open' : ''}>
-      <summary class="user-summary-header">
-        <span class="user-summary-avatar user-summary-avatar--${usuario.toLowerCase()}">${initial}</span>
-        <div class="user-summary-info">
-          <div class="user-summary-top-row">
-            <span class="user-summary-name">${usuario}</span>
-            <span class="user-summary-chevron">${icon.chevronDown}</span>
-            <div class="user-summary-stats">
-              <span class="user-summary-stat">${streak}🔥</span>
-              <span class="user-summary-stat">${thisWeek}/${planned || '?'}📅</span>
-              <span class="user-summary-stat">${lastLabel}⏱</span>
-            </div>
+    <div class="user-carousel-slide" data-usuario="${usuario}">
+      <div class="carousel-card">
+        <div class="carousel-card-header">
+          <span class="carousel-avatar carousel-avatar--${usuario.toLowerCase()}">${initial}</span>
+          <span class="carousel-name">${usuario}</span>
+          <div class="carousel-stats">
+            <span>${streak}🔥</span>
+            <span>${sessionsThisMonth}/${planned}📅</span>
+            <span>${avgTime}⏱</span>
           </div>
-          ${subtitleHtml}
         </div>
-      </summary>
-      <div class="user-summary-body">
-        ${bodyHtml}
+        <div class="carousel-card-meta">
+          ${code ? `<span class="carousel-code">${code}</span>` : ''}
+          ${lugarTag ? `<span class="carousel-lugar-badge">${lugarTag}</span>` : ''}
+          <span class="carousel-rutina-name">${rutina.nombre}</span>
+        </div>
+        <div class="carousel-divider"></div>
+        <div class="carousel-circuits">${circuitsHtml}</div>
+        <div class="carousel-divider"></div>
+        <div class="carousel-cta">
+          <button class="btn btn-primary btn-full carousel-start-btn" data-action="start" data-id="${rutina.id}">&#9654; Iniciar entreno</button>
+        </div>
       </div>
-    </details>
-  `;
+    </div>`;
 }
 
-function renderUserSummaries() {
+function renderUserCarousel() {
+  const USERS = ['Lean', 'Nat'];
+  const slides = USERS.map(renderCarouselSlide).join('');
+  const dots = USERS.map((_, i) => `<span class="dot${i === 0 ? ' active' : ''}"></span>`).join('');
+
   return `
-    <div class="user-summaries animate-in" style="animation-delay:50ms">
-      ${renderUserSummary('Lean')}
-      ${renderUserSummary('Nat')}
+    <div class="user-carousel animate-in" id="user-carousel" style="animation-delay:50ms">
+      <div class="user-carousel-track">${slides}</div>
+      <div class="user-carousel-dots">${dots}</div>
     </div>
   `;
 }
 
+function initCarousel(el) {
+  if (!el) return;
+  let startX = 0;
+  let currentSlide = 0;
+  const track = el.querySelector('.user-carousel-track');
+  const dots = el.querySelectorAll('.dot');
+  const total = el.querySelectorAll('.user-carousel-slide').length;
+  if (!track || total === 0) return;
+
+  function goTo(i) {
+    currentSlide = Math.max(0, Math.min(i, total - 1));
+    track.style.transform = `translateX(-${currentSlide * 100}%)`;
+    dots.forEach((d, idx) => d.classList.toggle('active', idx === currentSlide));
+  }
+
+  el.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, { passive: true });
+  el.addEventListener('touchend', (e) => {
+    const diff = startX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) goTo(currentSlide + (diff > 0 ? 1 : -1));
+  });
+
+  // Allow dot clicks
+  dots.forEach((d, idx) => {
+    d.addEventListener('click', () => goTo(idx));
+  });
+
+  goTo(0);
+}
+
 // ── Week strip ──────────────────────────────
 
-function renderWeekStrip(usuario) {
+function renderWeekStrip() {
   const today = new Date();
   const monday = getMonday(selectedDate);
   const USERS = ['Lean', 'Nat'];
@@ -186,16 +228,13 @@ function renderWeekStrip(usuario) {
     const dow = d.getDay();
     const isToday = isSameDay(d, today);
     const isSelected = isSameDay(d, selectedDate);
-    const isPast = d < startOfDay(today) && !isToday;
 
-    // Build dual dots (one per user)
     const dateStr = dateToStr(d);
     let dotsHtml = '<span class="cal-strip-dots">';
     for (const u of USERS) {
       const plan = getPlanSemanal(u);
       const sessions = getSessionsForDate(u, d.getFullYear(), d.getMonth(), d.getDate());
       const hasCompleted = sessions.length > 0;
-      // Check date-specific override first, then fall back to weekly plan
       const override = getDayOverride(u, dateStr);
       const tipo = override ? (override.tipo || '') : (plan[dow] || '');
       const hasPlanned = !!tipo;
@@ -228,12 +267,11 @@ function renderWeekStrip(usuario) {
 
 // ── Month grid ──────────────────────────────
 
-function renderMonthGrid(usuario) {
+function renderMonthGrid() {
   const today = new Date();
   const USERS = ['Lean', 'Nat'];
   const isCurrentMonth = calYear === today.getFullYear() && calMonth === today.getMonth();
 
-  // Gather per-user activity & plans
   const userData = USERS.map((u) => ({
     name: u,
     activeDays: getMonthActivity(u, calYear, calMonth),
@@ -249,23 +287,19 @@ function renderMonthGrid(usuario) {
 
   let cells = '';
 
-  // Previous month filler
   for (let i = startOffset - 1; i >= 0; i--) {
     cells += `<div class="cal-month-day cal-month-day--outside">${prevMonthDays - i}</div>`;
   }
 
-  // Current month days
   for (let d = 1; d <= totalDays; d++) {
     const isToday = isCurrentMonth && d === today.getDate();
     const isSelected = selectedDate.getFullYear() === calYear && selectedDate.getMonth() === calMonth && selectedDate.getDate() === d;
     const dateObj = new Date(calYear, calMonth, d);
-    const isPast = dateObj < startOfDay(today) && !isToday;
 
     let cls = 'cal-month-day';
     if (isToday) cls += ' cal-month-day--today';
     if (isSelected) cls += ' cal-month-day--selected';
 
-    // Build dual dots (one per user)
     let dotsHtml = '<span class="cal-month-dots">';
     for (const ud of userData) {
       const hasSession = ud.activeDays.has(d);
@@ -283,7 +317,6 @@ function renderMonthGrid(usuario) {
     cells += `<div class="${cls}" data-action="cal-select-day" data-cal-date="${dateToStr(dateObj)}">${d}${dotsHtml}</div>`;
   }
 
-  // Next month filler
   const totalCells = startOffset + totalDays;
   const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
   for (let d = 1; d <= remaining; d++) {
@@ -300,13 +333,12 @@ function renderMonthGrid(usuario) {
 
 // ── Unified calendar ────────────────────────
 
-function renderUnifiedCalendar(usuario) {
+function renderUnifiedCalendar() {
   const today = new Date();
   const isOnCurrentPeriod = calExpanded
     ? (calYear === today.getFullYear() && calMonth === today.getMonth())
     : isSameDay(getMonday(selectedDate), getMonday(today)) || isSameDay(selectedDate, today);
 
-  // Title: week range or month name
   const monday = getMonday(selectedDate);
   const title = calExpanded
     ? `${MONTH_NAMES[calMonth]} ${calYear}`
@@ -317,8 +349,8 @@ function renderUnifiedCalendar(usuario) {
     : '';
 
   const body = calExpanded
-    ? renderMonthGrid(usuario)
-    : renderWeekStrip(usuario);
+    ? renderMonthGrid()
+    : renderWeekStrip();
 
   return `
     <div class="cal-unified animate-in" id="cal-unified">
@@ -336,14 +368,13 @@ function renderUnifiedCalendar(usuario) {
   `;
 }
 
-// ── Day detail panel ────────────────────────
+// ── Day detail panel ("Hoy") ────────────────
 
 function renderUserDayRow(u, selectedDate, isToday, isPast, dow, isActive) {
   const sessions = getSessionsForDate(u, selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
   const planned = getPlannedRoutineForDate(u, selectedDate);
   const initial = u.charAt(0).toUpperCase();
 
-  // Build status + meta info
   let statusHtml = '';
   if (sessions.length > 0) {
     const s = sessions[0];
@@ -359,14 +390,12 @@ function renderUserDayRow(u, selectedDate, isToday, isPast, dow, isActive) {
   } else if (planned && planned.routine) {
     const r = planned.routine;
     const code = r.numero ? formatNumero(r.numero, r) : '';
-    const volanta = code ? `<div class="cal-shared-volanta">${code}</div>` : '';
-    // Day detail row: routine name + lugar badge only (no circuit meta — that lives in the summary card)
     const lugarBadge = r.lugar
-      ? ` <span class="cal-lugar-badge">${r.lugar === 'SPORT_FITNESS' ? 'Sport' : r.lugar === 'VILO_GYM' ? 'Vilo' : r.lugar === 'RIO' ? 'Río' : r.lugar}</span>`
+      ? ` <span class="cal-lugar-badge">${LUGAR_LABELS[r.lugar] || r.lugar}</span>`
       : '';
     statusHtml = `
       <div class="cal-shared-row-info">
-        ${volanta}
+        ${code ? `<div class="cal-shared-volanta">${code}</div>` : ''}
         <span class="cal-shared-status" data-action="start" data-id="${r.id}" style="cursor:pointer">${r.nombre}${lugarBadge}</span>
       </div>`;
   } else if (planned && !planned.routine) {
@@ -381,7 +410,6 @@ function renderUserDayRow(u, selectedDate, isToday, isPast, dow, isActive) {
       </div>`;
   }
 
-  // Actions (for any user)
   let actionHtml = '';
   const dateISO = selectedDate ? selectedDate.toISOString() : '';
   if (sessions.length > 0) {
@@ -392,13 +420,11 @@ function renderUserDayRow(u, selectedDate, isToday, isPast, dow, isActive) {
   } else if (planned && planned.routine && !isPast) {
     actionHtml = `<button class="btn btn-ghost btn-xs" data-action="cal-change-routine" data-day="${dow}" data-user="${u}">Cambiar</button>`;
   } else if (planned && planned.routine && isPast) {
-    // Past day with planned routine but no session — allow retroactive registration
     actionHtml = `<button class="btn btn-ghost btn-xs" data-action="start-backdate" data-id="${planned.routine.id}" data-date="${dateISO}">Registrar</button>`;
   } else if (!isPast) {
     actionHtml = `<button class="btn btn-ghost btn-xs" data-action="cal-assign-training" data-day="${dow}" data-user="${u}">+</button>`;
   }
 
-  // Row-level click action (whole row is tappable)
   let rowAction = '';
   if (sessions.length > 0) {
     rowAction = `data-action="cal-view-session" data-id="${sessions[0].id}"`;
@@ -419,20 +445,19 @@ function renderUserDayRow(u, selectedDate, isToday, isPast, dow, isActive) {
   `;
 }
 
-function renderDayDetailPanel(usuario) {
+function renderDayDetailPanel() {
+  const usuario = getUsuarioActivo();
   const today = new Date();
   const isToday = isSameDay(selectedDate, today);
   const isPast = selectedDate < startOfDay(today) && !isToday;
   const dow = selectedDate.getDay();
   const USERS = ['Lean', 'Nat'];
 
-  // Date label
   const dayName = DAY_NAMES_LONG[dow];
   const dateLabel = isToday
     ? `Hoy &middot; ${dayName}`
     : `${dayName} ${selectedDate.getDate()} de ${MONTH_NAMES[selectedDate.getMonth()]}`;
 
-  // Render both users
   const rows = USERS.map((u) =>
     renderUserDayRow(u, selectedDate, isToday, isPast, dow, u === usuario)
   ).join('');
@@ -448,10 +473,6 @@ function renderDayDetailPanel(usuario) {
     </div>
   `;
 }
-
-// ── Entrenamiento hero (training day) ────────
-
-// Hero removed — training starts from the calendar day detail panel
 
 // ── Rest day ─────────────────────────────────
 
@@ -478,7 +499,6 @@ export function render() {
   const workoutActivo = getWorkoutActivo();
   const rutinaHoy = getRutinaHoy(usuario);
   const proximo = getProximoEntrenamiento(usuario);
-  const firebaseUser = getCurrentUser();
 
   // Active workout banner
   const isMyWorkout = workoutActivo && (!workoutActivo.usuario || workoutActivo.usuario === usuario);
@@ -493,23 +513,22 @@ export function render() {
       </div>`
     : '';
 
-  // Greeting
-  const displayName = usuario;
-  const greeting = `<div class="home-greeting animate-in">${getGreeting(displayName)}</div>`;
+  // Carousel replaces old user-summary-cards
+  const carousel = renderUserCarousel();
 
   // Unified calendar
-  const calendar = renderUnifiedCalendar(usuario);
-  const dayDetail = renderDayDetailPanel(usuario);
+  const calendar = renderUnifiedCalendar();
+  const dayDetail = renderDayDetailPanel();
 
-  // Rest day message (no big CTA)
+  // Rest day message
   const isSelectedToday = isSameDay(selectedDate, new Date());
   const rest = isSelectedToday && !rutinaHoy && !isMyWorkout ? renderRestDay(proximo) : '';
 
-  // Update center nav button: play when there's a workout to start/resume
+  // Update center nav button
   const mainBtnId = isMyWorkout ? workoutActivo.rutinaId : (rutinaHoy ? rutinaHoy.id : null);
   updateMainButton(mainBtnId);
 
-  // Show today's plan activity (running, sauna, etc.) if active plan
+  // Plan activity banner
   const todayStr = new Date().toISOString().split('T')[0];
   const activePlan = getPlanGenerado(usuario);
   let planActivity = '';
@@ -533,7 +552,7 @@ export function render() {
     }
   }
 
-  // Plan button: show "Ver plan" if active, "Generar plan" if not
+  // Plan button
   const planBtn = activePlan && activePlan.status === 'active'
     ? `<div style="padding:0 var(--space-md);margin-top:var(--space-md)">
         <a href="#/plan/preview" class="btn btn-ghost btn-full" style="gap:6px">📋 Ver mi plan</a>
@@ -544,10 +563,8 @@ export function render() {
         </a>
       </div>`;
 
-  const summaries = renderUserSummaries();
-
   return `
-    ${summaries}
+    ${carousel}
     ${planActivity}
     ${dayDetail}
     ${calendar}
@@ -560,17 +577,16 @@ export function render() {
 // ── Inline refresh ───────────────────────────
 
 function refreshCalendarSection() {
-  const usuario = getUsuarioActivo();
-
   const calEl = document.getElementById('cal-unified');
-  if (calEl) calEl.outerHTML = renderUnifiedCalendar(usuario);
+  if (calEl) calEl.outerHTML = renderUnifiedCalendar();
 
   const detailEl = document.getElementById('cal-day-detail');
-  if (detailEl) detailEl.outerHTML = renderDayDetailPanel(usuario);
+  if (detailEl) detailEl.outerHTML = renderDayDetailPanel();
 
   // Update rest day message
   const heroSection = document.getElementById('hero-section');
   if (heroSection) {
+    const usuario = getUsuarioActivo();
     const isSelectedToday = isSameDay(selectedDate, new Date());
     const rutinaHoy = getRutinaHoy(usuario);
     const workoutActivo = getWorkoutActivo();
@@ -584,6 +600,10 @@ function refreshCalendarSection() {
 
 export function mount() {
   const app = document.getElementById('app');
+
+  // Initialize carousel swipe
+  const carouselEl = document.getElementById('user-carousel');
+  initCarousel(carouselEl);
 
   let lastTapDate = null;
   let lastTapTime = 0;
@@ -623,7 +643,7 @@ export function mount() {
         calYear = selectedDate.getFullYear();
         calMonth = selectedDate.getMonth();
 
-        // Double-tap detection → open day assignment modal
+        // Double-tap detection
         if (lastTapDate === dateStr && (now - lastTapTime) < DOUBLE_TAP_DELAY) {
           lastTapDate = null;
           lastTapTime = 0;
@@ -649,8 +669,7 @@ export function mount() {
         }
         const calEl = document.getElementById('cal-unified');
         if (calEl) {
-          const usuario = getUsuarioActivo();
-          calEl.outerHTML = renderUnifiedCalendar(usuario);
+          calEl.outerHTML = renderUnifiedCalendar();
         }
         break;
       }
