@@ -86,30 +86,52 @@ function getGreeting(nombre) {
   return `${saludo}, ${nombre}`;
 }
 
-function renderQuickStatsStrip(usuario) {
+function renderUserSummary(usuario) {
   const streak = getWeeklyStreak(usuario);
   const thisWeek = getSessionsThisWeek(usuario);
   const planned = getPlannedDaysThisWeek(usuario);
   const daysSince = getDaysSinceLastSession(usuario);
+  const proximo = getProximoEntrenamiento(usuario);
+  const rutinaHoy = getRutinaHoy(usuario);
 
   const lastLabel = daysSince === null ? '--' : daysSince === 0 ? 'Hoy' : daysSince === 1 ? 'Ayer' : `${daysSince}d`;
+  const initial = usuario.charAt(0).toUpperCase();
+  const isActive = usuario === getUsuarioActivo();
+
+  // Next routine info
+  let nextInfo = '';
+  if (rutinaHoy) {
+    const code = formatNumero(rutinaHoy.numero, rutinaHoy);
+    nextInfo = `<span class="summary-next">Hoy: <strong>${code ? code + ' ' : ''}${rutinaHoy.nombre}</strong></span>`;
+  } else if (proximo) {
+    const code = formatNumero(proximo.rutina.numero, proximo.rutina);
+    nextInfo = `<span class="summary-next">Próximo: <strong>${code ? code + ' ' : ''}${proximo.rutina.nombre}</strong> · ${proximo.diaNombre}</span>`;
+  }
 
   return `
-    <div class="home-quick-stats animate-in" style="animation-delay:50ms">
-      <div class="home-quick-stat">
-        <span class="home-quick-stat-value">${streak}</span>
-        <span class="home-quick-stat-label">sem racha</span>
+    <details class="user-summary-card${isActive ? ' user-summary-active' : ''}" ${isActive ? 'open' : ''}>
+      <summary class="user-summary-header">
+        <span class="user-summary-avatar user-summary-avatar--${usuario.toLowerCase()}">${initial}</span>
+        <span class="user-summary-name">${usuario}</span>
+        <div class="user-summary-stats">
+          <span class="user-summary-stat">${streak}🔥</span>
+          <span class="user-summary-stat">${thisWeek}/${planned || '?'}📅</span>
+          <span class="user-summary-stat">${lastLabel}⏱</span>
+        </div>
+        <span class="user-summary-chevron">${icon.chevronDown}</span>
+      </summary>
+      <div class="user-summary-body">
+        ${nextInfo}
       </div>
-      <div class="home-quick-stat-divider"></div>
-      <div class="home-quick-stat">
-        <span class="home-quick-stat-value">${thisWeek}${planned > 0 ? `/${planned}` : ''}</span>
-        <span class="home-quick-stat-label">esta sem</span>
-      </div>
-      <div class="home-quick-stat-divider"></div>
-      <div class="home-quick-stat">
-        <span class="home-quick-stat-value">${lastLabel}</span>
-        <span class="home-quick-stat-label">ultimo</span>
-      </div>
+    </details>
+  `;
+}
+
+function renderUserSummaries() {
+  return `
+    <div class="user-summaries animate-in" style="animation-delay:50ms">
+      ${renderUserSummary('Lean')}
+      ${renderUserSummary('Nat')}
     </div>
   `;
 }
@@ -489,8 +511,11 @@ export function render() {
         </a>
       </div>`;
 
+  const summaries = renderUserSummaries();
+
   return `
     ${greeting}
+    ${summaries}
     ${planActivity}
     ${dayDetail}
     ${calendar}

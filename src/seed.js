@@ -200,9 +200,10 @@ function sportCirc(grupo, ejercicios) {
 }
 
 function velCirc() {
-  return sportCirc('Cardio', [{
+  return sportCirc('HIIT', [{
     id: generateId(), nombre: 'Pasadas de velocidad', tipo: 'velocidad',
-    velocidad: 12, tiempo: 60, descanso: 30, cantidadPasadas: 3, inclinacion: 0,
+    equipment: 'treadmill',
+    velocidad: 12, tiempo: 60, descanso: 60, cantidadPasadas: 5, inclinacion: 1,
   }]);
 }
 
@@ -488,7 +489,7 @@ function deriveGruposFromNames(exerciseNames) {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '32'; // 32 = fix override IDs (regenerate post-merge)
+  const CURRENT_SEED_V = '33'; // 33 = force Sport Fitness default + clean all diaSemana
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -776,30 +777,51 @@ export function seedIfEmpty() {
             }
           }
 
-          // ── Clean ALL non-Sport assignments + assign Sport Fitness to Lu/Mi/Vi ──
+          // ── Force Sport Fitness as default for Lu/Mi/Vi ──
           {
             const gymDays = [1, 3, 5];
+            const now = new Date().toISOString();
             for (const usuario of ['Lean', 'Nat']) {
-              // Clear ALL non-Sport-Fitness day assignments
+              // Clear ALL diaSemana assignments for this user (start fresh)
               for (const r of merged) {
-                if (r.usuario === usuario && r.diaSemana != null && r.lugar !== 'SPORT_FITNESS') {
+                if (r.usuario === usuario && r.diaSemana != null) {
                   r.diaSemana = null;
+                  r.updatedAt = now;
                 }
               }
-              // Assign Sport Fitness round-robin to gym days
-              const sportRutinas = merged.filter((r) =>
-                r.lugar === 'SPORT_FITNESS' && r.usuario === usuario && r.tipo === 'gimnasio' && !r.deleted
+              // Assign Sport Fitness Press/Pull to gym days:
+              // Lu=Press, Mi=Pull, Vi=Press (default week pattern)
+              const pressRutinas = merged.filter((r) =>
+                r.lugar === 'SPORT_FITNESS' && r.usuario === usuario
+                && r.tipo === 'gimnasio' && r.pushPull === 'press' && !r.deleted
               );
-              if (sportRutinas.length === 0) continue;
-              // Check if Sport Fitness already assigned
-              const hasAssignment = sportRutinas.some((r) => r.diaSemana != null && gymDays.includes(Number(r.diaSemana)));
-              if (hasAssignment) continue;
-              for (let i = 0; i < gymDays.length; i++) {
-                const r = sportRutinas[i % sportRutinas.length];
-                r.diaSemana = gymDays[i];
-                r.updatedAt = new Date().toISOString();
+              const pullRutinas = merged.filter((r) =>
+                r.lugar === 'SPORT_FITNESS' && r.usuario === usuario
+                && r.tipo === 'gimnasio' && r.pushPull === 'pull' && !r.deleted
+              );
+              if (pressRutinas.length === 0 || pullRutinas.length === 0) continue;
+              // Lu=Press[0], Mi=Pull[0], Vi=Press[1]
+              const assignments = [
+                { day: 1, r: pressRutinas[0] },
+                { day: 3, r: pullRutinas[0] },
+                { day: 5, r: pressRutinas[1] || pressRutinas[0] },
+              ];
+              for (const { day, r } of assignments) {
+                r.diaSemana = day;
+                r.updatedAt = now;
               }
             }
+
+            // Also force plan semanal to gimnasio for Lu/Mi/Vi
+            const planKey = 'gym_plan_semanal';
+            const plan = JSON.parse(localStorage.getItem(planKey) || '{}');
+            for (const usuario of ['Lean', 'Nat']) {
+              if (!plan[usuario]) plan[usuario] = {};
+              plan[usuario][1] = 'gimnasio'; // Lunes
+              plan[usuario][3] = 'gimnasio'; // Miercoles
+              plan[usuario][5] = 'gimnasio'; // Viernes
+            }
+            localStorage.setItem(planKey, JSON.stringify(plan));
           }
 
           // ── v30: Delete old-name Sport Fitness routines (pre push/pull rename) ──
