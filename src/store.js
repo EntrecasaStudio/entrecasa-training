@@ -299,12 +299,14 @@ export function getRutinaHoy(usuario) {
 
   const rutinas = getRutinas();
 
-  // First try: programmed routine for this day + user
+  // First try: programmed routine for this day + user (diaSemana assignment)
   const programada = rutinas.find((r) => Number(r.diaSemana) === hoy && r.usuario === usuario);
   if (programada) return programada;
 
-  // Fallback: first library routine of matching type + user
-  return rutinas.find((r) => r.tipo === tipoHoy && r.usuario === usuario && r.diaSemana == null) || null;
+  // Fallback: prefer Sport Fitness, then any matching type
+  return rutinas.find((r) => r.tipo === tipoHoy && r.usuario === usuario && r.lugar === 'SPORT_FITNESS' && r.diaSemana == null)
+    || rutinas.find((r) => r.tipo === tipoHoy && r.usuario === usuario && r.diaSemana == null)
+    || null;
 }
 
 export function getProximoEntrenamiento(usuario) {
@@ -318,9 +320,10 @@ export function getProximoEntrenamiento(usuario) {
     const tipo = plan[d];
     if (!tipo) continue;
 
-    // Find a routine for that day
+    // Find a routine for that day — prefer Sport Fitness
     const rut =
       rutinas.find((r) => Number(r.diaSemana) === d && r.usuario === usuario) ||
+      rutinas.find((r) => r.tipo === tipo && r.usuario === usuario && r.lugar === 'SPORT_FITNESS' && r.diaSemana == null) ||
       rutinas.find((r) => r.tipo === tipo && r.usuario === usuario && r.diaSemana == null);
     if (rut) return { rutina: rut, diaNombre: DIAS_NOMBRES[d], tipo };
   }
@@ -443,10 +446,13 @@ export function isRutinaDoneInCycle(rutinaId, usuario, tipo) {
 }
 
 export function checkCycleComplete(usuario, tipo) {
+  // Only Sport Fitness routines participate in the completion cycle.
+  // Other locations (Vilo, Río) can be done manually but don't rotate.
   const rutinas = getRutinas().filter((r) =>
     (r.tipo || 'gimnasio') === tipo &&
     r.usuario === usuario &&
-    r.numero // only library routines (have numero)
+    r.numero &&
+    r.lugar === 'SPORT_FITNESS'
   );
   if (rutinas.length === 0) return false;
   const allDone = rutinas.every((r) => isRutinaDoneInCycle(r.id, usuario, tipo));
