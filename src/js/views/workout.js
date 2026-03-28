@@ -1559,7 +1559,9 @@ export function mount(params) {
             const doneCount = ej.vueltas.filter((v) => v.done).length;
             const parts = [`${totalV} series`];
             if (ej.vueltas[0]) parts.push(`${ej.vueltas[0].repsReal} rep`);
-            const showPeso = ej.pesoObjetivoKg !== 0 || meta.usaPeso;
+            const _catEntry = getTodosLosEjercicios().find((e) => e.nombre === ej.nombre);
+            const _usaPesoDefault = _catEntry ? defaultUsaPeso(_catEntry.nombre, _catEntry.tipo) : defaultUsaPeso(ej.nombre, undefined);
+            const showPeso = ej.pesoObjetivoKg !== 0 || meta.usaPeso || _usaPesoDefault;
             if (showPeso && ej.vueltas[0]) parts.push(`${ej.vueltas[0].pesoRealKg} kg`);
             if (doneCount > 0) parts.push(`${doneCount}/${totalV} ✓`);
             summaryEl.textContent = parts.join(' · ');

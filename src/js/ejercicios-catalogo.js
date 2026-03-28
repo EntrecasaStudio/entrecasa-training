@@ -255,8 +255,8 @@ export function getTodosLosEjercicios() {
 }
 
 /** Keywords in exercise names that indicate weight is used */
-const PESO_KEYWORDS = ['barra', 'mancuerna', 'rusas', 'disco', 'peso', 'polea', 'maquina', 'máquina', 'press', 'curl', 'remo', 'fondos', 'aductores', 'elevaciones', 'vuelos', 'biceps', 'triceps', 'sentadilla', 'sumo', 'empuje'];
-const NO_PESO_NAMES = ['burpees', 'plancha', 'copenhague', 'deadbug', 'salto', 'sentadilla con salto', 'sentadilla con estocada y salto', 'complex', 'estrella', 'ruedita', 'ballwall'];
+const PESO_KEYWORDS = ['barra', 'mancuerna', 'rusas', 'disco', 'peso', 'polea', 'maquina', 'máquina', 'press', 'curl', 'remo', 'fondos', 'aductores', 'elevaciones', 'vuelos', 'biceps', 'triceps', 'sentadilla', 'sumo', 'empuje', 'kettlebell', 'jalón', 'jalon', 'hip thrust', 'extensión', 'extension', 'dominada con peso', 'goblet'];
+const NO_PESO_NAMES = ['burpees', 'plancha', 'copenhague', 'deadbug', 'salto', 'sentadilla con salto', 'sentadilla con estocada y salto', 'complex', 'estrella', 'ruedita', 'ballwall', 'banda hip thrust', 'trx'];
 
 /**
  * Determine if an exercise uses weight by default.
