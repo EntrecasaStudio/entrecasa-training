@@ -360,17 +360,14 @@ function renderUserDayRow(u, selectedDate, isToday, isPast, dow, isActive) {
     const r = planned.routine;
     const code = r.numero ? formatNumero(r.numero, r) : '';
     const volanta = code ? `<div class="cal-shared-volanta">${code}</div>` : '';
-    // Meta: circuits, exercises, muscle groups
-    const numCirc = r.circuitos ? r.circuitos.length : 0;
-    const numEj = r.circuitos ? r.circuitos.reduce((sum, c) => sum + (c.ejercicios ? c.ejercicios.length : 0), 0) : 0;
-    const grupos = r.circuitos ? [...new Set(r.circuitos.flatMap((c) => normalizeGrupos(c)))] : [];
-    const metaParts = [`${numCirc}c · ${numEj}ej`, ...grupos].filter(Boolean);
-    const metaLine = metaParts.length > 0 ? `<div class="cal-shared-meta">${metaParts.join(' · ')}</div>` : '';
+    // Day detail row: routine name + lugar badge only (no circuit meta — that lives in the summary card)
+    const lugarBadge = r.lugar
+      ? ` <span class="cal-lugar-badge">${r.lugar === 'SPORT_FITNESS' ? 'Sport' : r.lugar === 'VILO_GYM' ? 'Vilo' : r.lugar === 'RIO' ? 'Río' : r.lugar}</span>`
+      : '';
     statusHtml = `
       <div class="cal-shared-row-info">
         ${volanta}
-        <span class="cal-shared-status" data-action="start" data-id="${r.id}" style="cursor:pointer">${r.nombre}${r.lugar ? ` <span class="cal-lugar-badge">${r.lugar === 'SPORT_FITNESS' ? 'Sport' : r.lugar === 'VILO_GYM' ? 'Vilo' : r.lugar === 'RIO' ? 'Río' : r.lugar}</span>` : ''}</span>
-        ${metaLine}
+        <span class="cal-shared-status" data-action="start" data-id="${r.id}" style="cursor:pointer">${r.nombre}${lugarBadge}</span>
       </div>`;
   } else if (planned && !planned.routine) {
     statusHtml = `
