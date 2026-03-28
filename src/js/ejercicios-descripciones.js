@@ -333,5 +333,206 @@ export const DESCRIPCIONES = {
     'Usando las cintas de suspension tipo TRX, inclinate hacia adelante con las manos en las manijas y los brazos extendidos. Flexiona los codos bajando el cuerpo hacia adelante y extiende los brazos para volver. Manten el cuerpo recto y los codos apuntando hacia atras.',
 
   'Fondos de triceps entre cajas con disco':
-    'Con las manos en una caja detras y los pies elevados en otra caja frente a ti, coloca un disco sobre los muslos. Baja el cuerpo flexionando los codos hasta 90 grados y sube contrayendo los triceps. Manten los codos apuntando atras y la espalda cerca de la caja.'
+    'Con las manos en una caja detras y los pies elevados en otra caja frente a ti, coloca un disco sobre los muslos. Baja el cuerpo flexionando los codos hasta 90 grados y sube contrayendo los triceps. Manten los codos apuntando atras y la espalda cerca de la caja.',
+
+  // ── Cardio ──────────────────────────────────────────────────────────────
+
+  'Cinta de correr':
+    'Caminar, trotar o correr sobre la cinta a la velocidad e inclinacion elegidas. Manten una postura erguida, brazos relajados y no te agarres de las barras laterales. Ajusta la velocidad progresivamente segun tu nivel de condicion fisica.',
+
+  'Bicicleta fija':
+    'Pedalea sentado manteniendo la espalda recta y los pies bien apoyados en los pedales. Ajusta la resistencia para mantener un esfuerzo moderado a intenso. Evita rebotar en el asiento y manten un ritmo constante de pedaleo.',
+
+  'Eliptica':
+    'De pie sobre los pedales con las manos en las manijas moviles, realiza un movimiento fluido de pedaleo eliptico. Empuja y tira de las manijas para involucrar el tren superior. Manten una postura erguida y no te inclines sobre la consola.',
+
+  'Remo ergometro':
+    'Sentado con los pies fijos en las plataformas, sujeta la manija con ambas manos. Empuja con las piernas primero, luego inclina el torso y finalmente tira con los brazos hacia el pecho. El retorno es en orden inverso: brazos, torso, piernas.',
+
+  'Pasadas de velocidad':
+    'Series de intervalos cortos de alta intensidad en cinta, bicicleta u otro equipo. Alterna periodos de esfuerzo maximo con periodos de descanso activo o completo. Manten la forma correcta incluso a alta velocidad.',
+
+  // ── HIIT ────────────────────────────────────────────────────────────────
+
+  'Kettlebell swings':
+    'De pie con los pies al ancho de hombros, sujeta la pesa rusa con ambas manos. Balancea la pesa entre las piernas flexionando las caderas y proyectala hacia adelante con un golpe de cadera explosivo. Manten los brazos relajados y deja que la cadera genere la fuerza.',
+
+  'Battle ropes':
+    'De pie con las rodillas ligeramente flexionadas, sujeta un extremo de cada soga. Mueve los brazos alternadamente arriba y abajo generando ondas en las sogas. Manten el core activado y usa todo el cuerpo, no solo los brazos.',
+
+  // ── Funcional / Calistenia ──────────────────────────────────────────────
+
+  'Kettlebell goblet squat':
+    'De pie con los pies al ancho de hombros, sostiene la pesa rusa por los cuernos contra el pecho. Baja en sentadilla profunda manteniendo los codos entre las rodillas y la espalda recta. Sube empujando con los talones y apretando gluteos.',
+
+  'Kettlebell clean and press':
+    'Con la pesa rusa en el suelo, haz un clean llevandola al hombro con un movimiento explosivo de cadera. Desde el hombro, presiona la pesa sobre la cabeza extendiendo el brazo. Baja controladamente al hombro y luego al suelo.',
+
+  'Kettlebell snatch':
+    'Con la pesa rusa entre las piernas, balancea y con un golpe de cadera explosivo lleva la pesa directamente sobre la cabeza en un movimiento. La pesa gira suavemente sobre la muneca arriba. Baja en arco controlado entre las piernas.',
+
+  'Kettlebell turkish get-up':
+    'Acostado boca arriba con la pesa rusa extendida en un brazo, levantate del suelo paso a paso hasta quedar de pie. Invierte el proceso para volver al suelo. Manten la mirada en la pesa y el brazo bloqueado durante todo el movimiento.',
+
+  'Kettlebell row':
+    'Inclinado hacia adelante con la espalda recta y una pesa rusa en una mano. Tira la pesa hacia la cadera flexionando el codo y apretando la espalda. Baja de forma controlada y manten el torso estable.',
+
+  'Kettlebell front squat':
+    'Con dos pesas rusas en posicion de rack (apoyadas en los antebrazos contra el pecho), pies al ancho de hombros. Baja en sentadilla profunda manteniendo los codos elevados y la espalda recta. Sube empujando con los talones.',
+
+  'Kettlebell sumo deadlift':
+    'Con los pies bien abiertos y las puntas hacia afuera, sujeta la pesa rusa con ambas manos entre las piernas. Baja con la espalda recta hasta que la pesa toque el suelo y sube extendiendo caderas y rodillas. Aprieta gluteos arriba.',
+
+  'TRX row':
+    'Sujeta las manijas del TRX con los brazos extendidos, el cuerpo inclinado hacia atras. Tira del cuerpo hacia las manijas apretando los omoplatos y la espalda. Extiende los brazos de forma controlada para volver. Cuanto mas horizontal el cuerpo, mas dificil.',
+
+  'TRX chest press':
+    'De espaldas al anclaje del TRX con las manos en las manijas, el cuerpo inclinado hacia adelante. Flexiona los codos bajando el pecho entre las manijas y empuja para volver. Similar a una flexion pero con inestabilidad de las cintas.',
+
+  'TRX pike':
+    'Con los pies en las manijas del TRX y las manos en el suelo en posicion de plancha. Eleva la cadera hacia arriba formando una V invertida, manteniendo las piernas rectas. Baja de forma controlada a la plancha. Trabaja core y hombros intensamente.',
+
+  'TRX pistol squat':
+    'Sujeta las manijas del TRX con los brazos extendidos frente a ti. Baja en sentadilla a una pierna (pistol) usando el TRX para equilibrio. Extiende la pierna libre al frente y baja lo mas que puedas, subiendo con control.',
+
+  'TRX curl de biceps':
+    'De cara al anclaje del TRX, sujeta las manijas con agarre supino y el cuerpo inclinado hacia atras. Flexiona los codos llevando las manos hacia la frente, solo moviendo los antebrazos. Extiende de forma controlada.',
+
+  'TRX triceps extension':
+    'De espaldas al anclaje del TRX, sujeta las manijas sobre la cabeza con los codos flexionados. Extiende los brazos empujando el cuerpo hacia adelante. Flexiona los codos para volver de forma controlada.',
+
+  'TRX face pull':
+    'De cara al anclaje del TRX con los brazos extendidos, tira de las manijas hacia la cara separando las manos. Aprieta los omoplatos y los musculos de la espalda alta. Extiende los brazos de forma controlada.',
+
+  'Banda press de pecho':
+    'Con la banda elastica anclada detras a la altura del pecho, sujeta ambos extremos. Empuja las manos hacia adelante extendiendo los brazos como un press. Regresa de forma controlada resistiendo la banda.',
+
+  'Banda pull apart':
+    'De pie con los brazos extendidos al frente sosteniendo la banda con ambas manos. Separa las manos hacia los costados estirando la banda y apretando los omoplatos. Regresa de forma controlada al frente.',
+
+  'Banda remo':
+    'Con la banda anclada al frente a la altura del pecho, sujeta ambos extremos con los brazos extendidos. Tira hacia el torso flexionando los codos y apretando la espalda. Extiende los brazos de forma controlada.',
+
+  'Banda curl de biceps':
+    'De pie sobre la banda con ambos pies, sujeta los extremos con las manos. Flexiona los codos subiendo las manos hacia los hombros contra la resistencia. Baja de forma controlada.',
+
+  'Banda triceps pushdown':
+    'Con la banda anclada arriba, sujeta el extremo con ambas manos a la altura del pecho. Extiende los codos empujando hacia abajo contra la resistencia. Sube de forma controlada manteniendo los codos fijos.',
+
+  'Banda sentadilla':
+    'De pie sobre la banda con los pies al ancho de hombros, sujeta los extremos a la altura de los hombros. Baja en sentadilla contra la resistencia de la banda y sube de forma explosiva. Manten la espalda recta.',
+
+  'Banda lateral walk':
+    'Con la banda elastica alrededor de los tobillos o justo arriba de las rodillas, adopta posicion de media sentadilla. Da pasos laterales manteniendo tension en la banda y las rodillas hacia afuera. Activa gluteos laterales durante todo el movimiento.',
+
+  'Banda hip thrust':
+    'Sentado en el suelo con la espalda apoyada en un banco y la banda alrededor de las rodillas. Coloca los pies en el suelo al ancho de caderas. Empuja la cadera hacia arriba apretando gluteos, manteniendo las rodillas abiertas contra la banda.',
+
+  'Dominadas en barra':
+    'Colgado de la barra con agarre prono al ancho de hombros o mas ancho. Tira del cuerpo hacia arriba hasta que la barbilla pase la barra, liderando con el pecho. Baja de forma controlada hasta extension completa de brazos.',
+
+  'Flexiones de pecho':
+    'Con las manos en el suelo al ancho de hombros y el cuerpo en linea recta de cabeza a pies. Baja el pecho al suelo flexionando los codos y empuja hacia arriba. Manten el core activado y no dejes caer la cadera.',
+
+  'Flexiones diamante':
+    'En posicion de flexion con las manos juntas formando un diamante con los indices y pulgares debajo del pecho. Baja el pecho hacia las manos flexionando los codos pegados al cuerpo. Sube extendiendo los triceps.',
+
+  'Dips en paralelas':
+    'Sostenido en las paralelas con los brazos extendidos, baja flexionando los codos con el torso ligeramente inclinado hacia adelante. Baja hasta que los hombros esten por debajo de los codos y sube empujando con fuerza.',
+
+  'Ab wheel rollout':
+    'De rodillas con la rueda abdominal en las manos, rueda hacia adelante extendiendo el cuerpo lo mas lejos posible. Regresa contrayendo el abdomen sin dejar que la cadera se hunda. Progresa la distancia gradualmente.',
+
+  'Mountain climbers':
+    'En posicion de plancha alta, lleva una rodilla al pecho y alterna rapidamente como si corrieras en el lugar. Manten la cadera baja, el core activado y las manos firmes debajo de los hombros.',
+
+  'Saltos laterales':
+    'De pie sobre una pierna, salta lateralmente aterrizando sobre la pierna contraria. Amortigua el impacto flexionando rodilla y cadera, y repite hacia el otro lado. Manten el cuerpo bajo y controla el equilibrio.',
+
+  'Bear crawl':
+    'En cuatro puntos con las rodillas ligeramente elevadas del suelo, avanza moviendo la mano derecha con el pie izquierdo y viceversa. Manten la espalda plana y la cadera baja. Muevete de forma fluida y controlada.',
+
+  'Jumping lunges':
+    'Desde posicion de estocada, salta explosivamente y cambia las piernas en el aire, aterrizando en estocada del lado contrario. Amortigua cada aterrizaje y manten el torso erguido. Alterna continuamente.',
+
+  'Box jumps':
+    'De pie frente a un cajon, flexiona caderas y rodillas y salta con ambos pies aterrizando suave sobre el cajon. Parate completamente arriba y baja caminando. Usa los brazos para impulsar el salto.',
+
+  'Face pulls':
+    'De pie frente a la polea con una soga a la altura de la cara. Tira hacia el rostro separando las manos y apretando los omoplatos. Mantene los codos elevados y la espalda recta. Excelente para salud del hombro.',
+
+  'Pallof press':
+    'De pie lateral a una polea o banda anclada a la altura del pecho. Sostiene el agarre con ambas manos contra el pecho y extiende los brazos al frente resistiendo la rotacion. Regresa al pecho y repite.',
+
+  'Peso muerto rumano':
+    'De pie con la barra o mancuernas al frente, flexiona la cadera empujandola hacia atras mientras la barra baja por las piernas. Manten las rodillas ligeramente flexionadas y la espalda recta. Sube apretando gluteos e isquiotibiales.',
+
+  'Zancadas con mancuernas':
+    'De pie con una mancuerna en cada mano, da un paso largo hacia adelante o atras bajando la rodilla trasera cerca del suelo. Empuja con el pie delantero para volver y alterna piernas. Manten el torso erguido.',
+
+  'Peso muerto dividido':
+    'En posicion dividida con un pie adelante, sostiene barra o mancuernas y baja flexionando la cadera con la espalda neutra. La mayor parte del peso recae sobre la pierna delantera. Sube apretando gluteos.',
+
+  'Press militar con mancuernas':
+    'De pie o sentado con una mancuerna en cada mano a la altura de los hombros. Empuja las mancuernas hacia arriba hasta extender los brazos. Baja de forma controlada. Manten el core firme.',
+
+  'Curl martillo':
+    'De pie con una mancuerna en cada mano, palmas mirando hacia adentro (agarre neutro). Flexiona los codos subiendo las mancuernas sin rotar las munecas. Trabaja biceps braquial y braquiorradial.',
+
+  'Extension de triceps sobre cabeza':
+    'De pie o sentado, sostiene una mancuerna con ambas manos detras de la cabeza. Extiende los codos subiendo la mancuerna sobre la cabeza. Baja de forma controlada manteniendo los codos cerca de las orejas.',
+
+  'Jalon al pecho':
+    'Sentado en la maquina de jalon, sujeta la barra ancha con agarre prono. Tira la barra hacia la parte alta del pecho sacando el pecho y apretando los omoplatos. Sube de forma controlada.',
+
+  'Remo en polea baja':
+    'Sentado con los pies apoyados en las plataformas y las piernas ligeramente flexionadas. Tira del agarre hacia el abdomen apretando los omoplatos. Extiende los brazos de forma controlada.',
+
+  'Hip thrust con barra':
+    'Sentado en el suelo con la espalda alta apoyada en un banco y la barra sobre la cadera. Empuja la cadera hacia arriba apretando los gluteos hasta que el torso quede paralelo al suelo. El movimiento principal de gluteos.',
+
+  'Kickbacks en polea':
+    'De pie frente a la polea baja con el tobillero puesto, inclinate hacia adelante. Extiende la pierna hacia atras con la rodilla ligeramente flexionada, apretando el gluteo. Regresa de forma controlada.',
+
+  'Press de banca con barra':
+    'Acostado en el banco plano, sujeta la barra con agarre al ancho de hombros. Baja la barra al pecho de forma controlada y empuja hacia arriba. Manten los pies firmes y los omoplatos apretados.',
+
+  'Press inclinado con mancuernas':
+    'Acostado en un banco inclinado a 30-45 grados con una mancuerna en cada mano. Empuja las mancuernas hacia arriba hasta extender los brazos. Baja de forma controlada hasta sentir estiramiento en el pecho.',
+
+  'Aperturas en polea':
+    'De pie entre dos poleas medias o bajas, sujeta un agarre en cada mano. Junta las manos al frente con los brazos casi estirados, contrayendo el pecho. Abre de forma controlada.',
+
+  'Fondos en paralelas':
+    'Sostenido en las paralelas con los brazos extendidos, baja flexionando los codos con el torso inclinado hacia adelante para pecho, o vertical para triceps. Sube empujando con fuerza.',
+
+  'Curl de biceps con barra':
+    'De pie con la barra en agarre supino, flexiona los codos subiendo la barra hacia los hombros. Manten los codos pegados al cuerpo. Baja de forma controlada sin balancear.',
+
+  'Triceps en polea (push down)':
+    'De pie frente a la polea alta, sujeta la barra con agarre prono. Extiende los codos empujando hacia abajo hasta que los brazos queden rectos. Manten los codos fijos al costado del cuerpo.',
+
+  'Sentadilla sumo':
+    'Con los pies bien abiertos y las puntas hacia afuera. Baja manteniendo las rodillas en direccion de los pies. Empuja con los talones y aprieta gluteos arriba. Ideal para aductores y gluteos.',
+
+  'Bulgarian split squat':
+    'Con el pie trasero elevado sobre un banco, baja flexionando la rodilla delantera hasta 90 grados. Empuja con el pie delantero para subir. Manten el torso vertical.',
+
+  'Remo con barra o mancuerna':
+    'Inclinado a 45 grados con barra o mancuerna colgando. Tira hacia el abdomen apretando la espalda. Baja de forma controlada. Manten la espalda recta.',
+
+  'Dominadas o jalon al pecho':
+    'Colgado de la barra (dominadas) o sentado en la maquina de jalon. Tira del cuerpo o la barra hacia el pecho. Aprieta los omoplatos. Baja de forma controlada.',
+
+  'Elevaciones laterales':
+    'De pie con mancuernas a los costados. Eleva los brazos lateralmente hasta la altura de los hombros. Baja de forma controlada. Usa peso liviano con buena tecnica.',
+
+  'Dead bug':
+    'Acostado boca arriba con brazos extendidos al techo y rodillas a 90 grados. Extiende un brazo y la pierna contraria simultaneamente hacia el suelo. Manten la espalda baja pegada al suelo.',
+
+  'Plancha':
+    'Apoyado sobre antebrazos y puntas de pies, manten el cuerpo en linea recta. Activa abdomen y gluteos. No dejes caer la cadera ni levantes la cola. Respira normalmente.',
+
+  'Empuje de hombros en maquina':
+    'Sentado en la maquina de press de hombros con la espalda apoyada. Empuja hacia arriba hasta extender los brazos sin bloquear los codos. Baja de forma controlada.'
 };
