@@ -3522,10 +3522,21 @@
 }
 .user-summary-avatar--lean { background: var(--color-accent); color: var(--color-bg); }
 .user-summary-avatar--nat { background: #a78bfa; color: var(--color-bg); }
+.user-summary-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.user-summary-top-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
 .user-summary-name {
   font-weight: var(--fw-semibold);
   font-size: var(--text-sm);
-  min-width: 36px;
 }
 .user-summary-stats {
   display: flex;
@@ -3537,22 +3548,78 @@
   color: var(--color-text-muted);
   white-space: nowrap;
 }
+.summary-subtitle {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.summary-lugar-tag {
+  font-size: 9px;
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  padding: 1px 4px;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  color: var(--color-accent);
+}
 .user-summary-chevron {
   color: var(--color-text-muted);
   transition: transform 200ms;
+  flex-shrink: 0;
 }
 .user-summary-chevron svg { width: 14px; height: 14px; }
 details[open] .user-summary-chevron { transform: rotate(180deg); }
 .user-summary-body {
-  padding: 0 var(--space-md) 10px;
+  padding: var(--space-xs) var(--space-md) var(--space-sm);
   border-top: 1px solid var(--color-border);
 }
-.summary-next {
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
+
+/* Expanded exercise list */
+.summary-circuits {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
 }
-.summary-next strong {
+.summary-circuit-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.summary-circuit-num {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: var(--fw-bold);
+  flex-shrink: 0;
+}
+.summary-circuit-list {
+  list-style: none;
+  padding: 0;
+  margin: 2px 0 0 20px;
+}
+.summary-ej {
+  font-size: 11px;
   color: var(--color-text);
+  padding: 1px 0;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+.summary-ej--cardio, .summary-ej--hiit { color: var(--color-text-muted); }
+.summary-ej-meta {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .home-quick-stats {

@@ -98,30 +98,66 @@ function renderUserSummary(usuario) {
   const initial = usuario.charAt(0).toUpperCase();
   const isActive = usuario === getUsuarioActivo();
 
-  // Next routine info
-  let nextInfo = '';
-  if (rutinaHoy) {
-    const code = formatNumero(rutinaHoy.numero, rutinaHoy);
-    nextInfo = `<span class="summary-next">Hoy: <strong>${code ? code + ' ' : ''}${rutinaHoy.nombre}</strong></span>`;
-  } else if (proximo) {
-    const code = formatNumero(proximo.rutina.numero, proximo.rutina);
-    nextInfo = `<span class="summary-next">Próximo: <strong>${code ? code + ' ' : ''}${proximo.rutina.nombre}</strong> · ${proximo.diaNombre}</span>`;
+  // Determine the routine to show (today or next)
+  const rutina = rutinaHoy || proximo?.rutina;
+  const rutinaLabel = rutinaHoy ? 'Hoy' : proximo ? proximo.diaNombre : '';
+
+  // Header subtitle: routine name + lugar
+  let subtitleHtml = '';
+  if (rutina) {
+    const code = formatNumero(rutina.numero, rutina);
+    const LUGAR_LABELS = { SPORT_FITNESS: 'Sport', VILO_GYM: 'Vilo', RIO: 'Río', URUGUAY: '🇺🇾' };
+    const lugarTag = rutina.lugar ? `<span class="summary-lugar-tag">${LUGAR_LABELS[rutina.lugar] || rutina.lugar}</span>` : '';
+    subtitleHtml = `<span class="summary-subtitle">${rutinaLabel}: ${code ? code + ' ' : ''}${lugarTag} ${rutina.nombre}</span>`;
+  }
+
+  // Expanded body: full exercise list grouped by circuit
+  let bodyHtml = '';
+  if (rutina && rutina.circuitos) {
+    const circuitsHtml = rutina.circuitos.map((c, ci) => {
+      const ejercicios = c.ejercicios.map((ej) => {
+        const tipo = ej.tipo || 'normal';
+        if (tipo === 'velocidad' || tipo === 'caminata') {
+          return `<li class="summary-ej summary-ej--cardio">${ej.nombre} <span class="summary-ej-meta">${ej.cantidadPasadas || 3}×${ej.tiempo || 60}s</span></li>`;
+        }
+        if (tipo === 'hiit') {
+          return `<li class="summary-ej summary-ej--hiit">${ej.nombre} <span class="summary-ej-meta">${ej.rounds || 3} rondas</span></li>`;
+        }
+        const series = ej.series?.length || 2;
+        const reps = ej.repsObjetivo || ej.series?.[0]?.reps || 10;
+        const peso = ej.pesoKg || ej.series?.[0]?.pesoKg || 0;
+        return `<li class="summary-ej">${ej.nombre} <span class="summary-ej-meta">${series}×${reps}${peso ? ` · ${peso}kg` : ''}</span></li>`;
+      }).join('');
+      const grupos = normalizeGrupos(c);
+      const grupoLabel = grupos.length > 0 ? grupos.join(' · ') : '';
+      return `
+        <div class="summary-circuit">
+          <div class="summary-circuit-header"><span class="summary-circuit-num">${ci + 1}</span>${grupoLabel}</div>
+          <ul class="summary-circuit-list">${ejercicios}</ul>
+        </div>`;
+    }).join('');
+    bodyHtml = `<div class="summary-circuits">${circuitsHtml}</div>`;
   }
 
   return `
     <details class="user-summary-card${isActive ? ' user-summary-active' : ''}" ${isActive ? 'open' : ''}>
       <summary class="user-summary-header">
         <span class="user-summary-avatar user-summary-avatar--${usuario.toLowerCase()}">${initial}</span>
-        <span class="user-summary-name">${usuario}</span>
-        <div class="user-summary-stats">
-          <span class="user-summary-stat">${streak}🔥</span>
-          <span class="user-summary-stat">${thisWeek}/${planned || '?'}📅</span>
-          <span class="user-summary-stat">${lastLabel}⏱</span>
+        <div class="user-summary-info">
+          <div class="user-summary-top-row">
+            <span class="user-summary-name">${usuario}</span>
+            <div class="user-summary-stats">
+              <span class="user-summary-stat">${streak}🔥</span>
+              <span class="user-summary-stat">${thisWeek}/${planned || '?'}📅</span>
+              <span class="user-summary-stat">${lastLabel}⏱</span>
+            </div>
+          </div>
+          ${subtitleHtml}
         </div>
         <span class="user-summary-chevron">${icon.chevronDown}</span>
       </summary>
       <div class="user-summary-body">
-        ${nextInfo}
+        ${bodyHtml}
       </div>
     </details>
   `;
@@ -514,7 +550,6 @@ export function render() {
   const summaries = renderUserSummaries();
 
   return `
-    ${greeting}
     ${summaries}
     ${planActivity}
     ${dayDetail}
