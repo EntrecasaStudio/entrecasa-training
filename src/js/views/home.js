@@ -2,6 +2,7 @@ import {
   getRutinas,
   getWorkoutActivo,
   getUsuarioActivo,
+  setUsuarioActivo,
   getRutinaHoy,
   getProximoEntrenamiento,
   getPlanSemanal,
@@ -14,6 +15,7 @@ import {
 import { navigate } from '@/router.js';
 import { icon, iconLg } from '@js/icons.js';
 import { updateMainButton } from '@js/components/nav-bar.js';
+import { updateAvatarMenu } from '@js/components/avatar-menu.js';
 import {
   renderTags,
   renderLastDone,
@@ -34,6 +36,10 @@ import {
 } from '@js/helpers/stats-helpers.js';
 import { getCurrentUser } from '@js/services/firebase.js';
 import { calcVolumenSesion } from '@/store.js';
+
+// ── Carousel state ──────────────────────────
+const CAROUSEL_USERS = ['Lean', 'Nat'];
+let carouselSlide = 0; // initialized lazily in mount() from getUsuarioActivo()
 
 // ── Calendar state ──────────────────────────
 let calYear = new Date().getFullYear();
@@ -86,7 +92,7 @@ function getGreeting(nombre) {
   return `${saludo}, ${nombre}`;
 }
 
-function renderUserSummary(usuario) {
+function renderUserCard(usuario) {
   const streak = getWeeklyStreak(usuario);
   const thisWeek = getSessionsThisWeek(usuario);
   const planned = getPlannedDaysThisWeek(usuario);
@@ -96,24 +102,31 @@ function renderUserSummary(usuario) {
 
   const lastLabel = daysSince === null ? '--' : daysSince === 0 ? 'Hoy' : daysSince === 1 ? 'Ayer' : `${daysSince}d`;
   const initial = usuario.charAt(0).toUpperCase();
-  const isActive = usuario === getUsuarioActivo();
 
-  // Determine the routine to show (today or next)
+  // Routine: today's or next upcoming
   const rutina = rutinaHoy || proximo?.rutina;
   const rutinaLabel = rutinaHoy ? 'Hoy' : proximo ? proximo.diaNombre : '';
 
-  // Header subtitle: routine name + lugar
-  let subtitleHtml = '';
+  // Routine header row: label · code · lugar badge · name
+  let routineHtml = '';
   if (rutina) {
     const code = formatNumero(rutina.numero, rutina);
     const LUGAR_LABELS = { SPORT_FITNESS: 'Sport', VILO_GYM: 'Vilo', RIO: 'Río', URUGUAY: '🇺🇾' };
-    const lugarTag = rutina.lugar ? `<span class="summary-lugar-tag">${LUGAR_LABELS[rutina.lugar] || rutina.lugar}</span>` : '';
-    subtitleHtml = `<span class="summary-subtitle">${rutinaLabel}: ${code ? code + ' ' : ''}${lugarTag} ${rutina.nombre}</span>`;
+    const lugarTag = rutina.lugar
+      ? `<span class="summary-lugar-tag">${LUGAR_LABELS[rutina.lugar] || rutina.lugar}</span>`
+      : '';
+    routineHtml = `
+      <div class="user-card-routine">
+        ${rutinaLabel ? `<span class="user-card-routine-label">${rutinaLabel}</span>` : ''}
+        ${code ? `<span class="user-card-code">${code}</span>` : ''}
+        ${lugarTag}
+        <span class="user-card-routine-name">${rutina.nombre}</span>
+      </div>`;
   }
 
-  // Expanded body: full exercise list grouped by circuit
+  // Full circuit list — always visible (no expand/collapse)
   let bodyHtml = '';
-  if (rutina && rutina.circuitos) {
+  if (rutina?.circuitos) {
     const circuitsHtml = rutina.circuitos.map((c, ci) => {
       const ejercicios = c.ejercicios.map((ej) => {
         const tipo = ej.tipo || 'normal';
@@ -129,45 +142,59 @@ function renderUserSummary(usuario) {
         return `<li class="summary-ej">${ej.nombre} <span class="summary-ej-meta">${series}×${reps}${peso ? ` · ${peso}kg` : ''}</span></li>`;
       }).join('');
       const grupos = normalizeGrupos(c);
-      const grupoLabel = grupos.length > 0 ? grupos.join(' · ') : '';
+      const grupoLabel = grupos.join(' · ');
       return `
         <div class="summary-circuit">
           <div class="summary-circuit-header"><span class="summary-circuit-num">${ci + 1}</span>${grupoLabel}</div>
           <ul class="summary-circuit-list">${ejercicios}</ul>
         </div>`;
     }).join('');
-    bodyHtml = `<div class="summary-circuits">${circuitsHtml}</div>`;
+    bodyHtml = `<div class="user-card-body"><div class="summary-circuits">${circuitsHtml}</div></div>`;
   }
 
+  // Start button: only when today has a routine
+  const startBtn = rutinaHoy
+    ? `<div class="user-card-footer"><button class="btn btn-primary btn-full" data-action="start" data-id="${rutinaHoy.id}">${icon.play} Iniciar</button></div>`
+    : '';
+
   return `
-    <details class="user-summary-card${isActive ? ' user-summary-active' : ''}" ${isActive ? 'open' : ''}>
-      <summary class="user-summary-header">
+    <div class="user-card">
+      <div class="user-card-header">
         <span class="user-summary-avatar user-summary-avatar--${usuario.toLowerCase()}">${initial}</span>
         <div class="user-summary-info">
           <div class="user-summary-top-row">
             <span class="user-summary-name">${usuario}</span>
-            <span class="user-summary-chevron">${icon.chevronDown}</span>
             <div class="user-summary-stats">
               <span class="user-summary-stat">${streak}🔥</span>
               <span class="user-summary-stat">${thisWeek}/${planned || '?'}📅</span>
               <span class="user-summary-stat">${lastLabel}⏱</span>
             </div>
           </div>
-          ${subtitleHtml}
         </div>
-      </summary>
-      <div class="user-summary-body">
-        ${bodyHtml}
       </div>
-    </details>
+      ${routineHtml}
+      ${bodyHtml}
+      ${startBtn}
+    </div>
   `;
 }
 
-function renderUserSummaries() {
+function renderUserCarousel() {
+  const slides = CAROUSEL_USERS.map((u) => `
+    <div class="user-carousel-slide" data-usuario="${u}">
+      ${renderUserCard(u)}
+    </div>`).join('');
+
+  const dots = CAROUSEL_USERS.map((_, i) =>
+    `<span class="user-carousel-dot${i === carouselSlide ? ' active' : ''}"></span>`
+  ).join('');
+
   return `
-    <div class="user-summaries animate-in" style="animation-delay:50ms">
-      ${renderUserSummary('Lean')}
-      ${renderUserSummary('Nat')}
+    <div class="user-carousel animate-in" id="user-carousel" style="animation-delay:50ms">
+      <div class="user-carousel-track" style="transform:translateX(-${carouselSlide * 100}%)">
+        ${slides}
+      </div>
+      <div class="user-carousel-dots">${dots}</div>
     </div>
   `;
 }
@@ -544,10 +571,10 @@ export function render() {
         </a>
       </div>`;
 
-  const summaries = renderUserSummaries();
+  const carousel = renderUserCarousel();
 
   return `
-    ${summaries}
+    ${carousel}
     ${planActivity}
     ${dayDetail}
     ${calendar}
@@ -718,7 +745,51 @@ export function mount() {
 
   app.addEventListener('click', handleClick);
 
+  // ── Carousel swipe ──────────────────────────
+  carouselSlide = Math.max(0, CAROUSEL_USERS.indexOf(getUsuarioActivo()));
+
+  const carouselEl = document.getElementById('user-carousel');
+  let carouselCleanup = null;
+
+  if (carouselEl) {
+    const track = carouselEl.querySelector('.user-carousel-track');
+
+    // Snap to the correct slide without animation (render used carouselSlide=0 as default)
+    track.style.transition = 'none';
+    track.style.transform = `translateX(-${carouselSlide * 100}%)`;
+    carouselEl.querySelectorAll('.user-carousel-dot').forEach((d, i) =>
+      d.classList.toggle('active', i === carouselSlide)
+    );
+    requestAnimationFrame(() => { track.style.transition = ''; });
+
+    let touchStartX = 0;
+
+    function goToSlide(idx) {
+      carouselSlide = Math.max(0, Math.min(idx, CAROUSEL_USERS.length - 1));
+      track.style.transform = `translateX(-${carouselSlide * 100}%)`;
+      carouselEl.querySelectorAll('.user-carousel-dot').forEach((d, i) =>
+        d.classList.toggle('active', i === carouselSlide)
+      );
+      setUsuarioActivo(CAROUSEL_USERS[carouselSlide]);
+      updateAvatarMenu();
+    }
+
+    const onTouchStart = (e) => { touchStartX = e.touches[0].clientX; };
+    const onTouchEnd = (e) => {
+      const diff = touchStartX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 50) goToSlide(carouselSlide + (diff > 0 ? 1 : -1));
+    };
+
+    carouselEl.addEventListener('touchstart', onTouchStart, { passive: true });
+    carouselEl.addEventListener('touchend', onTouchEnd, { passive: true });
+    carouselCleanup = () => {
+      carouselEl.removeEventListener('touchstart', onTouchStart);
+      carouselEl.removeEventListener('touchend', onTouchEnd);
+    };
+  }
+
   return () => {
     app.removeEventListener('click', handleClick);
+    if (carouselCleanup) carouselCleanup();
   };
 }
