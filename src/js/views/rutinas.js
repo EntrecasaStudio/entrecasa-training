@@ -37,7 +37,17 @@ let cardCounter = 0;
 let searchQuery = '';
 let sortBy = 'numero'; // 'numero' | 'picante' | 'duracion' | 'done'
 let filterDone = 'all'; // 'all' | 'pending' | 'done'
-let filterLugar = JSON.parse(localStorage.getItem('gym_filter_lugar') || 'null'); // null = show all
+let filterLugar = _loadFilterLugar();
+
+function _loadFilterLugar() {
+  try {
+    const stored = JSON.parse(localStorage.getItem('gym_filter_lugar') || 'null');
+    if (!stored) return null; // null = show all
+    if (!Array.isArray(stored) || stored.length === 0) return null; // empty/invalid → show all
+    const valid = stored.filter((l) => Object.keys(LUGAR_LABELS).includes(l));
+    return valid.length === 0 || valid.length === Object.keys(LUGAR_LABELS).length ? null : valid;
+  } catch { return null; }
+}
 let _lastLugarTap = null; // for double-tap detection
 
 const ALL_LUGARES = Object.keys(LUGAR_LABELS);

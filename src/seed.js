@@ -489,7 +489,7 @@ function deriveGruposFromNames(exerciseNames) {
 export function seedIfEmpty() {
   const KEY = 'gym_rutinas';
   const SEED_VERSION = 'gym_seed_version';
-  const CURRENT_SEED_V = '34'; // 34 = fix lugar for all routines + HIIT circuit for VILO_GYM
+  const CURRENT_SEED_V = '35'; // 35 = add C6 velocidad to SPORT_FITNESS routines missing it
 
   const seedRutinas = [
     ...rutinasLean(),
@@ -515,9 +515,17 @@ export function seedIfEmpty() {
       // 2) Must have both H and M variants (enough library routines)
       const libraryCount = parsed.filter((r) => r.numero).length;
       const hasNatVariants = parsed.some((r) => r.numero && r.usuario === 'Nat');
+      const hasMissingSFC6 = parsed.some((r) =>
+        r.lugar === 'SPORT_FITNESS' && !r.custom && !r.deleted
+        && (r.circuitos || []).length < 6
+        && !(r.circuitos || []).some((c) =>
+          (c.ejercicios || []).some((e) => e.tipo === 'velocidad' || e.tipo === 'hiit')
+        )
+      );
       const needsMigration = parsed.some((r) => r.numero && !r.usuario)
         || !hasNatVariants
-        || libraryCount < EXPECTED_LIBRARY * 0.9;
+        || libraryCount < EXPECTED_LIBRARY * 0.9
+        || hasMissingSFC6;
       if (parsed.length > 0 && !needsMigration) {
         seedPlan(); // ensure plan exists even on existing data
         return; // Already seeded with current version
@@ -749,6 +757,8 @@ export function seedIfEmpty() {
               if (r.lugar !== 'SPORT_FITNESS' || r.tipo !== 'gimnasio') continue;
               if (doneIds.has(r.id)) continue;
               if (!r.circuitos) continue;
+              // Skip routines that already have 6 circuits — their content is correct
+              if ((r.circuitos || []).length >= 6) continue;
 
               const isNat = r.usuario === 'Nat';
               const combo = isNat
@@ -946,6 +956,46 @@ export function seedIfEmpty() {
               hiitAdded++;
             }
             if (hiitAdded > 0) console.log(`[seed] v34b: added HIIT circuit to ${hiitAdded} VILO_GYM routines`);
+          }
+
+          // ── Migration v35: add C6 velocidad to SPORT_FITNESS routines missing it ──
+          // Non-destructive: only appends the circuit, never replaces C1-C5.
+          // Covers routines that were seeded before velCirc() was part of SF seed.
+          {
+            const sesiones35 = JSON.parse(localStorage.getItem('gym_sesiones') || '[]');
+            const doneIds35 = new Set(sesiones35.map((s) => s.rutinaId));
+            let sfC6Added = 0;
+            for (const r of merged) {
+              if (r.custom) continue;
+              if (doneIds35.has(r.id)) continue;
+              if (r.lugar !== 'SPORT_FITNESS') continue;
+              const circCount = (r.circuitos || []).length;
+              if (circCount >= 6) continue;
+              const hasVel = (r.circuitos || []).some((c) =>
+                (c.ejercicios || []).some((e) => e.tipo === 'velocidad' || e.tipo === 'hiit')
+              );
+              if (hasVel) continue;
+              r.circuitos = [
+                ...(r.circuitos || []),
+                {
+                  id: generateId(),
+                  grupoMuscular: ['Cardio'],
+                  ejercicios: [{
+                    id: generateId(),
+                    nombre: 'Pasadas de velocidad',
+                    tipo: 'velocidad',
+                    velocidad: 12,
+                    tiempo: 60,
+                    descanso: 30,
+                    cantidadPasadas: 3,
+                    inclinacion: 0,
+                  }],
+                },
+              ];
+              r.updatedAt = new Date().toISOString();
+              sfC6Added++;
+            }
+            if (sfC6Added > 0) console.log(`[seed] v35: added C6 to ${sfC6Added} SPORT_FITNESS routines`);
           }
 
           // ── FINAL: Regenerate day_overrides with push/pull alternation ──
